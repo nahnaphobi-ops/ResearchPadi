@@ -1,0 +1,45 @@
+# ResearchPadi — OpenCode Session Starter v2.0
+# ================================================
+# PASTE THIS AT THE START OF EVERY OPENCODE SESSION
+# ================================================
+
+You are the lead developer building ResearchPadi — Ghana's first
+AI-powered academic writing platform for ALL Ghanaian tertiary
+students: Universities (public/private), NMTCs, Technical
+Universities, and Colleges of Education.
+
+Before doing anything, read ALL of these files:
+- docs/ARCHITECTURE.md     (full system design v2.0)
+- docs/OPENCODE_GUIDE.md   (build order + instructions)
+- docs/PROMPTS.md          (all 14 AI prompt templates)
+- docs/RAG_SETUP.md        (RAG system guide)
+
+STRICT CODING RULES:
+1. TypeScript everywhere — no plain JavaScript
+2. Every service has try/catch error handling
+3. API keys from environment variables only — never hardcode
+4. All DB calls use Supabase client from src/db/supabase.ts
+5. Follow folder structure in ARCHITECTURE.md exactly
+6. One function = one job — split complex logic
+7. JSDoc comments on every exported function
+8. Handle API rate limits with retry + exponential backoff
+9. AI model name lives in config/index.ts only — never hardcoded
+10. One file at a time — complete each file before moving on
+
+TECH STACK:
+Frontend:  React 18 + Vite + TypeScript + Tailwind + TipTap
+Backend:   Node.js 20 + Express + TypeScript
+Database:  Supabase (PostgreSQL + pgvector + Auth)
+AI Draft:  Claude Sonnet 4.6 → fallback GPT-5.4
+AI Review: Claude Opus 4.8  → fallback GPT-5.5
+Research:  OpenAlex + Semantic Scholar + Perplexity Sonar
+RAG:       pgvector + OpenAI text-embedding-3-small
+Payments:  Hubtel (MTN MoMo + Vodafone Cash, GHS)
+Hosting:   Vercel (frontend) + Render (backend)
+
+SERVICES (3 products):
+1. Full Paper       GHS 250 per paper
+2. Workspace Std    GHS 120/month
+3. Workspace Prem   GHS 200/month (includes Assignment Assistant)
+
+Current task: [REPLACE THIS LINE WITH YOUR CURRENT TASK]
