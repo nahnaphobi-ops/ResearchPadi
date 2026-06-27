@@ -1,0 +1,3 @@
+-- Seed file for ResearchPadi
+-- No seed data required for initial setup.
+-- This file is referenced by config.toml for supabase db reset.

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 380" fill="none">
+  <defs>
+    <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2b6cb0"/>
+      <stop offset="100%" style="stop-color:#1a4f8a"/>
+    </linearGradient>
+    <linearGradient id="pageGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e8f0fe"/>
+    </linearGradient>
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9"/>
+      <stop offset="50%" style="stop-color:#e8f4fd;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.8"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Book spine -->
+  <path d="M200 80 L200 260" stroke="#1a4f8a" stroke-width="4"/>
+
+  <!-- Left page -->
+  <path d="M200 80 Q130 70 70 90 L70 250 Q130 235 200 260 Z" fill="url(#pageGrad)" stroke="#2b6cb0" stroke-width="3"/>
+  <path d="M200 80 Q150 75 100 88 L100 248 Q150 238 200 255" fill="none" stroke="#d0e0f5" stroke-width="1"/>
+
+  <!-- Right page -->
+  <path d="M200 80 Q270 70 330 90 L330 250 Q270 235 200 260 Z" fill="url(#pageGrad)" stroke="#2b6cb0" stroke-width="3"/>
+  <path d="M200 80 Q250 75 300 88 L300 248 Q250 238 200 255" fill="none" stroke="#d0e0f5" stroke-width="1"/>
+
+  <!-- Left page fold lines -->
+  <path d="M85 100 L85 240" stroke="#c8ddf0" stroke-width="1" opacity="0.5"/>
+  <path d="M100 95 L100 243" stroke="#c8ddf0" stroke-width="1" opacity="0.5"/>
+
+  <!-- Right page fold lines -->
+  <path d="M315 100 L315 240" stroke="#c8ddf0" stroke-width="1" opacity="0.5"/>
+  <path d="M300 95 L300 243" stroke="#c8ddf0" stroke-width="1" opacity="0.5"/>
+
+  <!-- Letter R on left page -->
+  <text x="130" y="195" font-family="Georgia, 'Times New Roman', serif" font-size="95" font-weight="bold" fill="#1a4f8a" text-anchor="middle">R</text>
+
+  <!-- Letter P on right page -->
+  <text x="270" y="195" font-family="Georgia, 'Times New Roman', serif" font-size="95" font-weight="bold" fill="#1a4f8a" text-anchor="middle">P</text>
+
+  <!-- Magnifying glass circle -->
+  <circle cx="285" cy="155" r="65" fill="url(#glassGrad)" stroke="#2b6cb0" stroke-width="5" filter="url(#shadow)"/>
+  <circle cx="285" cy="155" r="58" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+
+  <!-- Magnifying glass handle -->
+  <path d="M335 200 Q355 225 370 260 Q375 275 365 280 Q355 270 340 240 Q325 215 310 200" fill="url(#bookGrad)" stroke="#1a4f8a" stroke-width="2"/>
+
+  <!-- RESEARCHPADI text -->
+  <text x="200" y="330" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="bold" fill="#1a4f8a" text-anchor="middle" letter-spacing="2">RESEARCHPADI</text>
+</svg>

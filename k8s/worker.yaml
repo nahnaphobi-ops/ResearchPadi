@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: researchpadi-worker
+  labels:
+    app: researchpadi
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: researchpadi
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: researchpadi
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: researchpadi/backend:latest
+          command: ["node", "dist/workers/paper.worker.js"]
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: researchpadi-secrets
+                  key: redis-url
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: researchpadi-secrets
+                  key: supabase-url
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: researchpadi-secrets
+                  key: supabase-service-role-key
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: researchpadi-secrets
+                  key: anthropic-api-key
+                  optional: true
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: researchpadi-secrets
+                  key: openai-api-key
+                  optional: true
+            - name: PAPER_CONCURRENCY
+              value: "3"
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+      terminationGracePeriodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: researchpadi-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: researchpadi-worker
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300

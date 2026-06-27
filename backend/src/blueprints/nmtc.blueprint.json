@@ -1,0 +1,199 @@
+{
+  "institutionType": "nmtc",
+  "sampleSize": 476,
+  "structuralAverages": {
+    "avgChapterCount": 5,
+    "avgSectionsPerChapter": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "avgParagraphLength": 265.7,
+    "avgSentencesPerParagraph": 10.5,
+    "careStudyPercent": 4,
+    "conceptualFrameworkPercent": 0,
+    "ethicalConsiderationsPercent": 0,
+    "demographicTablePercent": 0
+  },
+  "citationAverages": {
+    "avgTotalReferences": 0,
+    "avgGhanaianSourcesPercent": 0,
+    "avgCitationAge": 0.1,
+    "topInstitutions": [],
+    "topCitationYears": [
+      1997
+    ]
+  },
+  "commonChapterTitles": [
+    []
+  ],
+  "examples": [
+    {
+      "documentTitle": "Attitude,Knowledge and Practices in regard to geophagia among pregnant women in Berekum Municipality in the Bono Region of Ghana.",
+      "institution": "Holy Family Nursing and Midwifery Training College, Berekum",
+      "institutionType": "nmtc",
+      "year": 2023,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 292,
+        "avgSentencesPerParagraph": 13,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "work closely with community groups so they design bottom up, culturally competent interventions. It is recommended that follow up cohort studies can be done on the consumers to check whether they were only ingesting soil during pregnancy or have continued after giving birth. And also, educating and creating of awareness to women in their early stages of pregnancy on the dangers of soil consumption and also reinforce it anytime they come for antenatal visit in order to facilitate its full indulge"
+    },
+    {
+      "documentTitle": "A Client/Family Centered Maternity Care Study on Madam Obeng Twene Vera",
+      "institution": "Holy Family Nursing and Midwifery Training College, Berekum",
+      "institutionType": "nmtc",
+      "year": 2023,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 157,
+        "avgSentencesPerParagraph": 6,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This care study was supervised by Ernestina Mensah A family centered maternity care is the care and supervision given to the expectant mother and family throughout pregnancy, labour and puerperium.It is based on a thoughtful understanding of the woman as individual with peculiar needs which must be met within the context of the client‟s family. The care is extended to the members of her family as well as the community in which she lives. Family centered maternity care gives each family member th"
+    },
+    {
+      "documentTitle": "A Client/Family Centered Maternity Care Study on Madam Felicia Nenpeebolola",
+      "institution": "Holy Family Nursing and Midwifery Training College, Berekum",
+      "institutionType": "nmtc",
+      "year": 2023,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 144,
+        "avgSentencesPerParagraph": 6,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This care study was supervised by Martha Kyeremaa Birth is a dynamic and transforming experience, both on an individual and the society, and has the power to profoundly affect the lives of those involved. It is a physiological process characterized by non-intervention, a supportive environment and empowerment of the woman. The client and family centered maternity care study is a study of the care rendered to a pregnant woman and her family. The study starts during pregnancy, continues through la"
+    },
+    {
+      "documentTitle": "A client family centered care study on Punguyire Wemanga Diana",
+      "institution": "Holy Family Nursing and Midwifery Training College, Berekum",
+      "institutionType": "nmtc",
+      "year": 2024,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 146,
+        "avgSentencesPerParagraph": 6,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This care study was supervised by Ubaida Abdul-Karim Birth is a dynamic and transforming experience, both on an individual and the societal level, and has the power to profoundly affect the lives of those involved. It is a physiological process characterised by non-intervention, a supportive environment and empowerment of the woman. The client and family centered maternity care study, is a study of the care rendered to a pregnant woman and her family. The study starts during pregnancy, continues"
+    },
+    {
+      "documentTitle": "A client/family centered maternity care study on madam Atongbone Patience",
+      "institution": "Holy Family Nursing and Midwifery Training College, Berekum",
+      "institutionType": "nmtc",
+      "year": 2024,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 226,
+        "avgSentencesPerParagraph": 7,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This care study was supervised by Ernestina Mensah Client/Family centered maternity care study is a systematic way of administering midwifery care to a pregnant woman and her family throughout pregnancy, labour and puerperium. The Client/ Family Centered Maternity care study also helps the student midwife to use new trends in midwifery like the partograph which is recommended and tested by the World Health Organization (WHO) in the management of labour. The active management of third stage of la"
+    }
+  ]
+}

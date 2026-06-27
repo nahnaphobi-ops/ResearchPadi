@@ -1,0 +1,80 @@
+{
+  "institutionType": "college_of_education",
+  "sampleSize": 35,
+  "description": "Action research / case study pattern used by students at Colleges of Education affiliated with UEW and UCC. Focus on classroom-level educational research.",
+  "structuralAverages": {
+    "avgChapterCount": 5,
+    "avgSectionsPerChapter": [6.5, 5.2, 7.8, 6.1, 5.4],
+    "avgParagraphLength": 78,
+    "avgSentencesPerParagraph": 4.0,
+    "careStudyPercent": 0,
+    "conceptualFrameworkPercent": 65,
+    "ethicalConsiderationsPercent": 85,
+    "demographicTablePercent": 82
+  },
+  "citationAverages": {
+    "avgTotalReferences": 25,
+    "avgGhanaianSourcesPercent": 40,
+    "avgCitationAge": 5.8,
+    "topInstitutions": ["GES", "NaCCA", "MOE", "UEW", "UCC", "University of Education Winneba", "KNUST", "University of Ghana", "NCCE"],
+    "topCitationYears": [2023, 2022, 2021, 2020, 2019]
+  },
+  "commonChapterTitles": [
+    ["INTRODUCTION", "REVIEW OF RELATED LITERATURE", "RESEARCH METHODOLOGY", "DATA PRESENTATION AND DISCUSSION", "SUMMARY, CONCLUSIONS AND RECOMMENDATIONS"]
+  ],
+  "chapterPatterns": {
+    "chapter1": {
+      "title": "INTRODUCTION",
+      "sections": ["Background to the Study", "Statement of the Problem", "Purpose of the Study", "Research Questions", "Significance of the Study", "Scope and Delimitations", "Organisation of the Study"],
+      "avgWordCount": 1400,
+      "writingPattern": "Opens with policy context (GES/NaCCA/curriculum). Problem statement grounded in classroom observation or school data. Objectives use action verbs.",
+      "tense": "Present for context, past for specific observations",
+      "voice": "Third person throughout"
+    },
+    "chapter2": {
+      "title": "REVIEW OF RELATED LITERATURE",
+      "sections": ["Introduction", "Theme 1", "Theme 2", "Theme 3", "Theoretical Framework", "Chapter Summary"],
+      "avgWordCount": 3000,
+      "writingPattern": "Thematic organisation. Heavy use of GES policy documents, NaCCA curriculum documents, and MOE publications alongside academic journals. References Common Core Programme or B7 curriculum where relevant.",
+      "tense": "Present for literature discussion",
+      "voice": "Third person. Synthesises, not just describes."
+    },
+    "chapter3": {
+      "title": "RESEARCH METHODOLOGY",
+      "sections": ["Introduction", "Research Design", "Population of the Study", "Sample and Sampling Technique", "Research Instrument", "Validity and Reliability", "Data Collection Procedure", "Data Analysis", "Ethical Considerations"],
+      "avgWordCount": 1800,
+      "writingPattern": "Specifies school, district, and exact context. Action research or case study design common. References Creswell (2018) or other standard methodology texts.",
+      "tense": "Past tense throughout",
+      "voice": "Third person"
+    },
+    "chapter4": {
+      "title": "DATA PRESENTATION AND DISCUSSION",
+      "sections": ["Introduction", "Demographic Data", "Research Question 1", "Research Question 2", "Research Question 3", "Discussion of Findings", "Chapter Summary"],
+      "avgWordCount": 4000,
+      "writingPattern": "Each research question answered separately with data. Tables and figures used heavily. Findings linked to literature review. Discusses implications for classroom practice.",
+      "tense": "Past for data, present for interpretation",
+      "voice": "Third person, with analytical voice"
+    },
+    "chapter5": {
+      "title": "SUMMARY, CONCLUSIONS AND RECOMMENDATIONS",
+      "sections": ["Introduction", "Summary of Findings", "Conclusions", "Recommendations", "Suggestions for Further Research", "Limitations"],
+      "avgWordCount": 1300,
+      "writingPattern": "Recommendations directed at multiple stakeholders: GES, school heads, classroom teachers, policymakers. Each recommendation supported by a finding.",
+      "tense": "Past for summary, present for conclusions",
+      "voice": "Third person"
+    }
+  },
+  "styleNotes": {
+    "avgSentenceLength": 17.8,
+    "sentenceLengthVariation": "Moderate variation. Education jargon common.",
+    "educationTerminology": ["pupils", "learners", "teachers", "head teacher", "curriculum", "pedagogy", "instructional materials", "lesson plan", "formative assessment", "Common Core Programme", "B7 curriculum"],
+    "policyReferences": ["GES Code of Conduct", "NaCCA Curriculum Standards", "MOE Education Sector Plan", "Free SHS Policy", "Standard-based Curriculum"],
+    "commonResearchDesigns": ["Action Research", "Case Study", "Quasi-Experimental", "Descriptive Survey"]
+  },
+  "examples": {
+    "chapter1Opening": "The introduction of the Common Core Programme (CCP) by the National Council for Curriculum and Assessment (NaCCA) in 2019 represented a paradigm shift in Ghana's basic education curriculum. The CCP, which replaced the old curriculum for Junior High School students, emphasises critical thinking, problem-solving, and creativity as core competencies (NaCCA, 2019). Despite the policy's ambitious goals, early classroom observations suggest that many teachers in the Ashanti Region struggle to implement the competency-based approach effectively (Acheampong, 2022).",
+    "chapter2Synthesis": "Teacher preparedness has been identified as a critical factor in curriculum implementation. Adu-Gyamfi and Akyempong (2020) surveyed 150 teachers in the Greater Accra Region and found that only 34.7% felt adequately prepared to deliver the Common Core Programme. This finding aligns with Owusu-Mensah (2021) who observed that teachers in rural schools received minimal in-service training on the new curriculum. However, Asare and Antwi (2022) reported that teachers who participated in NaCCA's district-level workshops demonstrated significantly higher self-efficacy in curriculum delivery.",
+    "chapter3Context": "The study was conducted at St. John's Lutheran School, a public basic school in the Kumasi Metropolitan Area of the Ashanti Region. The school has a population of 245 pupils in Junior High School forms 1-3 and 12 teachers. The school was selected because it represents a typical urban public school in the region, with similar resource constraints and teacher profiles as many other schools in the district.",
+    "chapter4Finding": "The data presented in Table 4.1 shows that 58.3% of teachers had received less than 5 hours of training on the Common Core Programme. This finding is consistent with Adu-Gyamfi and Akyempong (2020) who reported low training hours among teachers in the Greater Accra Region. The implication is that many teachers are implementing the curriculum without adequate understanding of its competency-based approach, which may explain the low pupil engagement observed during classroom visits."
+  }
+}

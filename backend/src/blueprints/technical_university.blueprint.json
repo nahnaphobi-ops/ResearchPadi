@@ -1,0 +1,81 @@
+{
+  "institutionType": "technical_university",
+  "sampleSize": 30,
+  "description": "Technical university thesis pattern used at ATU, KTU, and other technical universities in Ghana. Emphasises practical, industry-focused research with heavy use of quantitative methods.",
+  "structuralAverages": {
+    "avgChapterCount": 5,
+    "avgSectionsPerChapter": [6.8, 5.5, 8.2, 7.2, 6.0],
+    "avgParagraphLength": 82,
+    "avgSentencesPerParagraph": 4.1,
+    "careStudyPercent": 0,
+    "conceptualFrameworkPercent": 88,
+    "ethicalConsiderationsPercent": 80,
+    "demographicTablePercent": 90
+  },
+  "citationAverages": {
+    "avgTotalReferences": 35,
+    "avgGhanaianSourcesPercent": 22,
+    "avgCitationAge": 5.5,
+    "topInstitutions": ["KNUST", "University of Ghana", "Accra Technical University", "Koforidua Technical University", "IEEE", "ACM", "Ghana Standards Authority"],
+    "topCitationYears": [2023, 2022, 2021, 2020, 2019, 2018]
+  },
+  "commonChapterTitles": [
+    ["INTRODUCTION", "REVIEW OF LITERATURE AND THEORETICAL FRAMEWORK", "METHODOLOGY", "DATA PRESENTATION, ANALYSIS AND DISCUSSION", "SUMMARY, CONCLUSIONS AND RECOMMENDATIONS"]
+  ],
+  "chapterPatterns": {
+    "chapter1": {
+      "title": "INTRODUCTION",
+      "sections": ["Background to the Study", "Problem Statement", "Objectives of the Study", "Research Questions", "Significance of the Study", "Scope of the Study", "Organisation of the Study"],
+      "avgWordCount": 1600,
+      "writingPattern": "Opens with industry context and technical problem. Statement of problem references specific industry data or technical gap.",
+      "tense": "Present for industry context, past for specific observations",
+      "voice": "Third person throughout"
+    },
+    "chapter2": {
+      "title": "REVIEW OF LITERATURE AND THEORETICAL FRAMEWORK",
+      "sections": ["Introduction", "Thematic Area 1", "Thematic Area 2", "Thematic Area 3", "Theoretical Framework", "Conceptual Framework", "Chapter Summary"],
+      "avgWordCount": 3200,
+      "writingPattern": "Heavier use of journal articles and conference papers. Conceptual framework described with diagram showing variable relationships. Technical vocabulary expected.",
+      "tense": "Present for literature discussion",
+      "voice": "Third person"
+    },
+    "chapter3": {
+      "title": "METHODOLOGY",
+      "sections": ["Introduction", "Research Design", "Population and Sampling", "Instruments for Data Collection", "Validity and Reliability", "Data Collection Procedure", "Data Analysis Techniques", "Ethical Considerations", "Chapter Summary"],
+      "avgWordCount": 2200,
+      "writingPattern": "SPSS v26 or Excel references common. Detailed statistical methods described. Quantitative approach dominant.",
+      "tense": "Past tense exclusively",
+      "voice": "Third person"
+    },
+    "chapter4": {
+      "title": "DATA PRESENTATION, ANALYSIS AND DISCUSSION",
+      "sections": ["Introduction", "Demographic Characteristics", "Research Question 1 Analysis", "Research Question 2 Analysis", "Research Question 3 Analysis", "Hypothesis Testing", "Discussion of Major Findings", "Chapter Summary"],
+      "avgWordCount": 4200,
+      "writingPattern": "Heavy use of tables, charts, and figures. Statistical tests reported (t-test, ANOVA, chi-square). Each finding discussed with industry implications.",
+      "tense": "Past for data, present for interpretation and industry implications",
+      "voice": "Third person"
+    },
+    "chapter5": {
+      "title": "SUMMARY, CONCLUSIONS AND RECOMMENDATIONS",
+      "sections": ["Introduction", "Summary of Findings", "Conclusions", "Recommendations", "Limitations of the Study", "Directions for Future Research"],
+      "avgWordCount": 1500,
+      "writingPattern": "Practical, industry-focused recommendations. Each recommendation tied to a specific finding. Addresses industry practitioners, not just academics.",
+      "tense": "Past for summary, present for conclusions",
+      "voice": "Third person"
+    }
+  },
+  "styleNotes": {
+    "avgSentenceLength": 19.2,
+    "sentenceLengthVariation": "Technical descriptions tend to be longer. Discussion sections have more variation.",
+    "technicalTerminology": ["SPSS", "regression analysis", "ANOVA", "chi-square", "reliability coefficient", "Cronbach's alpha", "validity", "variables", "hypothesis", "significant at p<0.05"],
+    "tableUsage": "Tables used extensively in Chapter 4. Table numbering: Table 4.1, Table 4.2, etc. Title above each table. Source below each table if adapted.",
+    "softwareReferences": ["SPSS version 26", "Microsoft Excel", "R Statistical Software"],
+    "industryFocus": "Recommendations address industry practitioners, engineering firms, IT departments, or technical organisations."
+  },
+  "examples": {
+    "chapter1Opening": "The rapid expansion of mobile telecommunications infrastructure across Ghana has created significant demand for skilled technicians in network installation and maintenance. According to the National Communications Authority (2023), Ghana's mobile subscriber base exceeded 43 million by the end of 2022, representing a penetration rate of 140.5%. This growth has placed considerable pressure on telecommunications companies to maintain network quality while managing expanding infrastructure. Despite this demand, technical universities report gaps in the practical competencies of graduates entering the telecommunications sector (Osei, 2022).",
+    "chapter2Conceptual": "The conceptual framework for this study illustrates the relationship between training programme design, practical skill acquisition, and workplace readiness. As depicted in Figure 2.1, the independent variables (training content, hands-on practice duration, and industry partnership) are hypothesised to influence the dependent variable (graduate workplace readiness) through the mediating variable (technical competency level). This framework draws on the Technical and Vocational Education and Training (TVET) model proposed by Aning and Essuman (2020), which emphasises the integration of theoretical knowledge with practical skill development.",
+    "chapter3Methodology": "A quantitative research design employing a descriptive survey approach was adopted for this study. The population comprised 450 final-year telecommunications engineering students from three technical universities in Ghana. The sample size of 205 was determined using the Krejcie and Morgan (1970) formula. A structured questionnaire with a 5-point Likert scale was used for data collection. The instrument was validated by three experts from the Department of Electrical Engineering at KNUST and pilot-tested with 30 students from a fourth technical university.",
+    "chapter4Analysis": "Table 4.2 presents the results of the chi-square test examining the relationship between hands-on practice hours and graduate competence. The results show a statistically significant association (χ² = 45.67, df = 4, p < 0.001). This finding suggests that students who completed more than 200 hours of practical training during their programme demonstrated significantly higher competence levels than those with fewer practical hours. This result is consistent with the TVET model framework and supports the argument by Aning and Essuman (2020) that practical training duration is a critical predictor of workplace readiness."
+  }
+}

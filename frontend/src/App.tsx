@@ -1,122 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Lazy-loaded pages for code splitting
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Wallet = lazy(() => import('./pages/Wallet'));
+const NewPaper = lazy(() => import('./pages/NewPaper'));
+const FullPaperForm = lazy(() => import('./pages/FullPaperForm'));
+const PaperDetails = lazy(() => import('./pages/PaperDetails'));
+const PaperReview = lazy(() => import('./pages/PaperReview'));
+const Subscribe = lazy(() => import('./pages/Subscribe'));
+const WorkspaceList = lazy(() => import('./pages/WorkspaceList'));
+const WorkspaceEditor = lazy(() => import('./pages/WorkspaceEditor'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const AdminOverview = lazy(() => import('./pages/admin/Overview'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminTransactions = lazy(() => import('./pages/admin/Transactions'));
+const AdminSubscriptions = lazy(() => import('./pages/admin/Subscriptions'));
+const AdminPapers = lazy(() => import('./pages/admin/Papers'));
+const AdminWritingAssist = lazy(() => import('./pages/admin/WritingAssist'));
 
+function LoadingSpinner() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  );
 }
 
-export default App
+function App() {
+  return (
+    <Router>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+          <Route path="/new-paper" element={<ProtectedRoute><NewPaper /></ProtectedRoute>} />
+          <Route path="/new-paper/full" element={<ProtectedRoute><FullPaperForm /></ProtectedRoute>} />
+          <Route path="/papers/:id" element={<ProtectedRoute><PaperDetails /></ProtectedRoute>} />
+          <Route path="/papers/:id/review" element={<ProtectedRoute><PaperReview /></ProtectedRoute>} />
+          <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
+          <Route path="/workspace" element={<ProtectedRoute><WorkspaceList /></ProtectedRoute>} />
+          <Route path="/workspace/:id" element={<ProtectedRoute><WorkspaceEditor /></ProtectedRoute>} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
+          <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
+          <Route path="/admin/transactions" element={<ProtectedAdminRoute><AdminTransactions /></ProtectedAdminRoute>} />
+          <Route path="/admin/subscriptions" element={<ProtectedAdminRoute><AdminSubscriptions /></ProtectedAdminRoute>} />
+          <Route path="/admin/papers" element={<ProtectedAdminRoute><AdminPapers /></ProtectedAdminRoute>} />
+          <Route path="/admin/writing-assist" element={<ProtectedAdminRoute><AdminWritingAssist /></ProtectedAdminRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </Router>
+  );
+}
+
+export default App;

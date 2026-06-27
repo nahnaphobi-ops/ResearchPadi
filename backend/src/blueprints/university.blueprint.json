@@ -1,0 +1,197 @@
+{
+  "institutionType": "university",
+  "sampleSize": 99,
+  "structuralAverages": {
+    "avgChapterCount": 5,
+    "avgSectionsPerChapter": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "avgParagraphLength": 67.1,
+    "avgSentencesPerParagraph": 4.5,
+    "careStudyPercent": 1,
+    "conceptualFrameworkPercent": 0,
+    "ethicalConsiderationsPercent": 0,
+    "demographicTablePercent": 0
+  },
+  "citationAverages": {
+    "avgTotalReferences": 0,
+    "avgGhanaianSourcesPercent": 0,
+    "avgCitationAge": 0,
+    "topInstitutions": [],
+    "topCitationYears": []
+  },
+  "commonChapterTitles": [
+    []
+  ],
+  "examples": [
+    {
+      "documentTitle": "Nursing Care Practices for Post-Operative Patients in Ghanaian Hospitals",
+      "institution": "Kwame Nkrumah University of Science and Technology",
+      "institutionType": "university",
+      "year": 2024,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 55,
+        "avgSentencesPerParagraph": 3,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This study examines nursing care practices for post-operative patients in major hospitals across Ghana. Observations and interviews with 200 nurses in five teaching hospitals revealed that while basic post-operative care protocols are followed, documentation practices and patient education remain suboptimal. The study recommends standardized post-operative care checklists and enhanced continuing professional development programs for nurses."
+    },
+    {
+      "documentTitle": "Nurses Knowledge and Practice of Pressure Ulcer Prevention in Intensive Care Units",
+      "institution": "Kwame Nkrumah University of Science and Technology",
+      "institutionType": "university",
+      "year": 2024,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 57,
+        "avgSentencesPerParagraph": 5,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This study assessed nurses knowledge and practice of pressure ulcer prevention in ICUs in Kumasi. A descriptive cross-sectional design was used with 120 ICU nurses. Results showed moderate knowledge levels but inadequate practice scores. Barriers included insufficient staffing, lack of pressure-relieving equipment, and inadequate training. Regular skills updates and resource provision are recommended to improve prevention practices."
+    },
+    {
+      "documentTitle": "Infection Prevention and Control Practices Among Nurses in Neonatal Intensive Care Units",
+      "institution": "Kwame Nkrumah University of Science and Technology",
+      "institutionType": "university",
+      "year": 2024,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 64,
+        "avgSentencesPerParagraph": 4,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This study evaluated infection prevention and control practices among nurses working in neonatal intensive care units in Ghana. Observational checklists and self-reported questionnaires were used to assess compliance with standard precautions. Hand hygiene compliance was found to be suboptimal, with rates below 50% in some units. Inadequate supplies of personal protective equipment and limited training were identified as key barriers to effective infection control."
+    },
+    {
+      "documentTitle": "Pain Assessment and Management Practices Among Nurses in Ghana",
+      "institution": "Kwame Nkrumah University of Science and Technology",
+      "institutionType": "university",
+      "year": 2023,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 65,
+        "avgSentencesPerParagraph": 4,
+        "hasCarePlan": false,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This study explored pain assessment and management practices among nurses in selected hospitals in Ghana. A descriptive cross-sectional survey of 250 nurses revealed that while most nurses recognize the importance of pain assessment, documentation and use of standardized pain scales remain inadequate. Opioid prescribing restrictions and misconceptions about addiction influence pain management decisions. The study recommends adoption of standardized pain assessment tools and educational intervent"
+    },
+    {
+      "documentTitle": "Nursing Documentation Practices in Ghanaian Hospitals: Compliance and Barriers",
+      "institution": "Kwame Nkrumah University of Science and Technology",
+      "institutionType": "university",
+      "year": 2023,
+      "documentType": "other",
+      "structural": {
+        "chapterCount": 5,
+        "chapterTitles": [],
+        "sectionCounts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "avgParagraphLength": 62,
+        "avgSentencesPerParagraph": 4,
+        "hasCarePlan": true,
+        "hasConceptualFramework": false,
+        "hasEthicalConsiderations": false,
+        "hasDemographicTable": false
+      },
+      "citation": {
+        "totalReferences": 0,
+        "ghanaianSources": 0,
+        "ghanaianSourcesPercent": 0,
+        "avgCitationAge": 0,
+        "citationYears": [],
+        "topInstitutions": []
+      },
+      "snippet": "This study evaluated nursing documentation practices and identified barriers to compliance in Ghanaian hospitals. A retrospective audit of 1,000 patient records was conducted across eight hospitals. Documentation was found to be incomplete in over 60% of records, with nursing care plans and discharge summaries being the most poorly documented sections. Barriers included time constraints, inadequate training, and lack of standardized documentation templates."
+    }
+  ]
+}
