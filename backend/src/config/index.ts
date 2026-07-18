@@ -45,6 +45,20 @@ export const CONFIG = {
     BUCKET: process.env.STORAGE_BUCKET || 'papers',
     LOCAL_DIR: process.env.STORAGE_LOCAL_DIR || './storage',
   },
+  CITATION_VERIFY: {
+    // Similarity thresholds (0..1). Conservative on purpose — false "verified" is worse.
+    TITLE_SIMILARITY_VERIFIED: parseFloat(process.env.CV_TITLE_SIM_VERIFIED || '0.90'),
+    TITLE_SIMILARITY_PARTIAL: parseFloat(process.env.CV_TITLE_SIM_PARTIAL || '0.75'),
+    YEAR_TOLERANCE: parseInt(process.env.CV_YEAR_TOLERANCE || '1', 10),
+    // Policy: block auto-delivery if unverified ratio exceeds this (0..1).
+    UNVERIFIED_BLOCK_RATIO: parseFloat(process.env.CV_UNVERIFIED_BLOCK_RATIO || '0.25'),
+    // Rate limiting for external APIs (requests per window).
+    EXTERNAL_RATE_LIMIT_MAX: parseInt(process.env.CV_EXT_RATE_MAX || '5', 10),
+    EXTERNAL_RATE_LIMIT_WINDOW: parseInt(process.env.CV_EXT_RATE_WINDOW || '1000', 10),
+    EXTERNAL_PER_REQUEST_TIMEOUT_MS: parseInt(process.env.CV_EXT_TIMEOUT || '8000', 10),
+    // How many candidate matches to fetch from each source for scoring.
+    CANDIDATE_LIMIT: parseInt(process.env.CV_CANDIDATE_LIMIT || '8', 10),
+  },
 };
 
 export const AI_CONFIG = {

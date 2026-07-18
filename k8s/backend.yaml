@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: researchpadi-backend
+  namespace: researchpadi
   labels:
     app: researchpadi
     component: backend
 spec:
-  replicas: 3
+  replicas: 6
   selector:
     matchLabels:
       app: researchpadi
@@ -94,7 +95,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: researchpadi-backend
+  name: backend-service
+  namespace: researchpadi
   labels:
     app: researchpadi
     component: backend
@@ -117,21 +119,21 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: researchpadi-backend
-  minReplicas: 3
-  maxReplicas: 20
+  minReplicas: 6
+  maxReplicas: 40
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 65
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 75
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 60

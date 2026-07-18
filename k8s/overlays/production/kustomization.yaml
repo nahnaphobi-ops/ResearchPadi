@@ -1,0 +1,21 @@
+# Production overlay for ResearchPadi
+# Apply with:  kubectl apply -k k8s/overlays/production
+#
+# This simply bundles the base manifests. Image tags are pinned at
+# deploy time by the CI workflow (kubectl set image), so no image
+# overrides are hard-coded here.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: researchpadi
+
+resources:
+  - ../../namespace.yaml
+  - ../../secrets.yaml
+  - ../../redis-ha.yaml
+  - ../../pdb.yaml
+  - ../../backend.yaml
+  - ../../worker.yaml
+  - ../../frontend.yaml
+  - ../../ingress.yaml

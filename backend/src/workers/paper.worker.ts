@@ -7,6 +7,7 @@ import { draftChapter } from '../services/pipeline/draft.service';
 import { supervisePaper } from '../services/pipeline/supervise.service';
 import { assembleFullPaper, generateAbstract, generateReferences } from '../services/pipeline/assemble.service';
 import { CHAPTER_STRUCTURE } from '../services/ai/prompts';
+import { runCitationVerification } from '../services/citations/verify/citation-verify.service';
 
 const log = childLogger('paper-worker');
 
@@ -79,6 +80,25 @@ async function runPipeline(job: Job<PaperJobData>) {
     await job.updateProgress(85);
     await updateProgress(d.paperId, 'Human voice supervision pass...');
     const finalizedPaper = await supervisePaper(assembledPaper, d, research.citations);
+
+    // Step 4.5: Citation verification (after supervision, before delivery)
+    await job.updateProgress(92);
+    await updateProgress(d.paperId, 'Verifying citations against real sources...');
+    try {
+      const citationSummary = await runCitationVerification({
+        paperId: d.paperId,
+        fullContent: finalizedPaper,
+      });
+      if (citationSummary.policy.action === 'manual_review') {
+        log.warn(
+          { paperId: d.paperId, ratio: citationSummary.policy.unverified_ratio },
+          'Citations below confidence threshold — routing to manual review, blocking auto-delivery',
+        );
+      }
+    } catch (cvErr: any) {
+      // Verification must never block the pipeline. Flag and continue.
+      log.error({ paperId: d.paperId, err: cvErr.message }, 'Citation verification failed; continuing delivery');
+    }
 
     // Step 5: Finalize
     await job.updateProgress(95);

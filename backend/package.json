@@ -8,7 +8,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts"
   },
   "keywords": [],
   "author": "",

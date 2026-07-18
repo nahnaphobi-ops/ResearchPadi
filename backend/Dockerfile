@@ -1,57 +1,36 @@
-FROM node:22-alpine AS base
-
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Set working directory
+# ---- Build stage ----
+FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files
+# Copy only manifests first for better layer caching
 COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev=false
 
-# Install production dependencies only
-FROM base AS deps
-RUN npm ci --omit=dev
-
-# Build stage
-FROM base AS builder
-RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
-RUN npx tsc
+RUN npm run build
 
-# Production stage
-FROM node:22-alpine AS production
+# Prune dev dependencies for the runtime image
+RUN npm prune --omit=dev
 
-# Security: non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
-
+# ---- Runtime stage ----
+FROM node:20-alpine AS runtime
 WORKDIR /app
-
-# Copy built files and production deps
-COPY --from=builder /app/dist ./dist
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
-
-# Copy blueprints and scripts
-COPY src/blueprints ./dist/blueprints
-COPY src/scripts ./dist/scripts
-
-# Set environment
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Expose port
+# tini for proper signal handling / zombie reaping
+RUN apk add --no-cache tini
+
+# Non-root user
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build --chown=app:app /app/node_modules ./node_modules
+COPY --from=build --chown=app:app /app/dist ./dist
+COPY --from=build --chown=app:app /app/package.json ./package.json
+
+USER app
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health/live || exit 1
-
-# Switch to non-root user
-USER appuser
-
-# Start with proper signal handling
-ENTRYPOINT ["dumb-init", "--"]
+# Graceful shutdown: tini forwards SIGTERM to the node process
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/index.js"]

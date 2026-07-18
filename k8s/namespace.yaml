@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: researchpadi
+  labels:
+    app.kubernetes.io/part-of: researchpadi
+    environment: production

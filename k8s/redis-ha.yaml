@@ -1,0 +1,145 @@
+# =====================================================================
+# Redis HA — 3-node Sentinel topology (1 master + 2 replicas)
+# ---------------------------------------------------------------------
+# At 15-20K concurrent users, Redis is a HARD dependency (BullMQ
+# paper/research/embedding queues + rate-limit store). A single Redis
+# instance is an unacceptable SPOF. This topology gives automatic
+# failover: if the master dies, Sentinel promotes a replica and the
+# sentinel service endpoint updates.
+#
+# ALTERNATIVE (recommended for production on a managed cluster):
+#   Use a managed Redis (AWS ElastiCache, GCP Memorystore, or Upstash)
+#   with replication + automatic failover, and point REDIS_URL at it.
+#   That removes the operational burden of running Redis yourself.
+# =====================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: researchpadi
+data:
+  redis.conf: |
+    maxmemory 2gb
+    maxmemory-policy allkeys-lru
+    appendonly yes
+    appendfsync everysec
+    save 900 1
+    save 300 10
+    save 60 10000
+    tcp-keepalive 300
+    timeout 0
+    databases 16
+    hz 10
+    dynamic-hz yes
+    # Replication is negotiated by Sentinel; do not hardcode replicaof.
+  sentinel.conf: |
+    port 26379
+    sentinel monitor researchpadi-redis redis-0.redis-service.researchpadi.svc.cluster.local 6379 2
+    sentinel down-after-milliseconds researchpadi-redis 5000
+    sentinel failover-timeout researchpadi-redis 10000
+    sentinel parallel-syncs researchpadi-redis 1
+    sentinel resolve-hostnames yes
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: researchpadi
+  labels:
+    app: redis
+spec:
+  # Headless service for stable pod DNS (redis-0, redis-1, redis-2)
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: researchpadi-redis-sentinel
+  namespace: researchpadi
+  labels:
+    app: redis
+    role: sentinel
+spec:
+  # Clients that are Sentinel-aware connect here on 26379.
+  type: ClusterIP
+  ports:
+    - port: 26379
+      targetPort: 26379
+      protocol: TCP
+  selector:
+    app: redis
+    role: sentinel
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: researchpadi
+spec:
+  serviceName: redis-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: sentinel
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command: ["sh", "-c"]
+          args:
+            - >
+              redis-server /etc/redis/redis.conf --replica-announce-ip $(POD_NAME).redis-service.researchpadi.svc.cluster.local &&
+              redis-sentinel /etc/redis/sentinel.conf
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          ports:
+            - containerPort: 6379
+            - containerPort: 26379
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-config
+              mountPath: /etc/redis
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

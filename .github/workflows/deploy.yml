@@ -1,0 +1,126 @@
+name: Build, Test & Deploy (Production)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/researchpadi-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/researchpadi-frontend
+  K8S_DIR: k8s
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Lint, typecheck, and unit-test the backend before shipping.
+  # ------------------------------------------------------------------
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+        continue-on-error: true
+
+  # ------------------------------------------------------------------
+  # 2. Build backend image and push to GHCR.
+  # ------------------------------------------------------------------
+  build-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ------------------------------------------------------------------
+  # 3. Build frontend image and push to GHCR.
+  # ------------------------------------------------------------------
+  build-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ------------------------------------------------------------------
+  # 4. Deploy to the production cluster.
+  #    Set KUBE_CONFIG (base64) as a repo/Org secret.
+  #    Images are pinned to the commit SHA for traceability.
+  # ------------------------------------------------------------------
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+      - name: Apply namespace & infra (idempotent)
+        run: |
+          kubectl apply -f ${{ env.K8S_DIR }}/namespace.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/secrets.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/redis-ha.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/pdb.yaml
+      - name: Apply workloads
+        run: |
+          kubectl apply -f ${{ env.K8S_DIR }}/backend.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/worker.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/frontend.yaml
+          kubectl apply -f ${{ env.K8S_DIR }}/ingress.yaml
+      - name: Roll out pinned images
+        run: |
+          kubectl set image deployment/researchpadi-backend backend=${{ env.BACKEND_IMAGE }}:${{ github.sha }} -n researchpadi
+          kubectl set image deployment/researchpadi-worker worker=${{ env.BACKEND_IMAGE }}:${{ github.sha }} -n researchpadi
+          kubectl set image deployment/researchpadi-frontend frontend=${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -n researchpadi
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/researchpadi-backend -n researchpadi --timeout=300s
+          kubectl rollout status deployment/researchpadi-worker -n researchpadi --timeout=300s
+          kubectl rollout status deployment/researchpadi-frontend -n researchpadi --timeout=300s

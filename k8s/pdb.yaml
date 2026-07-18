@@ -1,0 +1,50 @@
+# PodDisruptionBudgets keep the service available during node drains,
+# cluster upgrades, and autoscaler scale-down events. At 15-20K
+# concurrent we must never evict so many pods that throughput collapses.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: researchpadi-backend-pdb
+  namespace: researchpadi
+spec:
+  minAvailable: 80%
+  selector:
+    matchLabels:
+      app: researchpadi
+      component: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: researchpadi-worker-pdb
+  namespace: researchpadi
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app: researchpadi
+      component: worker
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: researchpadi-frontend-pdb
+  namespace: researchpadi
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: researchpadi
+      component: frontend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: researchpadi-redis-pdb
+  namespace: researchpadi
+spec:
+  # Sentinel needs a quorum; keep at least 2 of 3 Redis nodes up.
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: redis

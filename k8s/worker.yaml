@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: researchpadi-worker
+  namespace: researchpadi
   labels:
     app: researchpadi
     component: worker
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: researchpadi
@@ -75,8 +76,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: researchpadi-worker
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 4
+  maxReplicas: 30
   metrics:
     - type: Resource
       resource:
