@@ -1,46 +1,82 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import logo from '../assets/logo.svg';
-import hero from '../assets/hero.png';
+import heroGrad from '../assets/hero-grad.png';
 import AdinkraBackground from '../components/common/AdinkraBackground';
-import { Shield, Star, BookOpen, FileText, CheckCircle, GraduationCap, Menu, X } from 'lucide-react';
+import {
+  Search, ChevronDown, ChevronRight, ChevronLeft,
+  Star, CheckCircle, Shield, Clock, Users, Zap,
+  FileText, BookOpen, GraduationCap, Award, PenTool,
+  Sparkles, Globe, ArrowRight, Quote
+} from 'lucide-react';
 
-const navLinks = [
-  { label: 'Features', href: '#features' },
-  { label: 'Pricing', href: '#pricing' },
-  { label: 'FAQs', href: '#faqs' },
-  { label: 'Contact', href: '#contact' },
+const popularSkills = ['Research Papers', 'Assignments', 'Thesis', 'Dissertations', 'Literature Reviews'];
+
+const services = [
+  { title: 'RESEARCH PAPERS', tags: ['Undergraduate', 'Masters', 'PhD', 'Journal Articles'], icon: FileText, color: 'from-blue-500 to-blue-700' },
+  { title: 'ESSAY WRITING', tags: ['Argumentative', 'Expository', 'Narrative', 'Descriptive'], icon: PenTool, color: 'from-emerald-500 to-emerald-700' },
+  { title: 'THESIS & DISSERTATION', tags: ['Proposal', 'Full Document', 'Defense Prep', 'Editing'], icon: GraduationCap, color: 'from-violet-500 to-violet-700' },
+  { title: 'LITERATURE REVIEW', tags: ['Systematic', 'Narrative', 'Meta-Analysis', 'Scoping'], icon: BookOpen, color: 'from-amber-500 to-amber-700' },
+  { title: 'ASSIGNMENT HELP', tags: ['Coursework', 'Homework', 'Case Studies', 'Lab Reports'], icon: Award, color: 'from-rose-500 to-rose-700' },
+  { title: 'EDITING & PROOFREADING', tags: ['Grammar', 'Structure', 'Citations', 'Formatting'], icon: Sparkles, color: 'from-cyan-500 to-cyan-700' },
+];
+
+const steps = [
+  { num: '01', title: 'Tell us what you need', desc: 'Describe your paper topic, academic level, and deadline. Our AI understands Ghanaian university requirements.' },
+  { num: '02', title: 'Get AI-powered draft', desc: 'ResearchPadi generates a structured, well-referenced draft with proper citations in seconds.' },
+  { num: '03', title: 'Review & refine', desc: 'Use our real-time feedback tools to polish your paper. Check for plagiarism and formatting.' },
+  { num: '04', title: 'Submit with confidence', desc: 'Download your paper in Word or PDF format, ready for submission to any Ghanaian university.' },
+];
+
+const pricingPlans = [
+  {
+    name: 'Try It',
+    price: 'GHS 5',
+    period: '/paper',
+    desc: 'Pay only when you need a paper',
+    features: ['Single paper', 'AI writing + quality guards', 'APA/MLA/Chicago/Harvard', 'University templates', 'AI/human supervisor review'],
+    cta: 'Order a Paper',
+    highlighted: false,
+  },
+  {
+    name: 'Student Pack',
+    price: 'GHS 39',
+    period: '/5 papers',
+    desc: 'Best value for regular writers',
+    features: ['5 papers', 'All citation formats', 'All university templates', 'Priority AI/human supervisors', 'Citation library'],
+    cta: 'Get Student Pack',
+    highlighted: true,
+  },
+  {
+    name: 'Researcher Pack',
+    price: 'GHS 69',
+    period: '/10 papers',
+    desc: 'For theses and heavy workloads',
+    features: ['10 papers', 'Thesis/dissertation mode', 'Literature review AI', 'Advanced supervisor review', 'Priority support'],
+    cta: 'Get Researcher Pack',
+    highlighted: false,
+  },
 ];
 
 const testimonials = [
-  { name: 'Akosua M.', institution: 'Univ. of Ghana', text: 'ResearchPadi saved me hours on my final year project. The AI understands Ghanaian academic context perfectly.', rating: 5 },
-  { name: 'Kwame A.', institution: 'KNUST', text: 'I used to struggle with citations. Now my papers are properly referenced in minutes. Game changer!', rating: 5 },
-  { name: 'Esi B.', institution: 'UCC', text: 'The AI writes like a Ghanaian student would. It references local sources and follows our academic guidelines.', rating: 5 },
+  { name: 'Anonymous', institution: 'Public University, Ghana', text: 'ResearchPadi changed how I approach academic writing. The AI understands my curriculum better than any generic tool I have tried.', rating: 5, role: 'Student' },
+  { name: 'Anonymous', institution: 'Technical University, Ghana', text: 'My supervisor was impressed by my literature review. ResearchPadi found local journals I never knew existed. Saved me weeks of work.', rating: 5, role: 'Student' },
+  { name: 'Anonymous', institution: 'Public University, Ghana', text: 'The quality guards and supervisor review are incredible. My drafts came back polished and ready to submit. This tool is a must for every Ghanaian student.', rating: 5, role: 'Student' },
 ];
 
-const institutions = [
-  'KNUST', 'Univ. of Ghana', 'UCC', 'UPSA', 'GIMPA', 'Ashesi',
-];
-
-const features = [
-  { icon: FileText, title: 'AI-Powered Writing', desc: 'Generate complete research papers and assignments with AI trained on Ghanaian academic standards.' },
-  { icon: BookOpen, title: 'Local Context', desc: 'References local sources, follows Ghanaian academic guidelines, and understands our educational system.' },
-  { icon: Shield, title: 'Plagiarism-Free', desc: 'Every paper is original, with proper citations in APA, MLA, Chicago, and Harvard formats.' },
-  { icon: GraduationCap, title: '24/7 Support', desc: 'Get help anytime with real-time writing assistance from our AI trained on Ghanaian curricula.' },
-];
-
-const comparisonData = [
-  { aspect: 'Ghanaian Academic Context', researchpadi: 'Deeply understands Ghanaian curricula, local references, and academic standards', chatgpt: 'Generic global knowledge, no Ghana-specific context' },
-  { aspect: 'Citation Formats', researchpadi: 'APA, MLA, Chicago, Harvard - formatted for Ghanaian universities', chatgpt: 'Basic citations, often incorrect or hallucinated' },
-  { aspect: 'Local Language Support', researchpadi: 'Understands Twi, Ga, Ewe, Hausa, and Pidgin alongside English', chatgpt: 'English only, no Ghanaian language support' },
-  { aspect: 'Plagiarism Check', researchpadi: 'Built-in plagiarism detection against local and global sources', chatgpt: 'No plagiarism checking capability' },
-  { aspect: 'Academic Structure', researchpadi: 'Follows Ghanaian university paper structures, formatting, and guidelines', chatgpt: 'Generic academic structure, no local alignment' },
-  { aspect: 'Cost', researchpadi: 'Affordable student plans starting from as low as GHS 5 per paper', chatgpt: 'Subscription-based, not designed for academic writing' },
+const faqs = [
+  { q: 'What makes ResearchPadi different from ChatGPT?', a: 'ResearchPadi is trained specifically on Ghanaian academic standards, curricula, and local sources. It understands the formatting requirements of Ghanaian universities, supports local languages, and provides citations from African journals that generic AI tools cannot access.' },
+  { q: 'Is the content really plagiarism-free?', a: 'Yes. Every paper generated by ResearchPadi is original. We also include a built-in plagiarism scanner that checks against both global databases and local academic repositories before you submit.' },
+  { q: 'Which universities does ResearchPadi support?', a: 'We support all Ghanaian tertiary institutions including KNUST, University of Ghana, UCC, UPSA, GIMPA, Ashesi, Technical University, and more. Our templates match each university\'s specific formatting requirements.' },
+  { q: 'Can I use ResearchPadi for my thesis or dissertation?', a: 'Absolutely. Our Researcher plan includes a dedicated thesis mode with chapter-by-chapter writing, advanced literature review AI, and comprehensive plagiarism reports suitable for postgraduate submissions.' },
+  { q: 'How accurate are the citations?', a: 'Our AI is trained on real academic databases and cross-references every citation. We support APA, MLA, Chicago, and Harvard formats, and our system is specifically tuned to prioritize Ghanaian and African academic sources.' },
 ];
 
 export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [activeService, setActiveService] = useState(0);
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
@@ -49,314 +85,488 @@ export default function Landing() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-white relative overflow-hidden">
-      <AdinkraBackground count={16} />
+    <div className="flex flex-col min-h-screen bg-white">
+      <AdinkraBackground count={12} />
 
-      {/* Navigation Bar */}
-      <nav className="relative z-20 w-full border-b border-blue-100/50 bg-white/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center shrink-0">
-            <img src={logo} alt="ResearchPadi" className="h-10 sm:h-14 w-auto" />
+      {/* ─── NAVBAR ─── */}
+      <nav className="fixed top-0 w-full z-50">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2 shrink-0">
+            <img src={logo} alt="ResearchPadi" className="h-20 w-auto" />
           </button>
 
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map(link => (
-              <button
-                key={link.href}
-                onClick={() => scrollTo(link.href.replace('#', ''))}
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition"
-              >
-                {link.label}
+          <div className="hidden md:flex items-center gap-7">
+            {['Find Papers', 'Pricing', 'FAQs', 'Contact'].map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase().replace(' ', ''))} className="text-[13px] font-medium text-gray-600 hover:text-gray-900 transition">
+                {item}
               </button>
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/login')}
-              className="hidden sm:inline-block text-sm font-medium text-gray-600 hover:text-blue-600 transition"
-            >
-              Sign In
+          <div className="hidden md:flex items-center gap-3">
+            <button onClick={() => navigate('/login')} className="text-[13px] font-semibold text-gray-700 border border-gray-300 px-5 py-2 rounded-full hover:bg-gray-50 transition">
+              Log in
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 text-white px-5 sm:px-6 py-2 rounded-full font-bold text-sm hover:bg-blue-700 transition shadow-md"
-            >
-              Get Started
-            </button>
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-600"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <button onClick={() => navigate('/login')} className="text-[13px] font-semibold text-white bg-gray-900 px-5 py-2 rounded-full hover:bg-gray-800 transition">
+              Join us
             </button>
           </div>
+
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-gray-700">
+            {mobileMenuOpen ? <span className="text-xl">&times;</span> : <span className="text-xl">&#9776;</span>}
+          </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-blue-100 bg-white px-4 py-4 space-y-3">
-            {navLinks.map(link => (
-              <button
-                key={link.href}
-                onClick={() => scrollTo(link.href.replace('#', ''))}
-                className="block w-full text-left text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition"
-              >
-                {link.label}
+          <div className="md:hidden bg-white border-t border-gray-100 px-5 py-4 space-y-3 shadow-lg">
+            {['Find Papers', 'Pricing', 'FAQs', 'Contact'].map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase().replace(' ', ''))} className="block w-full text-left text-sm font-medium text-gray-600 py-2">
+                {item}
               </button>
             ))}
-            <button
-              onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
-              className="block w-full text-left text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition"
-            >
-              Sign In
-            </button>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="flex-1 text-sm font-semibold text-gray-700 border border-gray-300 py-2.5 rounded-full">Log in</button>
+              <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="flex-1 text-sm font-semibold text-white bg-gray-900 py-2.5 rounded-full">Join us</button>
+            </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative z-10 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 px-4 sm:px-6 py-12 sm:py-16 lg:py-24 max-w-6xl mx-auto w-full">
-        <div className="flex-1 text-center lg:text-left">
-          <h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 sm:mb-6 leading-tight"
-            style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-          >
-            Ghana's first AI-powered <span className="text-blue-600">Academic Writing</span> platform.
-          </h1>
-          <p className="text-base sm:text-lg text-gray-600 mb-8 max-w-xl" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-            Built for every Ghanaian tertiary student. Get complete research papers,
-            assignment help, and real-time writing assistance grounded in local context.
-          </p>
+      {/* ─── HERO ─── */}
+      <section className="relative pt-[72px] bg-[#C5CEBD] min-h-[600px] lg:min-h-[680px]">
+        {/* Giant background text */}
+        <div className="absolute inset-0 flex items-center justify-start pointer-events-none select-none overflow-hidden pl-4 sm:pl-10">
+            <span className="text-[80px] sm:text-[120px] lg:text-[160px] font-black text-white/40 leading-none tracking-tighter whitespace-nowrap">
+            RESEARCHPADI
+          </span>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 text-white px-8 py-3.5 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg transform hover:scale-105"
-              style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-            >
-              Start Your Paper Now
-            </button>
-            <button
-              onClick={() => scrollTo('features')}
-              className="bg-white text-blue-600 border-2 border-blue-600 px-8 py-3.5 rounded-xl font-bold text-lg hover:bg-blue-50 transition"
-              style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-            >
-              Learn How It Works
-            </button>
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-16 sm:pt-20">
+          <div className="grid lg:grid-cols-2 gap-10 items-end">
+            {/* Left content */}
+            <div className="relative z-10 text-center lg:text-left pb-8 lg:pb-0">
+              {/* Search bar */}
+              <div className="flex items-center bg-white rounded-full p-1.5 shadow-sm max-w-md mx-auto lg:mx-0 mb-5">
+                <Search className="w-5 h-5 text-gray-400 ml-4" />
+                <input
+                  type="text"
+                  placeholder="Search for any services..."
+                  className="flex-1 px-3 py-2.5 text-sm text-gray-700 bg-transparent outline-none placeholder:text-gray-400"
+                  readOnly
+                  onClick={() => scrollTo('services')}
+                />
+                <button className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center shrink-0">
+                  <Search className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              {/* Popular skills */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-6">
+                <span className="text-xs font-medium text-gray-500">Popular skills:</span>
+                {popularSkills.map((skill) => (
+                  <button key={skill} className="text-xs font-medium text-gray-700 bg-white/70 hover:bg-white px-3 py-1.5 rounded-full border border-gray-200/50 transition">
+                    {skill}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-sm text-gray-600 max-w-md mx-auto lg:mx-0 mb-8 leading-relaxed">
+                An AI-powered academic writing platform built for Ghanaian students. Get research papers, assignments, and thesis help grounded in local context.
+              </p>
+
+              {/* Trust badge */}
+              <div className="inline-flex items-center gap-4 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/80">
+                <div className="flex -space-x-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="w-9 h-9 rounded-full border-2 border-white bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
+                      {['AM', 'KA', 'EB', 'FO'][i]}
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-gray-700">10,000+ Satisfied Students</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <div className="flex-1 flex justify-center lg:justify-end mt-8 lg:mt-0">
-          <img
-            src={hero}
-            alt="ResearchPadi AI Academic Writing Platform"
-            className="w-full max-w-md lg:max-w-lg rounded-2xl shadow-2xl border border-blue-100"
-          />
+        {/* Hero image - absolutely positioned to sit on the bottom edge of the hero */}
+        <div className="hidden lg:block absolute bottom-0 right-8 xl:right-16 z-10">
+          <div className="relative">
+            <img src={heroGrad} alt="Ghanaian graduate celebrating" className="w-[320px] xl:w-[380px] h-auto" />
+
+            {/* Profile card */}
+            <div className="absolute top-4 -left-16 bg-white rounded-2xl px-4 py-3 shadow-xl border border-gray-100 z-20">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-[10px] font-bold text-white">AM</div>
+                <div>
+                  <p className="text-xs font-bold text-gray-900">Akosua M.</p>
+                  <p className="text-[10px] text-gray-500">Political Science</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                <span>80+ papers completed</span>
+              </div>
+            </div>
+
+            {/* Plagiarism badge */}
+            <div className="absolute bottom-16 -left-14 bg-white rounded-2xl px-4 py-3 shadow-xl border border-gray-100 z-20">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-900">Plagiarism-Free</p>
+                  <p className="text-[10px] text-gray-500">100% original content</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Circular trust badge */}
+            <div className="absolute -top-2 -right-6 w-20 h-20 rounded-full bg-white/80 backdrop-blur-sm border border-white flex items-center justify-center z-10 shadow-lg">
+              <div className="text-center">
+                <span className="block text-[7px] font-bold text-gray-500 uppercase tracking-wider leading-tight">Trusted</span>
+                <span className="block text-[7px] font-bold text-gray-500 uppercase tracking-wider leading-tight">Platform</span>
+                <div className="mt-0.5"><img src={logo} alt="" className="w-5 h-5 mx-auto" /></div>
+                <span className="block text-[6px] font-medium text-gray-400">Since 2026</span>
+              </div>
+            </div>
+
+            {/* Citation formats badge */}
+            <div className="absolute bottom-6 -right-12 bg-gray-900 rounded-xl px-3 py-2 shadow-xl z-20">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-[10px] font-bold text-white">APA, MLA, Chicago</span>
+              </div>
+            </div>
+
+            {/* Rating badge */}
+            <div className="absolute top-20 -right-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100 z-20">
+              <div className="flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span className="text-[10px] font-bold text-gray-900">4.9 Rating</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-10 py-16 sm:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              Everything you need to excel
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              ResearchPadi is built specifically for Ghanaian students, combining AI power with local academic expertise.
-            </p>
+      {/* ─── POPULAR SERVICES ─── */}
+      <section id="findpapers" className="py-20 sm:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+                Popular Services
+              </h2>
+              <p className="text-sm text-gray-500 mt-3 max-w-md leading-relaxed">
+                ResearchPadi offers a comprehensive range of academic writing services, from research papers to thesis help, catering to every Ghanaian student's needs.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setActiveService(Math.max(0, activeService - 1))} className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition">
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <button onClick={() => setActiveService(Math.min(services.length - 1, activeService + 1))} className="w-11 h-11 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition">
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((f, i) => {
-              const Icon = f.icon;
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {services.map((service, i) => {
+              const Icon = service.icon;
               return (
-                <div key={i} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 hover:shadow-lg transition">
-                  <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6 text-white" />
+                <button key={i} onClick={() => scrollTo('pricing')} className="group text-left bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:border-gray-300 transition-all duration-300">
+                  <div className={`h-44 bg-gradient-to-br ${service.color} flex items-center justify-center relative overflow-hidden`}>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
+                    <Icon className="w-16 h-16 text-white/80 group-hover:scale-110 transition-transform duration-300" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{f.title}</h3>
-                  <p className="text-sm text-gray-600">{f.desc}</p>
-                </div>
+                  <div className="p-5">
+                    <h3 className="text-sm font-black text-gray-900 uppercase tracking-wide mb-3">{service.title}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {service.tags.map((tag) => (
+                        <span key={tag} className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </button>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Why ResearchPadi vs ChatGPT */}
-      <section className="relative z-10 py-16 sm:py-24 bg-blue-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              Why ResearchPadi beats ChatGPT
+      {/* ─── WHY RESEARCHPADI ─── */}
+      <section className="py-20 sm:py-28 bg-[#F4F6F2]">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+              Why ResearchPadi
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              Generic AI tools weren't built for Ghanaian students. ResearchPadi was.
+            <p className="text-sm text-gray-500 mt-3 max-w-lg mx-auto">
+              Generic AI tools were not built for Ghanaian students. ResearchPadi was designed from the ground up for our academic system.
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-blue-200 shadow-lg">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  <th className="px-4 sm:px-6 py-4 text-sm sm:text-base font-bold">Feature</th>
-                  <th className="px-4 sm:px-6 py-4 text-sm sm:text-base font-bold text-center">ResearchPadi</th>
-                  <th className="px-4 sm:px-6 py-4 text-sm sm:text-base font-bold text-center">ChatGPT / Generic AI</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonData.map((row, i) => (
-                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/50'}>
-                    <td className="px-4 sm:px-6 py-4 text-sm sm:text-base font-medium text-gray-900 border-b border-blue-100">{row.aspect}</td>
-                    <td className="px-4 sm:px-6 py-4 text-sm sm:text-base text-center border-b border-blue-100">
-                      <span className="inline-flex items-center gap-1.5 text-green-700 font-medium">
-                        <CheckCircle className="w-4 h-4 shrink-0" /> {row.researchpadi}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-sm sm:text-base text-center text-gray-500 border-b border-blue-100">{row.chatgpt}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <div className="hidden sm:grid grid-cols-[1fr_1fr_1fr] bg-gray-900 text-white">
+              <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Feature</div>
+              <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center bg-blue-600">ResearchPadi</div>
+              <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center text-gray-400">ChatGPT / Others</div>
+            </div>
+            {[
+              { aspect: 'Ghanaian Academic Context', rp: 'Trained on local curricula & standards', comp: 'Generic global knowledge only' },
+              { aspect: 'Citation Formats', rp: 'APA, MLA, Chicago, Harvard — Ghana-ready', comp: 'Basic, often hallucinated' },
+              { aspect: 'Quality Guards', rp: 'Multi-layer review for accuracy & relevance', comp: 'No quality checks' },
+              { aspect: 'AI / Human Supervisors', rp: 'Expert oversight on every paper', comp: 'No human review' },
+              { aspect: 'University Templates', rp: 'KNUST, UG, UCC, UPSA, GIMPA', comp: 'No local templates' },
+              { aspect: 'Student Pricing', rp: 'From GHS 5/paper, pay-per-use', comp: 'Expensive subscriptions' },
+            ].map((row, i) => (
+              <div key={i} className={`grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                <div className="px-6 py-4 text-sm font-semibold text-gray-800 sm:border-b-0 border-b border-gray-100 sm:block flex items-center justify-between">
+                  <span>{row.aspect}</span>
+                  <span className="sm:hidden text-[10px] text-gray-400">vs Generic AI</span>
+                </div>
+                <div className="px-6 py-4 flex items-center justify-center sm:border-b-0 border-b border-gray-100">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    {row.rp}
+                  </span>
+                </div>
+                <div className="px-6 py-4 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">{row.comp}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="py-20 sm:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+              How It Works
+            </h2>
+            <p className="text-sm text-gray-500 mt-3 max-w-md mx-auto">
+              From idea to submission in four simple steps.
+            </p>
           </div>
 
-          <div className="text-center mt-10">
-            <button
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg transform hover:scale-105"
-              style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-            >
-              Start Writing the Ghanaian Way
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((step, i) => (
+              <div key={i} className="relative group">
+                <div className="text-6xl font-black text-gray-100 group-hover:text-blue-100 transition mb-3">{step.num}</div>
+                <h3 className="text-base font-bold text-gray-900 mb-2">{step.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                {i < 3 && (
+                  <div className="hidden lg:block absolute top-8 right-0 w-12 border-t border-dashed border-gray-200" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PRICING ─── */}
+      <section id="pricing" className="py-20 sm:py-28 bg-[#F4F6F2]">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+              Simple Pricing
+            </h2>
+            <p className="text-sm text-gray-500 mt-3 max-w-md mx-auto">
+              Start free, upgrade when you need more. No hidden fees, no surprises.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {pricingPlans.map((plan, i) => (
+              <div key={i} className={`rounded-2xl p-7 border transition ${
+                plan.highlighted
+                  ? 'bg-gray-900 text-white border-gray-900 shadow-xl scale-[1.02]'
+                  : 'bg-white border-gray-200 hover:shadow-lg'
+              }`}>
+                {plan.highlighted && (
+                  <div className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
+                    <Zap className="w-3 h-3" /> Most Popular
+                  </div>
+                )}
+                <h3 className={`text-lg font-bold mb-1 ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
+                <p className={`text-xs mb-5 ${plan.highlighted ? 'text-gray-400' : 'text-gray-500'}`}>{plan.desc}</p>
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className={`text-3xl font-black ${plan.highlighted ? 'text-white' : 'text-gray-900'}`}>{plan.price}</span>
+                  {plan.period && <span className={`text-sm ${plan.highlighted ? 'text-gray-400' : 'text-gray-500'}`}>{plan.period}</span>}
+                </div>
+                <ul className="space-y-3 mb-7">
+                  {plan.features.map((feat, j) => (
+                    <li key={j} className="flex items-start gap-2.5">
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <span className={`text-sm ${plan.highlighted ? 'text-gray-300' : 'text-gray-600'}`}>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={() => navigate('/login')} className={`w-full py-3 rounded-full font-bold text-sm transition ${
+                  plan.highlighted
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}>
+                  {plan.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="py-20 sm:py-28 bg-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+              What Students Say
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {testimonials.map((t, i) => (
+              <div key={i} className="bg-[#F4F6F2] rounded-2xl p-7 border border-gray-100">
+                <Quote className="w-8 h-8 text-gray-300 mb-4" />
+                <p className="text-sm text-gray-600 leading-relaxed mb-6">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-bold text-white">
+                    {t.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{t.name}</p>
+                    <p className="text-[11px] text-gray-500">{t.role} — {t.institution}</p>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 mt-3">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section id="faqs" className="py-20 sm:py-28 bg-[#F4F6F2]">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight">
+              Frequently Asked
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <div key={i} className={`rounded-xl border transition bg-white ${openFaq === i ? 'border-gray-300 shadow-sm' : 'border-gray-200 hover:border-gray-300'}`}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-6 py-5 text-left">
+                  <span className="text-sm font-bold text-gray-900 pr-4">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-5">
+                    <p className="text-sm text-gray-500 leading-relaxed">{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section id="contact" className="py-20 sm:py-28 bg-[#C5CEBD] relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+          <span className="text-[100px] sm:text-[160px] lg:text-[200px] font-black text-white/30 leading-none tracking-tighter">
+            START
+          </span>
+        </div>
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 text-center relative z-10">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 uppercase tracking-tight mb-4">
+            Ready to write your best paper?
+          </h2>
+          <p className="text-sm text-gray-600 max-w-lg mx-auto mb-8">
+            Join thousands of Ghanaian students using ResearchPadi to produce better academic work, faster. Start for free today.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onClick={() => navigate('/login')} className="bg-gray-900 text-white px-8 py-3.5 rounded-full font-bold text-sm hover:bg-gray-800 transition shadow-lg">
+              Start Writing for Free
+            </button>
+            <button onClick={() => navigate('/login')} className="bg-white/80 backdrop-blur-sm text-gray-900 px-8 py-3.5 rounded-full font-bold text-sm hover:bg-white transition border border-white">
+              Sign In
             </button>
           </div>
         </div>
       </section>
 
-      {/* Trust Indicators */}
-      <section className="relative z-10 py-16 sm:py-24 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          {/* Supported Institutions */}
-          <div className="mb-16">
-            <h3 className="text-center text-sm font-semibold uppercase tracking-wider text-gray-500 mb-8">
-              Trusted by students at
-            </h3>
-            <div className="flex flex-wrap justify-center gap-8 sm:gap-12">
-              {institutions.map(inst => (
-                <div key={inst} className="font-bold text-xl sm:text-2xl text-gray-400 italic" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-                  {inst}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Testimonials */}
-          <div className="mb-16">
-            <h3 className="text-center text-2xl sm:text-3xl font-extrabold text-gray-900 mb-10" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              What students are saying
-            </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {testimonials.map((t, i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition">
-                  <div className="flex gap-1 mb-3">
-                    {Array.from({ length: t.rating }).map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-700 mb-4 italic">"{t.text}"</p>
-                  <div>
-                    <p className="font-bold text-sm text-gray-900">{t.name}</p>
-                    <p className="text-xs text-gray-500">{t.institution}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Security Badges */}
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
-            <div className="flex items-center gap-2 text-gray-500">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium">SSL Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium">GDPR Compliant</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium">100% Original Content</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium">Secure Payments</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="relative z-10 py-16 sm:py-24 bg-gradient-to-r from-blue-600 to-blue-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-            Ready to write your best paper?
-          </h2>
-          <p className="text-lg text-blue-100 mb-8 max-w-xl mx-auto" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-            Join thousands of Ghanaian students already using ResearchPadi.
-          </p>
-          <button
-            onClick={() => navigate('/login')}
-            className="bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition shadow-lg transform hover:scale-105"
-            style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-          >
-            Start Your Paper Now
-          </button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-gray-200 bg-gray-900">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-            <div>
-              <img src={logo} alt="ResearchPadi" className="h-10 w-auto mb-4" />
-              <p className="text-sm text-gray-400" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-                Ghana's first AI-powered academic writing platform, built for every Ghanaian tertiary student.
+      {/* ─── FOOTER ─── */}
+      <footer className="bg-gray-950 pt-16 pb-8">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+            <div className="col-span-2 md:col-span-1">
+              <img src={logo} alt="ResearchPadi" className="h-20 w-auto mb-4" />
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                Ghana's first AI-powered academic writing platform. Built for every Ghanaian tertiary student.
               </p>
             </div>
             <div>
-              <h4 className="font-bold text-gray-300 mb-3 text-sm uppercase tracking-wider">Product</h4>
-              <ul className="space-y-2">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Product</h4>
+              <ul className="space-y-2.5">
                 {['Features', 'Pricing', 'FAQs', 'Contact'].map(item => (
                   <li key={item}>
-                    <button onClick={() => scrollTo(item.toLowerCase())} className="text-sm text-gray-400 hover:text-white transition">
-                      {item}
-                    </button>
+                    <button onClick={() => scrollTo(item.toLowerCase())} className="text-sm text-gray-500 hover:text-white transition">{item}</button>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-gray-300 mb-3 text-sm uppercase tracking-wider">Company</h4>
-              <ul className="space-y-2">
-                {['About', 'Blog', 'Privacy Policy', 'Terms of Service'].map(item => (
-                  <li key={item}>
-                    <span className="text-sm text-gray-400 hover:text-white transition cursor-pointer">{item}</span>
-                  </li>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Company</h4>
+              <ul className="space-y-2.5">
+                {['About', 'Blog', 'Careers', 'Press Kit'].map(item => (
+                  <li key={item}><span className="text-sm text-gray-500 hover:text-white transition cursor-pointer">{item}</span></li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-gray-300 mb-3 text-sm uppercase tracking-wider">Contact</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>Kumasi, Ghana</li>
-                <li>hello@researchpadi.com</li>
-                <li>+233 (0) 50 000 0000</li>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Legal</h4>
+              <ul className="space-y-2.5">
+                {['Privacy Policy', 'Terms of Service', 'Cookie Policy', 'Refund Policy'].map(item => (
+                  <li key={item}><span className="text-sm text-gray-500 hover:text-white transition cursor-pointer">{item}</span></li>
+                ))}
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-6 text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} AbusuaITLabs, Kumasi, Ghana. Supporting academic excellence across Ghana.
+
+          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-gray-600">&copy; {new Date().getFullYear()} ResearchPadi by AbusuaITLabs, Kumasi, Ghana.</p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Shield className="w-3.5 h-3.5 text-green-500" />
+                SSL Encrypted
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                GDPR Compliant
+              </div>
+            </div>
           </div>
         </div>
       </footer>
