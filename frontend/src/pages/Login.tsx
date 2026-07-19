@@ -51,6 +51,33 @@ export default function Login() {
     }
   };
 
+  const handleTryDemo = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await authService.requestOtp('+233200000000');
+      const response = await authService.verifyOtp('+233200000000', '123456');
+      const { token, user, isNewUser } = response.data;
+      setAuth(token, user);
+
+      if (isNewUser) {
+        const reg = await authService.updateProfile({
+          full_name: 'Demo Student',
+          institution_type: 'university',
+          institution_name: 'University of Ghana',
+          programme: 'BSc Computer Science',
+          level: '300L',
+        });
+        if (reg.data.token) setAuth(reg.data.token, reg.data.user);
+      }
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -139,6 +166,14 @@ export default function Login() {
           </form>
         )}
         <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={handleTryDemo}
+            disabled={loading}
+            className="w-full p-3 mb-4 bg-emerald-600 text-white rounded font-bold hover:bg-emerald-700 disabled:bg-emerald-300 transition"
+          >
+            {loading ? 'Loading Demo...' : 'Try Demo Account'}
+          </button>
           <a href="/admin/login" className="text-xs text-gray-400 hover:text-gray-600 underline">
             Admin Login
           </a>
