@@ -14,8 +14,12 @@ export async function cacheGet<T>(
   ttlSeconds: number,
   fn: () => Promise<T>,
 ): Promise<T> {
+  const redis = getRedis();
+  if (!redis) {
+    return fn();
+  }
+
   try {
-    const redis = getRedis();
     const cached = await redis.get(key);
     if (cached) {
       log.debug({ key }, 'Cache hit');
@@ -29,6 +33,7 @@ export async function cacheGet<T>(
 
   try {
     const redis = getRedis();
+    if (!redis) return result;
     await redis.set(key, JSON.stringify(result), 'EX', ttlSeconds);
     log.debug({ key, ttl: ttlSeconds }, 'Cache stored');
   } catch (err: any) {
@@ -45,6 +50,7 @@ export async function cacheGet<T>(
 export async function cacheInvalidate(pattern: string): Promise<void> {
   try {
     const redis = getRedis();
+    if (!redis) return;
     let cursor = '0';
     let totalDeleted = 0;
 
@@ -78,6 +84,7 @@ export async function cacheInvalidate(pattern: string): Promise<void> {
 export async function cacheDel(key: string): Promise<void> {
   try {
     const redis = getRedis();
+    if (!redis) return;
     await redis.del(key);
   } catch {
     // ignore
@@ -90,6 +97,7 @@ export async function cacheDel(key: string): Promise<void> {
 export async function cacheMget<T>(keys: string[]): Promise<(T | null)[]> {
   try {
     const redis = getRedis();
+    if (!redis) return keys.map(() => null);
     const values = await redis.mget(...keys);
     return values.map(v => (v ? JSON.parse(v) as T : null));
   } catch {
@@ -103,6 +111,7 @@ export async function cacheMget<T>(keys: string[]): Promise<(T | null)[]> {
 export async function cacheMset(entries: { key: string; value: any; ttl: number }[]): Promise<void> {
   try {
     const redis = getRedis();
+    if (!redis) return;
     const pipeline = redis.pipeline();
     for (const entry of entries) {
       pipeline.set(entry.key, JSON.stringify(entry.value), 'EX', entry.ttl);

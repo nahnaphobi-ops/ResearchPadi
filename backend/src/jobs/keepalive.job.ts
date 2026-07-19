@@ -4,8 +4,8 @@ import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('keepalive');
 
-// Run every 3 days at 12:00 PM to prevent Supabase from pausing after 7 days of inactivity
-cron.schedule('0 12 */3 * *', async () => {
+// Run every 6 hours to prevent Supabase from pausing after 7 days of inactivity
+cron.schedule('0 */6 * * *', async () => {
   log.info('[KeepAlive] Pinging Supabase to prevent project pausing');
 
   try {

@@ -58,6 +58,7 @@ async function checkRateLimit(provider: Provider): Promise<boolean> {
 
   try {
     const redis = getRedis();
+    if (!redis) return true;
     const current = await redis.incr(key);
     if (current === 1) {
       await redis.pexpire(key, limit.windowMs);
@@ -81,6 +82,7 @@ async function checkBudget(userId: string | undefined): Promise<{ allowed: boole
 
   try {
     const redis = getRedis();
+    if (!redis) return { allowed: true, remaining: DEFAULT_DAILY_LIMIT };
     const used = parseInt((await redis.get(budgetKey)) || '0', 10);
     const remaining = DEFAULT_DAILY_LIMIT - used;
     return { allowed: remaining > 0, remaining };
@@ -97,6 +99,7 @@ async function deductTokens(userId: string | undefined, tokens: number): Promise
 
   try {
     const redis = getRedis();
+    if (!redis) return;
     const pipeline = redis.pipeline();
     pipeline.incrby(budgetKey, tokens);
     pipeline.pexpire(budgetKey, 86_400_000);
@@ -492,6 +495,11 @@ export async function getRemainingBudget(userId: string): Promise<{ remaining: n
 
   try {
     const redis = getRedis();
+    if (!redis) {
+      const resetAt = new Date();
+      resetAt.setHours(23, 59, 59, 999);
+      return { remaining: DEFAULT_DAILY_LIMIT, limit: DEFAULT_DAILY_LIMIT, resetAt: resetAt.getTime() };
+    }
     const used = parseInt((await redis.get(budgetKey)) || '0', 10);
     const resetAt = new Date();
     resetAt.setHours(23, 59, 59, 999);

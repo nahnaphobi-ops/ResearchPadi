@@ -7,6 +7,10 @@ const _require = createRequire(import.meta.url);
 function createRedisStore() {
   try {
     const redisClient = getRedis();
+    if (!redisClient) {
+      // Fallback to memory store if Redis is not configured
+      return undefined;
+    }
     const { RedisStore } = _require('rate-limit-redis');
     const Store = RedisStore.default || RedisStore;
     return new Store({

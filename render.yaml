@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: researchpadi-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    rootDir: backend
+    branch: main
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: REDIS_URL
+        value: redis://redis-service:6379
+      - key: FRONTEND_URL
+        value: https://researchpadi.app

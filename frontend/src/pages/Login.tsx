@@ -102,7 +102,19 @@ export default function Login() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 relative overflow-hidden">
       <AdinkraBackground count={10} />
-      
+
+      <button
+        type="button"
+        onClick={() => navigate('/')}
+        className="absolute top-5 left-5 z-20 inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
+        </svg>
+        Back to Home
+      </button>
+
       <div className="w-full max-w-md p-8 bg-white rounded shadow-lg z-10">
         <img src={logo} alt="ResearchPadi" className="h-20 w-auto mx-auto mb-6" />
         {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}

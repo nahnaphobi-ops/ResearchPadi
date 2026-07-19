@@ -67,23 +67,28 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     return res.status(500).json({ error: error.message });
   }
 
-  const job = await paperQueue.add('generate-paper', {
-    paperId: paper.id,
-    topic,
-    course,
-    institution_name,
-    institution_type,
-    programme,
-    supervisor_name,
-    target_word_count,
-    research_questions,
-  });
-
-  log.info({ paperId: paper.id, jobId: job.id }, 'Paper job enqueued');
+  let jobId: string | undefined;
+  if (!paperQueue) {
+    log.warn({ paperId: paper.id }, 'Redis not configured — paper generation queue disabled');
+  } else {
+    const job = await paperQueue.add('generate-paper', {
+      paperId: paper.id,
+      topic,
+      course,
+      institution_name,
+      institution_type,
+      programme,
+      supervisor_name,
+      target_word_count,
+      research_questions,
+    });
+    jobId = job.id;
+    log.info({ paperId: paper.id, jobId: job.id }, 'Paper job enqueued');
+  }
 
   await supabase.from('papers').update({ progress_step: 'Queued' }).eq('id', paper.id);
 
-  res.json({ message: 'Paper submission successful', paperId: paper.id, jobId: job.id });
+  res.json({ message: 'Paper submission successful', paperId: paper.id, jobId });
 };
 
 export const getJobStatus = async (req: Request, res: Response) => {

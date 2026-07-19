@@ -16,12 +16,24 @@ function getQueueOpts() {
   };
 }
 
-export const paperQueue = new Queue('papers', getQueueOpts());
-export const researchQueue = new Queue('research', getQueueOpts());
-export const embeddingQueue = new Queue('embeddings', getQueueOpts());
+function createQueue(name: string): Queue | null {
+  const connection = getRedis();
+  if (!connection) {
+    log.warn({ queue: name }, 'Redis not configured — queue disabled');
+    return null;
+  }
+  return new Queue(name, getQueueOpts());
+}
+
+export const paperQueue = createQueue('papers');
+export const researchQueue = createQueue('research');
+export const embeddingQueue = createQueue('embeddings');
 
 export function setupQueueEvents() {
-  const paperEvents = new QueueEvents('papers', { connection: getRedis() as any });
+  const connection = getRedis();
+  if (!connection) return null;
+
+  const paperEvents = new QueueEvents('papers', { connection: connection as any });
 
   paperEvents.on('completed', ({ jobId }) => {
     log.info({ jobId }, 'Paper job completed');

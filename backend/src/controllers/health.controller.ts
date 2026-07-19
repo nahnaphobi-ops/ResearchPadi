@@ -91,6 +91,9 @@ async function checkRedis(): Promise<CheckResult> {
   const start = Date.now();
   try {
     const redis = getRedis();
+    if (!redis) {
+      return { status: 'ok', message: 'Redis not configured (optional)' };
+    }
     await redis.ping();
     return { status: 'ok', latencyMs: Date.now() - start };
   } catch (err: any) {
@@ -115,6 +118,9 @@ async function checkQueues(): Promise<CheckResult> {
   try {
     // Just check Redis is reachable for queues
     const redis = getRedis();
+    if (!redis) {
+      return { status: 'ok', message: 'Redis not configured (queues optional)' };
+    }
     await redis.ping();
     return { status: 'ok', message: 'Queues operational' };
   } catch {

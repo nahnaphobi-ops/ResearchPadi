@@ -126,11 +126,17 @@ async function runPipeline(job: Job<PaperJobData>) {
 
 let paperWorker: Worker | null = null;
 
-export function startPaperWorker(): Worker {
+export function startPaperWorker(): Worker | null {
   if (paperWorker) return paperWorker;
 
+  const connection = getRedis();
+  if (!connection) {
+    log.warn('Redis not configured — paper worker disabled');
+    return null;
+  }
+
   paperWorker = new Worker<PaperJobData>('papers', runPipeline, {
-    connection: getRedis() as any,
+    connection: connection as any,
     concurrency: 3,
     limiter: { max: 5, duration: 60000 },
   });
