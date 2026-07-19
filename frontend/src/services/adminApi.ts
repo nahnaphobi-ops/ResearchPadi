@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAdminStore } from '../store/useAdminStore';
 
 const adminApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 });
 
 adminApi.interceptors.request.use((config) => {
@@ -71,7 +71,7 @@ adminApi.interceptors.response.use(
         }
 
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/refresh-token`,
+          `${import.meta.env.VITE_API_URL || '/api'}/admin/refresh-token`,
           { refreshToken }
         );
 
