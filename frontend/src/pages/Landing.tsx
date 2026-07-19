@@ -5,9 +5,9 @@ import heroGrad from '../assets/hero-grad.png';
 import AdinkraBackground from '../components/common/AdinkraBackground';
 import {
   Search, ChevronDown, ChevronRight, ChevronLeft,
-  Star, CheckCircle, Shield, Clock, Users, Zap,
+  Star, CheckCircle, Shield, Zap,
   FileText, BookOpen, GraduationCap, Award, PenTool,
-  Sparkles, Globe, ArrowRight, Quote
+  Sparkles, Quote
 } from 'lucide-react';
 
 const popularSkills = ['Research Papers', 'Assignments', 'Thesis', 'Dissertations', 'Literature Reviews'];
