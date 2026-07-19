@@ -1,5 +1,5 @@
-import { getRedis } from './redis';
-import { childLogger } from './logger';
+import { getRedis } from './redis.js';
+import { childLogger } from './logger.js';
 
 const log = childLogger('cache');
 

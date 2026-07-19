@@ -1,13 +1,13 @@
-import app from './app';
-import { CONFIG } from './config';
-import { validateEnv } from './config/env';
-import { logger } from './lib/logger';
-import { startPaperWorker, stopPaperWorker } from './workers/paper.worker';
-import { setupQueueEvents } from './lib/queue';
-import { closeRedis } from './lib/redis';
-import { closePools } from './db/supabase';
-import './jobs/harvest.job';
-import './jobs/keepalive.job';
+import app from './app.js';
+import { CONFIG } from './config/index.js';
+import { validateEnv } from './config/env.js';
+import { logger } from './lib/logger.js';
+import { startPaperWorker, stopPaperWorker } from './workers/paper.worker.js';
+import { setupQueueEvents } from './lib/queue.js';
+import { closeRedis } from './lib/redis.js';
+import { closePools } from './db/supabase.js';
+import './jobs/harvest.job.js';
+import './jobs/keepalive.job.js';
 
 const log = logger.child({ module: 'index' });
 

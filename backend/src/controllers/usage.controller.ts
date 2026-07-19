@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getUsageStats, getRemainingBudget } from '../services/ai/gateway.service';
+import { getUsageStats, getRemainingBudget } from '../services/ai/gateway.service.js';
 
 export async function getUsage(req: Request, res: Response) {
   try {

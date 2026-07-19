@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../../config/index.js';
 
 const PAYSTACK_BASE = 'https://api.paystack.co';
 

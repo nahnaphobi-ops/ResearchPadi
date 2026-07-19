@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { childLogger } from '../../lib/logger';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { childLogger } from '../../lib/logger.js';
+import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 
 const log = childLogger('perplexity');
 

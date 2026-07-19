@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../db/supabase';
+import { supabase } from '../db/supabase.js';
 
 export const requireSubscription = async (req: Request, res: Response, next: NextFunction) => {
   const userId = (req as any).user?.id;

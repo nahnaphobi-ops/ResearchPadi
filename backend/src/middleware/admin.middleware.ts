@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { CONFIG } from '../config';
+import { CONFIG } from '../config/index.js';
 
 export interface AdminRequest extends Request {
   admin?: { id: string; email: string };

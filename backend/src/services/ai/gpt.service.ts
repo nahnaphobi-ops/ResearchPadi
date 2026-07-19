@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../../config/index.js';
 
 const getClient = () => {
   if (!CONFIG.OPENAI_API_KEY) return null;

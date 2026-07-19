@@ -1,4 +1,4 @@
-import { childLogger } from './logger';
+import { childLogger } from './logger.js';
 
 const log = childLogger('circuit-breaker');
 

@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { PDFParse } from 'pdf-parse';
-import { generateEmbedding } from './embedder.service';
-import { chunkText } from './chunker.service';
-import { supabase } from '../../db/supabase';
-import { CONFIG } from '../../config';
-import { uploadFile, getPublicUrl } from '../../lib/storage';
-import { childLogger } from '../../lib/logger';
+import { generateEmbedding } from './embedder.service.js';
+import { chunkText } from './chunker.service.js';
+import { supabase } from '../../db/supabase.js';
+import { CONFIG } from '../../config/index.js';
+import { uploadFile, getPublicUrl } from '../../lib/storage.js';
+import { childLogger } from '../../lib/logger.js';
 
 const log = childLogger('ingester');
 
@@ -25,8 +25,8 @@ export interface DocumentToIngest {
 
 export async function extractPdfText(pdfBuffer: Buffer): Promise<string> {
   try {
-    const parser = new PDFParse();
-    const data = await parser.parseBuffer(pdfBuffer);
+    const parser = new PDFParse({ data: new Uint8Array(pdfBuffer) });
+    const data = await parser.getText();
     return data.text || '';
   } catch (err: any) {
     log.error({ err: err.message }, 'PDF extraction failed');

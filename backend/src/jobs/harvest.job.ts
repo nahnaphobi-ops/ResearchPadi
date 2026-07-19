@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { runFullHarvest } from '../services/rag/harvester.service';
+import { runFullHarvest } from '../services/rag/harvester.service.js';
 
 // Run every Sunday at 2:00 AM GMT
 cron.schedule('0 2 * * 0', async () => {

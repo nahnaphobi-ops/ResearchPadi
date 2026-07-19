@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 
 export const searchOpenAlex = async (topic: string) => {
   return cacheGet(

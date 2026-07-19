@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { getBlueprint, getAllBlueprints, getChapterGuide } from '../services/ai/blueprint.service';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { getBlueprint, getAllBlueprints, getChapterGuide } from '../services/ai/blueprint.service.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -20,7 +20,7 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:type', async (req: Request, res: Response) => {
   const { type } = req.params;
   try {
-    const blueprint = getBlueprint(type);
+    const blueprint = getBlueprint(type as string);
     if (!blueprint) {
       return res.status(404).json({ error: `Blueprint not found for type: ${type}` });
     }
@@ -39,7 +39,7 @@ router.get('/:type/chapter/:num', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Chapter number must be 1-5' });
   }
   try {
-    const guide = getChapterGuide(type, chapterNumber);
+    const guide = getChapterGuide(type as string, chapterNumber);
     if (!guide) {
       return res.status(404).json({ error: `Chapter ${chapterNumber} not found for ${type}` });
     }

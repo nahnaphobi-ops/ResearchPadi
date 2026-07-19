@@ -1,5 +1,5 @@
-import { buildReferenceListPrompt, buildAbstractPrompt } from '../ai/prompts';
-import { routeDrafting } from '../ai/router.service';
+import { buildReferenceListPrompt, buildAbstractPrompt } from '../ai/prompts.js';
+import { routeDrafting } from '../ai/router.service.js';
 
 export const generateReferences = async (citedSources: any[], institutionType: string) => {
   const prompt = buildReferenceListPrompt(citedSources, institutionType);

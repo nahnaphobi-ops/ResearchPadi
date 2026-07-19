@@ -1,13 +1,13 @@
-import { childLogger } from '../../../lib/logger';
-import { aiCall } from '../../ai/gateway.service';
-import { normalizeText } from './similarity';
+import { childLogger } from '../../../lib/logger.js';
+import { aiCall } from '../../ai/gateway.service.js';
+import { normalizeText } from './similarity.js';
 import type {
   ParsedAuthor,
   ParsedCitation,
   InTextCitation,
   ReferenceEntry,
   ExtractionMethod,
-} from './types';
+} from './types.js';
 
 const log = childLogger('citation-extractor');
 

@@ -1,6 +1,6 @@
-import { supabase } from '../../db/supabase';
-import { generateEmbedding } from '../rag/embedder.service';
-import { CONFIG } from '../../config';
+import { supabase } from '../../db/supabase.js';
+import { generateEmbedding } from '../rag/embedder.service.js';
+import { CONFIG } from '../../config/index.js';
 
 export interface PlagiarismMatch {
   originalText: string;

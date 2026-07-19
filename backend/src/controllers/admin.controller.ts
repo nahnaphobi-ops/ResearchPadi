@@ -2,12 +2,12 @@ import { Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { supabase } from '../db/supabase';
-import { CONFIG } from '../config';
-import { childLogger } from '../lib/logger';
-import { auditLog, queryAuditLogs } from '../lib/audit';
-import { getUsageStats } from '../services/ai/gateway.service';
-import type { AdminRequest } from '../middleware/admin.middleware';
+import { supabase } from '../db/supabase.js';
+import { CONFIG } from '../config/index.js';
+import { childLogger } from '../lib/logger.js';
+import { auditLog, queryAuditLogs } from '../lib/audit.js';
+import { getUsageStats } from '../services/ai/gateway.service.js';
+import type { AdminRequest } from '../middleware/admin.middleware.js';
 
 const log = childLogger('admin');
 
@@ -310,7 +310,7 @@ export async function getOverview(req: AdminRequest, res: Response) {
 }
 
 export async function getUsers(req: AdminRequest, res: Response) {
-  const { search, institution_type, page = '1', limit = '20' } = req.query;
+  const { search, institution_type, page = '1', limit = '20' } = req.query as Record<string, string | undefined>;
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
   const from = (pageNum - 1) * limitNum;
@@ -374,7 +374,7 @@ export async function getUserDetail(req: AdminRequest, res: Response) {
 }
 
 export async function getTransactions(req: AdminRequest, res: Response) {
-  const { status, type, page = '1', limit = '20' } = req.query;
+  const { status, type, page = '1', limit = '20' } = req.query as Record<string, string | undefined>;
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
   const from = (pageNum - 1) * limitNum;
@@ -439,7 +439,7 @@ export async function getSubscriptions(req: AdminRequest, res: Response) {
 }
 
 export async function getPapers(req: AdminRequest, res: Response) {
-  const { status, page = '1', limit = '20' } = req.query;
+  const { status, page = '1', limit = '20' } = req.query as Record<string, string | undefined>;
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
   const from = (pageNum - 1) * limitNum;
@@ -495,8 +495,9 @@ export async function getKnowledgeBase(req: AdminRequest, res: Response) {
     const countResult = await supabase.from('knowledge_chunks').select('*', { count: 'exact', head: true });
 
     // Aggregate field counts server-side
-    const { data: fieldData } = await supabase.rpc('get_knowledge_field_counts' as any).catch(() => ({ data: null }));
-    const { data: sourceData } = await supabase.rpc('get_knowledge_source_counts' as any).catch(() => ({ data: null }));
+    let fieldData: any, sourceData: any;
+    try { fieldData = (await supabase.rpc('get_knowledge_field_counts' as any)).data; } catch { fieldData = null; }
+    try { sourceData = (await supabase.rpc('get_knowledge_source_counts' as any)).data; } catch { sourceData = null; }
 
     let byField: Record<string, number> = {};
     let bySource: Record<string, number> = {};

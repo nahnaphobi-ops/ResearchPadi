@@ -1,8 +1,8 @@
-import { searchOpenAlex } from '../citations/openalex.service';
-import { searchSemanticScholar } from '../citations/semantic.service';
-import { searchPerplexity } from '../ai/perplexity.service';
-import { retrieveContext } from '../rag/retriever.service';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { searchOpenAlex } from '../citations/openalex.service.js';
+import { searchSemanticScholar } from '../citations/semantic.service.js';
+import { searchPerplexity } from '../ai/perplexity.service.js';
+import { retrieveContext } from '../rag/retriever.service.js';
+import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 
 export const performResearch = async (topic: string) => {
   return cacheGet(

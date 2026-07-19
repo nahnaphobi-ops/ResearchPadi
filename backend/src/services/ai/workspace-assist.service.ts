@@ -1,8 +1,8 @@
-import { routeDrafting } from './router.service';
-import { searchOpenAlex } from '../citations/openalex.service';
-import { searchSemanticScholar } from '../citations/semantic.service';
-import { retrieveContext } from '../rag/retriever.service';
-import { formatCitation, type CitationStyle, type CitationData } from '../citations/formatter.service';
+import { routeDrafting } from './router.service.js';
+import { searchOpenAlex } from '../citations/openalex.service.js';
+import { searchSemanticScholar } from '../citations/semantic.service.js';
+import { retrieveContext } from '../rag/retriever.service.js';
+import { formatCitation, type CitationStyle, type CitationData } from '../citations/formatter.service.js';
 
 export interface AssistResult {
   response: string;

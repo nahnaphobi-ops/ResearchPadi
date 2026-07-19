@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
-import { supabase } from '../db/supabase';
-import * as workspaceAssist from '../services/ai/workspace-assist.service';
-import { checkGrammar, getGrammarSummary } from '../services/ai/grammar-engine.service';
-import { extractClaims, validateClaim, analyzeDocument } from '../services/ai/claim-validator.service';
-import { checkPlagiarism } from '../services/ai/plagiarism-checker.service';
-import { detectAIContent } from '../services/ai/ai-detector.service';
-import { getCitationStyles, getCitationStyle } from '../services/ai/citation-styles.service';
-import { retrieveContext } from '../services/rag/retriever.service';
-import { childLogger } from '../lib/logger';
+import { supabase } from '../db/supabase.js';
+import * as workspaceAssist from '../services/ai/workspace-assist.service.js';
+import { checkGrammar, getGrammarSummary } from '../services/ai/grammar-engine.service.js';
+import { extractClaims, validateClaim, analyzeDocument } from '../services/ai/claim-validator.service.js';
+import { checkPlagiarism } from '../services/ai/plagiarism-checker.service.js';
+import { detectAIContent } from '../services/ai/ai-detector.service.js';
+import { getCitationStyles, getCitationStyle } from '../services/ai/citation-styles.service.js';
+import { retrieveContext } from '../services/rag/retriever.service.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('workspace');
 

@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { createRequire } from 'module';
-import { getRedis } from '../lib/redis';
+import { getRedis } from '../lib/redis.js';
 
 const _require = createRequire(import.meta.url);
 
@@ -10,7 +10,7 @@ function createRedisStore() {
     const { RedisStore } = _require('rate-limit-redis');
     const Store = RedisStore.default || RedisStore;
     return new Store({
-      sendCommand: (...args: string[]) => redisClient.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => (redisClient.call as (...a: string[]) => Promise<any>)(...args),
       prefix: 'rl:global:',
     });
   } catch {

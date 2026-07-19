@@ -1,5 +1,5 @@
-import { supabase } from '../db/supabase';
-import { childLogger } from '../lib/logger';
+import { supabase } from '../db/supabase.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('audit');
 

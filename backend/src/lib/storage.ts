@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { childLogger } from '../../lib/logger';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { childLogger } from './logger.js';
+import { cacheGet, CACHE_TTL } from './cache.js';
 
 const log = childLogger('storage');
 
@@ -98,7 +98,7 @@ export async function deleteFile(key: string): Promise<void> {
 
   switch (config.provider) {
     case 'supabase': {
-      const { supabase } = await import('../../db/supabase');
+      const { supabase } = await import('../db/supabase.js');
       await supabase.storage.from(config.bucket!).remove([key]);
       break;
     }
@@ -119,7 +119,7 @@ async function uploadToSupabase(
   contentType: string,
   bucket: string,
 ): Promise<string> {
-  const { supabase } = await import('../../db/supabase');
+  const { supabase } = await import('../db/supabase.js');
 
   const { error } = await supabase.storage
     .from(bucket)
@@ -138,7 +138,7 @@ async function uploadToSupabase(
 }
 
 async function downloadFromSupabase(key: string, bucket: string): Promise<Buffer | null> {
-  const { supabase } = await import('../../db/supabase');
+  const { supabase } = await import('../db/supabase.js');
 
   const { data, error } = await supabase.storage.from(bucket).download(key);
 

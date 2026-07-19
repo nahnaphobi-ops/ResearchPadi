@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-import { analyzeDocument, aggregateAnalyses, saveBlueprint, DocumentAnalysis } from '../services/ai/writing-analyzer.service';
+import { analyzeDocument, aggregateAnalyses, saveBlueprint, DocumentAnalysis } from '../services/ai/writing-analyzer.service.js';
 
 dotenv.config();
 

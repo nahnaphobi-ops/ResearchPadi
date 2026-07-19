@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import * as workspaceController from '../controllers/workspace.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
-import { requireSubscription, enforceSessionLimit } from '../middleware/subscription.middleware';
+import * as workspaceController from '../controllers/workspace.controller.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
+import { requireSubscription, enforceSessionLimit } from '../middleware/subscription.middleware.js';
 
 const router = Router();
 

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { supabase } from '../db/supabase';
-import { CONFIG } from '../config';
-import { childLogger } from '../lib/logger';
+import { supabase } from '../db/supabase.js';
+import { CONFIG } from '../config/index.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('auth');
 

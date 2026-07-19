@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
-import { harvestAll, RepositoryConfig, clearResumeState, OaiRecord } from '../services/rag/oai-harvester.service';
-import { ingestDocument, downloadPdf, extractPdfText } from '../services/rag/document-ingester.service';
-import { generateEmbedding } from '../services/rag/embedder.service';
-import { chunkText } from '../services/rag/chunker.service';
+import { harvestAll, RepositoryConfig, clearResumeState, OaiRecord } from '../services/rag/oai-harvester.service.js';
+import { ingestDocument, downloadPdf, extractPdfText } from '../services/rag/document-ingester.service.js';
+import { generateEmbedding } from '../services/rag/embedder.service.js';
+import { chunkText } from '../services/rag/chunker.service.js';
 
 dotenv.config();
 

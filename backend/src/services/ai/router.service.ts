@@ -1,5 +1,5 @@
-import { childLogger } from '../../lib/logger';
-import { aiCall, gatewayDraft, gatewaySupervise, type GatewayResponse } from './gateway.service';
+import { childLogger } from '../../lib/logger.js';
+import { aiCall, gatewayDraft, gatewaySupervise, type GatewayResponse } from './gateway.service.js';
 
 const log = childLogger('ai-router');
 

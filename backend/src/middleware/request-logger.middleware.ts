@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { childLogger } from '../lib/logger';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('http');
 

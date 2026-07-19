@@ -1,20 +1,21 @@
 export const STYLES = ['apa', 'mla', 'chicago', 'harvard', 'ieee'] as const;
 export type CitationStyle = (typeof STYLES)[number];
 
-export interface CitationData {
-  title?: string;
-  authors?: string;
-  year?: number;
-  source?: string;
-  institution?: string;
-  url?: string;
-  type?: 'academic' | 'rag';
-  doi?: string;
-  publisher?: string;
-  volume?: string;
-  issue?: string;
-  pages?: string;
-}
+  export interface CitationData {
+    title?: string;
+    authors?: string;
+    year?: number;
+    source?: string;
+    institution?: string;
+    url?: string;
+    type?: 'academic' | 'rag';
+    doi?: string;
+    publisher?: string;
+    volume?: string;
+    issue?: string;
+    pages?: string;
+    chunk_text?: string;
+  }
 
 const splitAuthors = (authors?: string): string[] =>
   authors ? authors.split(',').map(a => a.trim()).filter(Boolean) : [];

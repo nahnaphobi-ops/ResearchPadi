@@ -1,10 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import axios from 'axios';
-import { supabase } from '../../db/supabase';
-import { childLogger } from '../../lib/logger';
-import { getRedis } from '../../lib/redis';
-import { aiCircuitBreaker } from '../../lib/circuit-breaker';
+import { supabase } from '../../db/supabase.js';
+import { childLogger } from '../../lib/logger.js';
+import { getRedis } from '../../lib/redis.js';
+import { aiCircuitBreaker } from '../../lib/circuit-breaker.js';
 import {
   MODELS,
   FAILOVER_CHAINS,
@@ -12,7 +12,7 @@ import {
   type Provider,
   type ModelTier,
   estimateCost,
-} from './models';
+} from './models.js';
 
 const log = childLogger('ai-gateway');
 
@@ -151,7 +151,7 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
   // Build chain
   const chain = req.preferredModel
     ? [MODELS[req.preferredModel], ...FAILOVER_CHAINS[tier].filter(m => m !== req.preferredModel)]
-        .map(n => MODELS[n])
+        .map(n => MODELS[n as string])
         .filter(Boolean)
     : FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
 

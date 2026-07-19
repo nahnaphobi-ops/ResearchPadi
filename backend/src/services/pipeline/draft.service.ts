@@ -1,5 +1,5 @@
-import { routeDrafting } from '../ai/router.service';
-import { buildChapterPrompt } from '../ai/prompts';
+import { routeDrafting } from '../ai/router.service.js';
+import { buildChapterPrompt } from '../ai/prompts.js';
 
 export const draftChapter = async (
   chapterNumber: number,

@@ -1,15 +1,15 @@
-import { CONFIG } from '../../../config';
-import { childLogger } from '../../../lib/logger';
-import { supabase } from '../../../db/supabase';
-import { cacheGet } from '../../../lib/cache';
-import { acquireToken } from './rate-limiter';
-import { titleSimilarity, surnameMatches, yearMatches } from './similarity';
+import { CONFIG } from '../../../config/index.js';
+import { childLogger } from '../../../lib/logger.js';
+import { supabase } from '../../../db/supabase.js';
+import { cacheGet } from '../../../lib/cache.js';
+import { acquireToken } from './rate-limiter.js';
+import { titleSimilarity, surnameMatches, yearMatches } from './similarity.js';
 import type {
   ReferenceEntry,
   MatchSource,
   VerificationResult,
   Candidate,
-} from './types';
+} from './types.js';
 
 const log = childLogger('citation-verifier');
 

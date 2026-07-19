@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { supabase } from '../db/supabase';
-import { getRedis } from '../lib/redis';
-import { childLogger } from '../lib/logger';
+import { supabase } from '../db/supabase.js';
+import { getRedis } from '../lib/redis.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('health');
 

@@ -1,6 +1,6 @@
-import { generateEmbedding } from '../rag/embedder.service';
-import { supabase } from '../../db/supabase';
-import { CONFIG } from '../../config';
+import { generateEmbedding } from '../rag/embedder.service.js';
+import { supabase } from '../../db/supabase.js';
+import { CONFIG } from '../../config/index.js';
 
 export interface UploadedPDF {
   id: string;

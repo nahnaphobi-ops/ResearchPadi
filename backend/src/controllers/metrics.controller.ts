@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { supabase, getWritePool } from '../db/supabase';
-import { getRedis } from '../lib/redis';
-import { aiCircuitBreaker } from '../lib/circuit-breaker';
-import { childLogger } from '../lib/logger';
+import { supabase, getWritePool } from '../db/supabase.js';
+import { getRedis } from '../lib/redis.js';
+import { aiCircuitBreaker } from '../lib/circuit-breaker.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('metrics');
 

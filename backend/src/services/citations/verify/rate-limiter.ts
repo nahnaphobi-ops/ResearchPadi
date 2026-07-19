@@ -2,8 +2,8 @@
  * Simple in-process token-bucket-ish rate limiter for external API calls.
  * Throttles bursts so we never fire OpenAlex/Semantic Scholar in a tight loop.
  */
-import { CONFIG } from '../../../config';
-import { childLogger } from '../../../lib/logger';
+import { CONFIG } from '../../../config/index.js';
+import { childLogger } from '../../../lib/logger.js';
 
 const log = childLogger('citation-ratelimit');
 

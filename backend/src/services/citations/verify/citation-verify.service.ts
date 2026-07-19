@@ -1,10 +1,10 @@
-import { CONFIG } from '../../../config';
-import { childLogger } from '../../../lib/logger';
-import { extractCitations } from './extractor.service';
-import { verifyAllReferences } from './verifier.service';
-import { crossConsistencyCheck } from './cross-check.service';
-import { persistVerification } from './store.service';
-import type { VerificationSummary, VerificationResult } from './types';
+import { CONFIG } from '../../../config/index.js';
+import { childLogger } from '../../../lib/logger.js';
+import { extractCitations } from './extractor.service.js';
+import { verifyAllReferences } from './verifier.service.js';
+import { crossConsistencyCheck } from './cross-check.service.js';
+import { persistVerification } from './store.service.js';
+import type { VerificationSummary, VerificationResult } from './types.js';
 
 const log = childLogger('citation-verify');
 

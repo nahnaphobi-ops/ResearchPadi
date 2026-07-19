@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { verifyReference } from '../verifier.service';
-import { crossConsistencyCheck } from '../cross-check.service';
-import { parseAuthor } from '../extractor.service';
-import type { ReferenceEntry, InTextCitation, Candidate } from '../types';
+import { verifyReference } from '../verifier.service.js';
+import { crossConsistencyCheck } from '../cross-check.service.js';
+import { parseAuthor } from '../extractor.service.js';
+import type { ReferenceEntry, InTextCitation, Candidate } from '../types.js';
 
 function makeRef(over: Partial<ReferenceEntry> & { id: string }): ReferenceEntry {
   return {

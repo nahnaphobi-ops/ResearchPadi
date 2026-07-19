@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../../config/index.js';
 
 let embeddingAvailable: boolean | null = null;
 
@@ -55,7 +55,7 @@ export const generateEmbedding = async (text: string) => {
 
     return response.data.data[0].embedding;
   } catch (error: any) {
-    if (embeddingAvailable !== false) {
+    if (embeddingAvailable !== null) {
       console.warn(`Embedding failed (${error?.message || 'unknown'}) — continuing without vectors`);
       embeddingAvailable = false;
     }

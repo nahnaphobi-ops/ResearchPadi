@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../../config/index.js';
 
 export const initiatePayment = async (amount: number, phone: string, reference: string) => {
   if (!CONFIG.HUBTEL.CLIENT_ID || !CONFIG.HUBTEL.CLIENT_SECRET) {

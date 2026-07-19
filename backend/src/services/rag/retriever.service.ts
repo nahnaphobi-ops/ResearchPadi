@@ -1,7 +1,7 @@
-import { supabase } from '../../db/supabase';
-import { generateEmbedding } from './embedder.service';
-import { CONFIG } from '../../config';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { supabase } from '../../db/supabase.js';
+import { generateEmbedding } from './embedder.service.js';
+import { CONFIG } from '../../config/index.js';
+import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 
 export const retrieveContext = async (query: string) => {
   return cacheGet(

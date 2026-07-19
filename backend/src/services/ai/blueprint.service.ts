@@ -1,8 +1,8 @@
-import { loadBlueprint, BlueprintAggregate, aggregateAnalyses, DocumentAnalysis, analyzeDocument } from './writing-analyzer.service';
+import { loadBlueprint, BlueprintAggregate, aggregateAnalyses, DocumentAnalysis, analyzeDocument } from './writing-analyzer.service.js';
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { cacheGet, CACHE_TTL } from '../../lib/cache';
+import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { supabase } from '../db/supabase';
-import * as paystackService from '../services/payments/paystack.service';
+import { supabase } from '../db/supabase.js';
+import * as paystackService from '../services/payments/paystack.service.js';
 
 export const initiatePayment = async (req: Request, res: Response) => {
   const { amount, email } = req.body;
@@ -39,7 +39,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
   const { reference } = req.params;
   if (!reference) return res.status(400).json({ error: 'Reference is required' });
 
-  const result = await paystackService.verifyTransaction(reference);
+  const result = await paystackService.verifyTransaction(reference as string);
 
   if (!result || !result.status) {
     return res.status(400).json({ error: 'Verification failed' });

@@ -1,4 +1,4 @@
-import { retrieveContext } from './retriever.service';
+import { retrieveContext } from '../rag/retriever.service.js';
 
 export interface ClaimAnalysis {
   claim: string;

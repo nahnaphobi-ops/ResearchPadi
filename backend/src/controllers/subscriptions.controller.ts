@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { supabase } from '../db/supabase';
+import { supabase } from '../db/supabase.js';
 
 const PLANS: Record<string, { price: number; features: string[] }> = {
   standard: { price: 120, features: ['5 workspace sessions', 'GPT-4o AI assistance', 'Citation search'] },

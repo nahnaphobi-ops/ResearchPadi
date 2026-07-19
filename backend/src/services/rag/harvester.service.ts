@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { supabase } from '../../db/supabase';
-import { chunkText } from './chunker.service';
-import { generateEmbedding } from './embedder.service';
-import { CONFIG } from '../../config';
+import { supabase } from '../../db/supabase.js';
+import { chunkText } from './chunker.service.js';
+import { generateEmbedding } from './embedder.service.js';
+import { CONFIG } from '../../config/index.js';
 
 interface HarvestRecord {
   source_name: string;
@@ -99,7 +99,7 @@ const recordExists = async (sourceUrl: string): Promise<boolean> => {
     .select('id')
     .eq('source_url', sourceUrl)
     .limit(1);
-  return (data && data.length > 0);
+  return !!(data && data.length > 0);
 };
 
 /**

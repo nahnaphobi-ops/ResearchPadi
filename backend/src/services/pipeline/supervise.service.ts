@@ -1,5 +1,5 @@
-import { routeSupervision } from '../ai/router.service';
-import { buildSupervisionPrompt } from '../ai/prompts';
+import { routeSupervision } from '../ai/router.service.js';
+import { buildSupervisionPrompt } from '../ai/prompts.js';
 
 export const supervisePaper = async (
   fullPaper: string,

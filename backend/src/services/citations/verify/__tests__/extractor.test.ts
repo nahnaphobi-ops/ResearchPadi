@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractCitations } from '../extractor.service';
+import { extractCitations } from '../extractor.service.js';
 
 // Reference-list block (APA style used by ResearchPadi).
 const REF_BLOCK = `

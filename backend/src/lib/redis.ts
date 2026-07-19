@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { childLogger } from './logger';
+import { childLogger } from './logger.js';
 
 const log = childLogger('redis');
 

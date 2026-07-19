@@ -1,10 +1,10 @@
-import { childLogger } from '../../../lib/logger';
-import { normalizeText, surnameMatches, yearMatches } from './similarity';
+import { childLogger } from '../../../lib/logger.js';
+import { normalizeText, surnameMatches, yearMatches } from './similarity.js';
 import type {
   InTextCitation,
   ReferenceEntry,
   CrossConsistencyResult,
-} from './types';
+} from './types.js';
 
 const log = childLogger('citation-crosscheck');
 

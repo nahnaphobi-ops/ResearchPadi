@@ -1,6 +1,6 @@
-import { supabase } from '../../../db/supabase';
-import { childLogger } from '../../../lib/logger';
-import type { VerificationResult, VerificationSummary } from './types';
+import { supabase } from '../../../db/supabase.js';
+import { childLogger } from '../../../lib/logger.js';
+import type { VerificationResult, VerificationSummary } from './types.js';
 
 const log = childLogger('citation-store');
 

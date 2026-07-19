@@ -7,7 +7,7 @@ import {
   surnameMatches,
   yearMatches,
   normalizeText,
-} from '../similarity';
+} from '../similarity.js';
 
 test('normalizeText lowercases and strips punctuation', () => {
   assert.equal(normalizeText('The Ghanaian Journal (2021)!'), 'the ghanaian journal 2021');

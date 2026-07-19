@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { supabase } from '../db/supabase';
-import { supervisePaper } from '../services/pipeline/supervise.service';
-import { routeDrafting } from '../services/ai/router.service';
-import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts';
-import { generateDocx } from '../services/documents/docx.service';
-import { paperQueue } from '../lib/queue';
-import { childLogger } from '../lib/logger';
+import { supabase } from '../db/supabase.js';
+import { supervisePaper } from '../services/pipeline/supervise.service.js';
+import { routeDrafting } from '../services/ai/router.service.js';
+import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts.js';
+import { generateDocx } from '../services/documents/docx.service.js';
+import { paperQueue } from '../lib/queue.js';
+import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('papers-controller');
 

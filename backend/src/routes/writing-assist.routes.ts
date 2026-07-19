@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { analyzeDocument, validateClaim, extractClaims } from '../services/ai/claim-validator.service';
-import { checkGrammar, getGrammarSummary } from '../services/ai/grammar-engine.service';
-import { checkPlagiarism } from '../services/ai/plagiarism-checker.service';
-import { detectAIContent, getDisclosureTemplates, getDisclosureTemplate } from '../services/ai/ai-detector.service';
-import { getCitationStyles, formatCitation, generateBibliography, Citation } from '../services/ai/citation-styles.service';
-import { processPDF, findRelevantChunks, getPdfStore, removePdf } from '../services/ai/pdf-chat.service';
-import { requireAdmin } from '../middleware/admin.middleware';
-import { upload } from '../middleware/upload.middleware';
+import { analyzeDocument, validateClaim, extractClaims } from '../services/ai/claim-validator.service.js';
+import { checkGrammar, getGrammarSummary } from '../services/ai/grammar-engine.service.js';
+import { checkPlagiarism } from '../services/ai/plagiarism-checker.service.js';
+import { detectAIContent, getDisclosureTemplates, getDisclosureTemplate } from '../services/ai/ai-detector.service.js';
+import { getCitationStyles, formatCitation, generateBibliography, Citation } from '../services/ai/citation-styles.service.js';
+import { processPDF, findRelevantChunks, getPdfStore, removePdf } from '../services/ai/pdf-chat.service.js';
+import { requireAdmin } from '../middleware/admin.middleware.js';
+import { upload } from '../middleware/upload.middleware.js';
 
 const router = Router();
 
@@ -80,7 +80,7 @@ router.get('/disclosure-templates', requireAdmin, (req: Request, res: Response) 
 });
 
 router.get('/disclosure-templates/:id', requireAdmin, (req: Request, res: Response) => {
-  const template = getDisclosureTemplate(req.params.id);
+  const template = getDisclosureTemplate(req.params.id as string);
   if (!template) return res.status(404).json({ error: 'Template not found' });
   res.json(template);
 });
@@ -166,7 +166,7 @@ router.get('/pdf/list', requireAdmin, (req: Request, res: Response) => {
 });
 
 router.delete('/pdf/:id', requireAdmin, (req: Request, res: Response) => {
-  const removed = removePdf(req.params.id);
+  const removed = removePdf(req.params.id as string);
   if (!removed) return res.status(404).json({ error: 'PDF not found' });
   res.json({ message: 'PDF removed' });
 });
