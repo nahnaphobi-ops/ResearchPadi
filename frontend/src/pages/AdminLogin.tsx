@@ -71,7 +71,7 @@ export default function AdminLogin() {
             <label className="block mb-2 font-medium">Email</label>
             <input
               type="email"
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500"
               placeholder="admin@researchpadi.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -80,14 +80,14 @@ export default function AdminLogin() {
             <label className="block mb-2 font-medium">Password</label>
             <input
               type="password"
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
             <button
               disabled={loading}
-              className="w-full p-3 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 disabled:bg-blue-300"
+              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -100,7 +100,7 @@ export default function AdminLogin() {
             <label className="block mb-2 font-medium">OTP Code</label>
             <input
               type="text"
-              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-gray-500"
               placeholder="123456"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
@@ -110,14 +110,14 @@ export default function AdminLogin() {
             />
             <button
               disabled={loading}
-              className="w-full p-3 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 disabled:bg-blue-300"
+              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
             >
               {loading ? 'Verifying...' : 'Verify OTP'}
             </button>
             <button
               type="button"
               onClick={handleBackToLogin}
-              className="w-full mt-4 text-blue-600 hover:underline"
+              className="w-full mt-4 text-gray-800 hover:underline"
             >
               Back to Login
             </button>

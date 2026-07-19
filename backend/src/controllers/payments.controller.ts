@@ -51,7 +51,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     // 1. Update transaction
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
-      .update({ status: 'success', hubtel_reference: txData.reference })
+      .update({ status: 'success', paystack_reference: txData.reference })
       .eq('reference', reference)
       .select()
       .single();
@@ -94,7 +94,7 @@ export const paystackWebhook = async (req: Request, res: Response) => {
       .maybeSingle();
 
     if (transaction) {
-      await supabase.from('transactions').update({ status: 'success', hubtel_reference: reference }).eq('id', transaction.id);
+       await supabase.from('transactions').update({ status: 'success', paystack_reference: reference }).eq('id', transaction.id);
 
       const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', transaction.user_id).maybeSingle();
       const newBalance = (wallet?.balance_ghs || 0) + transaction.amount_ghs;

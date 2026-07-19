@@ -32,7 +32,7 @@ export default function PaperDetails() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/dashboard')} className="text-blue-600 font-bold hover:underline mb-6 inline-block">
+      <button onClick={() => navigate('/dashboard')} className="text-gray-800 font-bold hover:underline mb-6 inline-block">
         &larr; Back to Dashboard
       </button>
 

@@ -13,12 +13,12 @@ import {
 const popularSkills = ['Research Papers', 'Assignments', 'Thesis', 'Dissertations', 'Literature Reviews'];
 
 const services = [
-  { title: 'RESEARCH PAPERS', tags: ['Undergraduate', 'Masters', 'PhD', 'Journal Articles'], icon: FileText, color: 'from-blue-500 to-blue-700' },
-  { title: 'ESSAY WRITING', tags: ['Argumentative', 'Expository', 'Narrative', 'Descriptive'], icon: PenTool, color: 'from-emerald-500 to-emerald-700' },
-  { title: 'THESIS & DISSERTATION', tags: ['Proposal', 'Full Document', 'Defense Prep', 'Editing'], icon: GraduationCap, color: 'from-violet-500 to-violet-700' },
-  { title: 'LITERATURE REVIEW', tags: ['Systematic', 'Narrative', 'Meta-Analysis', 'Scoping'], icon: BookOpen, color: 'from-amber-500 to-amber-700' },
-  { title: 'ASSIGNMENT HELP', tags: ['Coursework', 'Homework', 'Case Studies', 'Lab Reports'], icon: Award, color: 'from-rose-500 to-rose-700' },
-  { title: 'EDITING & PROOFREADING', tags: ['Grammar', 'Structure', 'Citations', 'Formatting'], icon: Sparkles, color: 'from-cyan-500 to-cyan-700' },
+  { title: 'RESEARCH PAPERS', tags: ['Undergraduate', 'Masters', 'PhD', 'Journal Articles'], icon: FileText, color: 'from-[#C5CEBD] to-[#a8b49e]' },
+  { title: 'ESSAY WRITING', tags: ['Argumentative', 'Expository', 'Narrative', 'Descriptive'], icon: PenTool, color: 'from-gray-800 to-gray-900' },
+  { title: 'THESIS & DISSERTATION', tags: ['Proposal', 'Full Document', 'Defense Prep', 'Editing'], icon: GraduationCap, color: 'from-[#C5CEBD] to-[#a8b49e]' },
+  { title: 'LITERATURE REVIEW', tags: ['Systematic', 'Narrative', 'Meta-Analysis', 'Scoping'], icon: BookOpen, color: 'from-gray-800 to-gray-900' },
+  { title: 'ASSIGNMENT HELP', tags: ['Coursework', 'Homework', 'Case Studies', 'Lab Reports'], icon: Award, color: 'from-[#C5CEBD] to-[#a8b49e]' },
+  { title: 'EDITING & PROOFREADING', tags: ['Grammar', 'Structure', 'Citations', 'Formatting'], icon: Sparkles, color: 'from-gray-800 to-gray-900' },
 ];
 
 const steps = [
@@ -30,30 +30,30 @@ const steps = [
 
 const pricingPlans = [
   {
-    name: 'Try It',
-    price: 'GHS 5',
+    name: 'Complete Paper',
+    price: 'GHS 250',
     period: '/paper',
-    desc: 'Pay only when you need a paper',
-    features: ['Single paper', 'AI writing + quality guards', 'APA/MLA/Chicago/Harvard', 'University templates', 'AI/human supervisor review'],
+    desc: 'Full end-to-end AI paper generation',
+    features: ['Complete paper written for you', 'AI writing + quality guards', 'APA/MLA/Chicago/Harvard', 'University templates', 'AI/human supervisor review'],
     cta: 'Order a Paper',
     highlighted: false,
   },
   {
-    name: 'Student Pack',
-    price: 'GHS 39',
-    period: '/5 papers',
-    desc: 'Best value for regular writers',
-    features: ['5 papers', 'All citation formats', 'All university templates', 'Priority AI/human supervisors', 'Citation library'],
-    cta: 'Get Student Pack',
+    name: 'Standard',
+    price: 'GHS 120',
+    period: '/month',
+    desc: 'Assisted writing for regular students',
+    features: ['AI writing assist', 'All citation formats', 'All university templates', 'Quality guards', 'Email support'],
+    cta: 'Start Standard',
     highlighted: true,
   },
   {
-    name: 'Researcher Pack',
-    price: 'GHS 69',
-    period: '/10 papers',
-    desc: 'For theses and heavy workloads',
-    features: ['10 papers', 'Thesis/dissertation mode', 'Literature review AI', 'Advanced supervisor review', 'Priority support'],
-    cta: 'Get Researcher Pack',
+    name: 'Premium',
+    price: 'GHS 200',
+    period: '/month',
+    desc: 'Assisted writing with full features',
+    features: ['Everything in Standard', 'Priority AI/human supervisors', 'Thesis/dissertation mode', 'Literature review AI', 'Priority support'],
+    cta: 'Start Premium',
     highlighted: false,
   },
 ];
@@ -178,7 +178,7 @@ export default function Landing() {
               <div className="inline-flex items-center gap-4 bg-white/60 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/80">
                 <div className="flex -space-x-2">
                   {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className="w-9 h-9 rounded-full border-2 border-white bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
+                    <div key={i} className="w-9 h-9 rounded-full border-2 border-white bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-[10px] font-bold text-white">
                       {['AM', 'KA', 'EB', 'FO'][i]}
                     </div>
                   ))}
@@ -186,7 +186,7 @@ export default function Landing() {
                 <div>
                   <div className="flex items-center gap-1">
                     {[0, 1, 2, 3, 4].map((i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-gray-600 text-gray-600" />
                     ))}
                   </div>
                   <span className="text-xs font-semibold text-gray-700">10,000+ Satisfied Students</span>
@@ -205,14 +205,14 @@ export default function Landing() {
             {/* Profile card */}
             <div className="absolute top-4 -left-16 bg-white rounded-2xl px-4 py-3 shadow-xl border border-gray-100 z-20">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-[10px] font-bold text-white">AM</div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-[10px] font-bold text-white">AM</div>
                 <div>
                   <p className="text-xs font-bold text-gray-900">Akosua M.</p>
                   <p className="text-[10px] text-gray-500">Political Science</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCircle className="w-3.5 h-3.5 text-gray-700" />
                 <span>80+ papers completed</span>
               </div>
             </div>
@@ -220,8 +220,8 @@ export default function Landing() {
             {/* Plagiarism badge */}
             <div className="absolute bottom-16 -left-14 bg-white rounded-2xl px-4 py-3 shadow-xl border border-gray-100 z-20">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-emerald-600" />
+                <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <Shield className="w-4 h-4 text-gray-700" />
                 </div>
                 <div>
                   <p className="text-xs font-bold text-gray-900">Plagiarism-Free</p>
@@ -243,7 +243,7 @@ export default function Landing() {
             {/* Citation formats badge */}
             <div className="absolute bottom-6 -right-12 bg-gray-900 rounded-xl px-3 py-2 shadow-xl z-20">
               <div className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-blue-400" />
+                <FileText className="w-3.5 h-3.5 text-gray-500" />
                 <span className="text-[10px] font-bold text-white">APA, MLA, Chicago</span>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function Landing() {
             {/* Rating badge */}
             <div className="absolute top-20 -right-10 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100 z-20">
               <div className="flex items-center gap-1.5">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <Star className="w-3.5 h-3.5 fill-gray-600 text-gray-600" />
                 <span className="text-[10px] font-bold text-gray-900">4.9 Rating</span>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function Landing() {
           <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
             <div className="hidden sm:grid grid-cols-[1fr_1fr_1fr] bg-gray-900 text-white">
               <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider">Feature</div>
-              <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center bg-blue-600">ResearchPadi</div>
+              <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center bg-gray-800">ResearchPadi</div>
               <div className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-center text-gray-400">ChatGPT / Others</div>
             </div>
             {[
@@ -331,7 +331,7 @@ export default function Landing() {
               { aspect: 'Quality Guards', rp: 'Multi-layer review for accuracy & relevance', comp: 'No quality checks' },
               { aspect: 'AI / Human Supervisors', rp: 'Expert oversight on every paper', comp: 'No human review' },
               { aspect: 'University Templates', rp: 'KNUST, UG, UCC, UPSA, GIMPA', comp: 'No local templates' },
-              { aspect: 'Student Pricing', rp: 'From GHS 5/paper, pay-per-use', comp: 'Expensive subscriptions' },
+              { aspect: 'Student Pricing', rp: 'GHS 250/paper or GHS 120/mo Standard', comp: 'Expensive subscriptions' },
             ].map((row, i) => (
               <div key={i} className={`grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] border-b border-gray-100 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                 <div className="px-6 py-4 text-sm font-semibold text-gray-800 sm:border-b-0 border-b border-gray-100 sm:block flex items-center justify-between">
@@ -339,7 +339,7 @@ export default function Landing() {
                   <span className="sm:hidden text-[10px] text-gray-400">vs Generic AI</span>
                 </div>
                 <div className="px-6 py-4 flex items-center justify-center sm:border-b-0 border-b border-gray-100">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-800 bg-gray-100 px-3 py-1.5 rounded-full">
                     <CheckCircle className="w-3.5 h-3.5" />
                     {row.rp}
                   </span>
@@ -368,7 +368,7 @@ export default function Landing() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((step, i) => (
               <div key={i} className="relative group">
-                <div className="text-6xl font-black text-gray-100 group-hover:text-blue-100 transition mb-3">{step.num}</div>
+                <div className="text-6xl font-black text-gray-100 group-hover:text-gray-200 transition mb-3">{step.num}</div>
                 <h3 className="text-base font-bold text-gray-900 mb-2">{step.title}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
                 {i < 3 && (
@@ -400,7 +400,7 @@ export default function Landing() {
                   : 'bg-white border-gray-200 hover:shadow-lg'
               }`}>
                 {plan.highlighted && (
-                  <div className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-1.5 bg-gray-800 text-white text-[10px] font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
                     <Zap className="w-3 h-3" /> Most Popular
                   </div>
                 )}
@@ -413,14 +413,14 @@ export default function Landing() {
                 <ul className="space-y-3 mb-7">
                   {plan.features.map((feat, j) => (
                     <li key={j} className="flex items-start gap-2.5">
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-gray-400' : 'text-gray-700'}`} />
                       <span className={`text-sm ${plan.highlighted ? 'text-gray-300' : 'text-gray-600'}`}>{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <button onClick={() => navigate('/login')} className={`w-full py-3 rounded-full font-bold text-sm transition ${
                   plan.highlighted
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'bg-gray-800 text-white hover:bg-gray-900'
                     : 'bg-gray-900 text-white hover:bg-gray-800'
                 }`}>
                   {plan.cta}
@@ -446,7 +446,7 @@ export default function Landing() {
                 <Quote className="w-8 h-8 text-gray-300 mb-4" />
                 <p className="text-sm text-gray-600 leading-relaxed mb-6">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-bold text-white">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs font-bold text-white">
                     {t.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
@@ -456,7 +456,7 @@ export default function Landing() {
                 </div>
                 <div className="flex gap-0.5 mt-3">
                   {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <Star key={j} className="w-3.5 h-3.5 fill-gray-600 text-gray-600" />
                   ))}
                 </div>
               </div>

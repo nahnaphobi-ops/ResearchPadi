@@ -12,11 +12,6 @@ export const CONFIG = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
-  HUBTEL: {
-    CLIENT_ID: process.env.HUBTEL_CLIENT_ID,
-    CLIENT_SECRET: process.env.HUBTEL_CLIENT_SECRET,
-    SENDER_ID: process.env.HUBTEL_SENDER_ID || 'ResearchPadi',
-  },
   JWT_SECRET: process.env.JWT_SECRET || 'fallback-secret-for-dev-only',
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
   AI: {

@@ -63,7 +63,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('/new-paper')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md"
+            className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-900 transition shadow-md"
           >
             + New Research Paper
           </button>
@@ -77,7 +77,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg">
+        <div className="p-6 bg-gradient-to-br from-gray-700 to-gray-800 text-white rounded-xl shadow-lg">
           <h3 className="font-medium opacity-80">Wallet Balance</h3>
           <p className="text-3xl font-bold">GHS {walletBalance.toFixed(2)}</p>
           <button onClick={() => navigate('/wallet')} className="mt-4 text-sm font-bold bg-white/20 px-3 py-1 rounded hover:bg-white/30 transition">Top Up</button>
@@ -99,7 +99,7 @@ export default function Dashboard() {
         ) : papers.length === 0 ? (
           <div className="p-10 text-center text-gray-500">
             <p className="mb-4 text-lg">You haven't started any research papers yet.</p>
-            <button onClick={() => navigate('/new-paper')} className="text-blue-600 font-bold hover:underline">Start your first paper →</button>
+            <button onClick={() => navigate('/new-paper')} className="text-gray-800 font-bold hover:underline">Start your first paper →</button>
           </div>
         ) : (
           <table className="w-full text-left border-collapse">
@@ -134,7 +134,7 @@ export default function Dashboard() {
                       <div className="flex gap-2 justify-end">
                         <button
                           onClick={() => navigate(`/papers/${paper.id}/review`)}
-                          className="bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700 transition"
+                          className="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold hover:bg-gray-900 transition"
                         >
                           Review
                         </button>
@@ -148,7 +148,7 @@ export default function Dashboard() {
                     ) : (
                       <button 
                         onClick={() => navigate(`/papers/${paper.id}`)}
-                        className="text-blue-600 text-sm font-bold hover:underline"
+                        className="text-gray-800 text-sm font-bold hover:underline"
                       >
                         View Details
                       </button>

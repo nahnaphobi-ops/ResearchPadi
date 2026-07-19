@@ -33,7 +33,7 @@ export default function AdminSubscriptions() {
                 <tr key={sub.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{sub.users?.full_name || sub.user_id?.slice(0, 8) + '...'}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs ${sub.plan === 'premium' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                    <span className={`px-2 py-1 rounded text-xs ${sub.plan === 'premium' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-700'}`}>
                       {sub.plan}
                     </span>
                   </td>

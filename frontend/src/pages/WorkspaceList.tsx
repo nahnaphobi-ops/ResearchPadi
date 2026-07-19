@@ -92,7 +92,7 @@ export default function WorkspaceList() {
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+              className="px-6 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition"
             >
               {showForm ? 'Cancel' : '+ New Session'}
             </button>
@@ -112,7 +112,7 @@ export default function WorkspaceList() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="e.g. Effects of Social Media on Student Performance"
-                    className="w-full p-3 border-2 rounded-lg focus:border-blue-500 outline-none"
+                    className="w-full p-3 border-2 rounded-lg focus:border-gray-500 outline-none"
                   />
                 </div>
                 <div>
@@ -122,7 +122,7 @@ export default function WorkspaceList() {
                     value={newCourse}
                     onChange={(e) => setNewCourse(e.target.value)}
                     placeholder="e.g. BSc. Computer Science"
-                    className="w-full p-3 border-2 rounded-lg focus:border-blue-500 outline-none"
+                    className="w-full p-3 border-2 rounded-lg focus:border-gray-500 outline-none"
                   />
                 </div>
               </div>
@@ -143,7 +143,7 @@ export default function WorkspaceList() {
               <p className="text-gray-500 mb-6">Create your first workspace session to start writing with AI.</p>
               <button
                 onClick={() => setShowForm(true)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+                className="px-6 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition"
               >
                 Create First Session
               </button>
@@ -154,13 +154,13 @@ export default function WorkspaceList() {
                 <div
                   key={session.id}
                   onClick={() => navigate(`/workspace/${session.id}`)}
-                  className="bg-white rounded-xl shadow-md p-6 border-2 border-gray-100 hover:border-blue-400 transition cursor-pointer"
+                  className="bg-white rounded-xl shadow-md p-6 border-2 border-gray-100 border-gray-200 transition cursor-pointer"
                 >
                   <h3 className="font-bold text-lg mb-1 truncate">
                     {session.title || 'Untitled Session'}
                   </h3>
                   {session.course && (
-                    <p className="text-sm text-blue-600 mb-2">{session.course}</p>
+                    <p className="text-sm text-gray-800 mb-2">{session.course}</p>
                   )}
                   <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                     {session.content

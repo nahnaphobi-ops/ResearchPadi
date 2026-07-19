@@ -42,7 +42,7 @@ export default function Register() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-10 bg-gray-50">
       <div className="w-full max-w-lg p-8 bg-white rounded shadow-xl">
-        <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">Complete Your Profile</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Complete Your Profile</h2>
         {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -51,7 +51,7 @@ export default function Register() {
             <input 
               name="full_name" 
               type="text" 
-              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-gray-500" 
               required 
               onChange={handleChange} 
               placeholder="e.g. Kwesi Mensah"
@@ -61,7 +61,7 @@ export default function Register() {
             <label className="block mb-1 font-medium text-gray-700">Institution Type</label>
             <select 
               name="institution_type" 
-              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-gray-500" 
               onChange={handleChange}
             >
               <option value="university">University</option>
@@ -75,7 +75,7 @@ export default function Register() {
             <input 
               name="institution_name" 
               type="text" 
-              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-gray-500" 
               required 
               onChange={handleChange} 
               placeholder="e.g. KNUST"
@@ -86,7 +86,7 @@ export default function Register() {
             <input 
               name="programme" 
               type="text" 
-              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-gray-500" 
               required 
               onChange={handleChange} 
               placeholder="e.g. BSc Computer Science"
@@ -97,7 +97,7 @@ export default function Register() {
             <input 
               name="level" 
               type="text" 
-              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-gray-500" 
               placeholder="e.g. 400L or Final Year" 
               required 
               onChange={handleChange} 
@@ -105,7 +105,7 @@ export default function Register() {
           </div>
           <button 
             disabled={loading}
-            className="w-full p-4 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 disabled:bg-blue-300 transition duration-200"
+            className="w-full p-4 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400 transition duration-200"
           >
             {loading ? 'Saving Profile...' : 'Finish Registration'}
           </button>

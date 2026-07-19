@@ -89,7 +89,7 @@ export default function FullPaperForm() {
           <div className="flex gap-2">
             <input
               name="topic"
-              className="flex-1 p-3 border-2 rounded-lg focus:border-blue-500"
+              className="flex-1 p-3 border-2 rounded-lg focus:border-gray-500"
               placeholder="e.g. The Impact of Mobile Money on Small Scale Businesses in Kumasi"
               required
               onChange={handleChange}
@@ -99,7 +99,7 @@ export default function FullPaperForm() {
               type="button"
               onClick={handleRefine}
               disabled={refining || !formData.topic.trim()}
-              className="px-4 py-3 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:bg-purple-300 whitespace-nowrap"
+              className="px-4 py-3 bg-gray-800 text-white rounded-lg text-sm font-semibold hover:bg-gray-900 disabled:bg-gray-400 whitespace-nowrap"
             >
               {refining ? 'Refining...' : 'Refine with AI'}
             </button>
@@ -110,11 +110,11 @@ export default function FullPaperForm() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block font-bold mb-1">Course/Subject</label>
-            <input name="course" className="w-full p-3 border rounded-lg focus:border-blue-500" required onChange={handleChange} placeholder="e.g. Economics" value={formData.course} />
+            <input name="course" className="w-full p-3 border rounded-lg focus:border-gray-500" required onChange={handleChange} placeholder="e.g. Economics" value={formData.course} />
           </div>
           <div>
             <label className="block font-bold mb-1">Supervisor Name (Optional)</label>
-            <input name="supervisor_name" className="w-full p-3 border rounded-lg focus:border-blue-500" onChange={handleChange} placeholder="e.g. Dr. Owusu" value={formData.supervisor_name} />
+            <input name="supervisor_name" className="w-full p-3 border rounded-lg focus:border-gray-500" onChange={handleChange} placeholder="e.g. Dr. Owusu" value={formData.supervisor_name} />
           </div>
         </div>
 
@@ -125,14 +125,14 @@ export default function FullPaperForm() {
               type="button"
               onClick={handleGenerateQuestions}
               disabled={generatingQuestions || !formData.topic.trim()}
-              className="text-sm text-purple-600 font-semibold hover:text-purple-800 disabled:text-purple-300"
+              className="text-sm text-gray-800 font-semibold hover:text-gray-900 disabled:text-gray-400"
             >
               {generatingQuestions ? 'Generating...' : 'Generate from Topic'}
             </button>
           </div>
           <textarea
             name="research_questions"
-            className="w-full p-3 border rounded-lg focus:border-blue-500 text-sm"
+            className="w-full p-3 border rounded-lg focus:border-gray-500 text-sm"
             placeholder="Enter your research questions or hypothesis. You can write them yourself or click 'Generate from Topic' to have AI create them."
             onChange={handleChange}
             value={formData.research_questions}
@@ -142,7 +142,7 @@ export default function FullPaperForm() {
 
         <div>
           <label className="block font-bold mb-1">
-            Target Word Count: <span className="text-blue-600">{formData.target_word_count.toLocaleString()}</span> words
+            Target Word Count: <span className="text-gray-800">{formData.target_word_count.toLocaleString()}</span> words
           </label>
           <input
             type="range"
@@ -152,7 +152,7 @@ export default function FullPaperForm() {
             step={500}
             value={formData.target_word_count}
             onChange={handleChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>3,000</span>
@@ -161,8 +161,8 @@ export default function FullPaperForm() {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
-          <h3 className="font-bold mb-4 text-blue-800">Review Institution Details</h3>
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <h3 className="font-bold mb-4 text-gray-800">Review Institution Details</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <label className="block text-gray-600 mb-1">Institution</label>
@@ -178,14 +178,14 @@ export default function FullPaperForm() {
         <div className="p-6 bg-gray-100 rounded-lg">
           <div className="flex justify-between items-center mb-4">
             <span className="font-bold">Service Fee</span>
-            <span className="text-xl font-bold text-blue-600">GHS 250.00</span>
+            <span className="text-xl font-bold text-gray-800">GHS 250.00</span>
           </div>
           <p className="text-xs text-gray-500">By clicking 'Start Pipeline', the amount will be deducted from your wallet balance. Ensure you have sufficient funds.</p>
         </div>
 
         <button
           disabled={loading}
-          className="w-full p-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 disabled:bg-blue-300 transition"
+          className="w-full p-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-900 disabled:bg-gray-400 transition"
         >
           {loading ? 'Initiating Pipeline...' : 'Start Research & Drafting'}
         </button>

@@ -112,7 +112,7 @@ export default function Login() {
             <label className="block mb-2 font-medium" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>Phone Number</label>
             <input 
               type="text" 
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-blue-500" 
+              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500" 
               placeholder="e.g. 0244123456"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -120,7 +120,7 @@ export default function Login() {
             />
             <button 
               disabled={loading}
-              className="w-full p-3 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 disabled:bg-blue-300"
+              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
               style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
             >
               {loading ? 'Sending...' : 'Send OTP'}
@@ -134,7 +134,7 @@ export default function Login() {
             <label className="block mb-2 font-medium" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>Enter OTP</label>
             <input 
               type="text" 
-              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-green-500" 
+              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-gray-500" 
               placeholder="123456"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
@@ -151,7 +151,7 @@ export default function Login() {
             <button 
               type="button"
               onClick={() => setStep(1)} 
-              className="w-full mt-4 text-blue-600 hover:underline"
+              className="w-full mt-4 text-gray-800 hover:underline"
             >
               Change Phone Number
             </button>
@@ -170,7 +170,7 @@ export default function Login() {
             type="button"
             onClick={handleTryDemo}
             disabled={loading}
-            className="w-full p-3 mb-4 bg-emerald-600 text-white rounded font-bold hover:bg-emerald-700 disabled:bg-emerald-300 transition"
+            className="w-full p-3 mb-4 bg-[#C5CEBD] text-gray-900 rounded font-bold hover:bg-[#a8b49e] disabled:bg-gray-400 transition"
           >
             {loading ? 'Loading Demo...' : 'Try Demo Account'}
           </button>

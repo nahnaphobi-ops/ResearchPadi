@@ -69,7 +69,7 @@ export default function PaperReview() {
               <button
                 onClick={handleSupervise}
                 disabled={supervising}
-                className="px-5 py-2 bg-purple-600 text-white rounded-lg font-bold text-sm hover:bg-purple-700 disabled:bg-purple-300"
+                className="px-5 py-2 bg-gray-800 text-white rounded-lg font-bold text-sm hover:bg-gray-900 disabled:bg-gray-400"
               >
                 {supervising ? 'Running Review...' : 'Run AI Supervisor Review'}
               </button>
@@ -84,7 +84,7 @@ export default function PaperReview() {
                 </button>
                 <button
                   onClick={() => paperService.downloadDocx(id!, paper.topic)}
-                  className="px-5 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700"
+                  className="px-5 py-2 bg-gray-800 text-white rounded-lg font-bold text-sm hover:bg-gray-900"
                 >
                   Download
                 </button>
@@ -101,13 +101,13 @@ export default function PaperReview() {
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setTab('original')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'original' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'original' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               Original
             </button>
             <button
               onClick={() => setTab('supervised')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'supervised' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'supervised' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
             >
               Supervised {tab === 'supervised' && <span className="ml-1 text-yellow-300">&#9679;</span>}
             </button>
@@ -124,7 +124,7 @@ export default function PaperReview() {
           <div className="mt-6 p-6 bg-orange-50 border border-orange-200 rounded-xl text-center">
             <p className="text-orange-700 font-bold mb-2">Paper is still being processed</p>
             <p className="text-orange-600 text-sm">Current step: {paper.progress_step}</p>
-            <button onClick={() => navigate('/dashboard')} className="mt-4 text-blue-600 font-bold text-sm hover:underline">
+            <button onClick={() => navigate('/dashboard')} className="mt-4 text-gray-800 font-bold text-sm hover:underline">
               Back to Dashboard
             </button>
           </div>

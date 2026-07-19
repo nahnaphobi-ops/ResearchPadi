@@ -47,7 +47,7 @@ export default function AdminUsers() {
           <option value="technical_university">Technical University</option>
           <option value="college_of_education">College of Education</option>
         </select>
-        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Search</button>
+        <button type="submit" className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-900">Search</button>
       </form>
 
       {loading ? (

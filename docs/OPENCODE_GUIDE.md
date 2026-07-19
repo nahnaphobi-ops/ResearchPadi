@@ -1,4 +1,4 @@
-# OpenCode Working Guide — ResearchPadi
+﻿# OpenCode Working Guide â€” ResearchPadi
 **For your developer. Read this before touching any code.**
 
 ---
@@ -7,7 +7,7 @@
 
 OpenCode is a terminal AI coding agent. You open your project
 folder in the terminal, run `opencode`, and the AI agent reads
-your files, writes code, runs commands, and builds features —
+your files, writes code, runs commands, and builds features â€”
 all from your terminal. No IDE plugin needed.
 
 Think of it as having a senior developer sitting next to you
@@ -83,7 +83,7 @@ git commit -m "Initial project scaffold"
 
 ## Supabase Setup (Do This Before Backend)
 
-1. Go to supabase.com — open your project
+1. Go to supabase.com â€” open your project
 2. Go to SQL Editor
 3. Run this SQL to enable pgvector and create all tables:
 
@@ -194,11 +194,11 @@ CREATE POLICY "Users see own papers"
   );
 ```
 
-4. Go to Storage → Create a bucket called `papers` (set to private)
+4. Go to Storage â†’ Create a bucket called `papers` (set to private)
 
 ---
 
-## How To Use OpenCode — Task By Task
+## How To Use OpenCode â€” Task By Task
 
 ### Starting OpenCode
 ```bash
@@ -218,8 +218,8 @@ Then build the auth routes in src/routes/auth.routes.ts
 and src/controllers/auth.controller.ts.
 
 The auth system works as follows:
-- User submits phone number → backend sends SMS OTP via Hubtel
-- User submits OTP → backend verifies → returns JWT token
+- User submits phone number â†’ backend sends SMS OTP via Paystack
+- User submits OTP â†’ backend verifies â†’ returns JWT token
 - All protected routes check JWT in Authorization header
 
 Use the Supabase client from src/db/supabase.ts.
@@ -275,7 +275,7 @@ Handle rate limits and errors gracefully.
 
 ## Build Order (Follow This Exactly)
 
-### Week 1 — Foundation
+### Week 1 â€” Foundation
 - [ ] Project scaffolded (done from setup above)
 - [ ] Supabase tables created (done from SQL above)
 - [ ] Backend: Supabase client setup (src/db/supabase.ts)
@@ -288,7 +288,7 @@ Handle rate limits and errors gracefully.
 - [ ] Frontend: Login page (phone + OTP)
 - [ ] Frontend: Register page
 
-### Week 2 — Paper Pipeline
+### Week 2 â€” Paper Pipeline
 - [ ] Backend: OpenAlex service
 - [ ] Backend: Semantic Scholar service
 - [ ] Backend: Perplexity service
@@ -301,15 +301,15 @@ Handle rate limits and errors gracefully.
 - [ ] Frontend: Paper processing page (live status)
 - [ ] Frontend: Paper complete + download
 
-### Week 3 — Payments & Dashboard
-- [ ] Backend: Hubtel payment service
+### Week 3 â€” Payments & Dashboard
+- [ ] Backend: Paystack payment service
 - [ ] Backend: Payment routes + webhook
 - [ ] Backend: Wallet system
 - [ ] Frontend: Dashboard
 - [ ] Frontend: Wallet + top-up page
 - [ ] Frontend: Payment flow pages
 
-### Week 4 — RAG System
+### Week 4 â€” RAG System
 - [ ] Supabase: Enable pgvector (done in SQL above)
 - [ ] Backend: Document chunker
 - [ ] Backend: OpenAI embedder
@@ -321,7 +321,7 @@ Handle rate limits and errors gracefully.
 - [ ] Backend: Weekly cron job
 - [ ] Integrate RAG into research service
 
-### Week 5 — Assisted Workspace
+### Week 5 â€” Assisted Workspace
 - [ ] Frontend: TipTap editor setup
 - [ ] Backend: Workspace routes
 - [ ] Frontend + Backend: AI suggestions
@@ -329,9 +329,10 @@ Handle rate limits and errors gracefully.
 - [ ] Frontend + Backend: Expand section
 - [ ] Frontend + Backend: Improve paragraph
 
-### Week 6 — Deployment
+### Week 6 â€” Deployment
 - [ ] Frontend: Deploy to Vercel
 - [ ] Backend: Deploy to Render
 - [ ] Environment variables: Set in both platforms
-- [ ] End-to-end test: Full paper → payment → download
+- [ ] End-to-end test: Full paper â†’ payment â†’ download
 - [ ] Fix any bugs found in testing
+

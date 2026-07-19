@@ -8,7 +8,7 @@ export default function NotFound() {
       <p className="text-xl text-gray-600 mb-8">Page not found</p>
       <button
         onClick={() => navigate('/dashboard')}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition"
+        className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-gray-900 transition"
       >
         Go to Dashboard
       </button>

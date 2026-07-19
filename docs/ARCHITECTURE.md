@@ -1,5 +1,5 @@
-# ResearchPadi — System Architecture
-# Version 2.0 — Full Updated Blueprint
+﻿# ResearchPadi â€” System Architecture
+# Version 2.0 â€” Full Updated Blueprint
 # AbusuaITLabs, Kumasi, Ghana
 
 ---
@@ -22,7 +22,7 @@ Built for every Ghanaian tertiary student.
 ### Two Services
 | Service | What It Does | Price |
 |---|---|---|
-| Full Paper | AI writes complete 10,000–15,000 word paper | GHS 250 |
+| Full Paper | AI writes complete 10,000â€“15,000 word paper | GHS 250 |
 | Assisted Workspace Standard | Student writes with AI help | GHS 120/month |
 | Assisted Workspace Premium | Standard + Assignment Assistant | GHS 200/month |
 
@@ -35,74 +35,74 @@ Built for every Ghanaian tertiary student.
 STUDENT SUBMITS:
 Topic, Course, Institution, Programme,
 Institution Type, Supervisor Name (optional)
-         │
-         ▼
-STEP 1 — PARALLEL RESEARCH
-├── Perplexity Sonar API    → live web facts & current data
-├── OpenAlex API            → 250M+ global papers (free)
-├── Semantic Scholar API    → 200M+ papers + AI summaries (free)
-└── RAG Knowledge Brain     → real Ghanaian university research
-         │
-         ▼
-STEP 2 — RESEARCH SYNTHESIS
+         â”‚
+         â–¼
+STEP 1 â€” PARALLEL RESEARCH
+â”œâ”€â”€ Perplexity Sonar API    â†’ live web facts & current data
+â”œâ”€â”€ OpenAlex API            â†’ 250M+ global papers (free)
+â”œâ”€â”€ Semantic Scholar API    â†’ 200M+ papers + AI summaries (free)
+â””â”€â”€ RAG Knowledge Brain     â†’ real Ghanaian university research
+         â”‚
+         â–¼
+STEP 2 â€” RESEARCH SYNTHESIS
 Claude Sonnet 4.6 structures all sources
 into a research brief for the drafter
-         │
-         ▼
-STEP 3 — CHUNKED DRAFTING (Sonnet 4.6)
+         â”‚
+         â–¼
+STEP 3 â€” CHUNKED DRAFTING (Sonnet 4.6)
 Chapter 1: Introduction         (~1,500 words)
 Chapter 2: Literature Review    (~3,500 words)
 Chapter 3: Methodology          (~2,000 words)
 Chapter 4: Results & Discussion (~4,500 words)
 Chapter 5: Conclusion           (~1,500 words)
 Each chapter = separate API call
-         │
-         ▼
-STEP 4 — ASSEMBLY
+         â”‚
+         â–¼
+STEP 4 â€” ASSEMBLY
 All chapters joined into one document
 Abstract generated from full paper
 Reference list generated in APA 7th
 Cover page and Declaration page added
-         │
-         ▼
-STEP 5 — HUMAN VOICE SUPERVISION (Opus 4.8)
+         â”‚
+         â–¼
+STEP 5 â€” HUMAN VOICE SUPERVISION (Opus 4.8)
 Pass 1: Structural review
 Pass 2: Citation accuracy check
 Pass 3: Human voice edit
-  → Remove all AI marker words
-  → Vary sentence length and rhythm
-  → Add Ghanaian context where missing
-  → Ensure researcher voice in Ch.4
-  → Polish language to student quality
-         │
-         ▼
-STEP 6 — DELIVERY
+  â†’ Remove all AI marker words
+  â†’ Vary sentence length and rhythm
+  â†’ Add Ghanaian context where missing
+  â†’ Ensure researcher voice in Ch.4
+  â†’ Polish language to student quality
+         â”‚
+         â–¼
+STEP 6 â€” DELIVERY
 Student downloads .docx + .pdf
 ```
 
 ### AI Fallback Routing
 ```
 DRAFTING LAYER
-  Primary  → Claude Sonnet 4.6  ($3/$15 per M tokens)
-  Fallback → GPT-5.4            ($2.50/$15 per M tokens)
+  Primary  â†’ Claude Sonnet 4.6  ($3/$15 per M tokens)
+  Fallback â†’ GPT-5.4            ($2.50/$15 per M tokens)
 
 SUPERVISION LAYER
-  Primary  → Claude Opus 4.8   ($5/$25 per M tokens)
-  Fallback → GPT-5.5           ($5/$30 per M tokens)
+  Primary  â†’ Claude Opus 4.8   ($5/$25 per M tokens)
+  Fallback â†’ GPT-5.5           ($5/$30 per M tokens)
 ```
 
 ### Cost Per Paper (15,000 words)
 | Step | Cost (USD) |
 |---|---|
 | Research (Perplexity) | ~$0.02 |
-| Drafting — Sonnet 4.6 | ~$0.30 |
-| Supervision — Opus 4.8 | ~$0.60 |
+| Drafting â€” Sonnet 4.6 | ~$0.30 |
+| Supervision â€” Opus 4.8 | ~$0.60 |
 | RAG retrieval | $0.00 |
 | **Total per paper** | **~$0.92 (~GHS 14)** |
 
 ---
 
-## 3. The RAG — Ghanaian Knowledge Brain
+## 3. The RAG â€” Ghanaian Knowledge Brain
 
 ### What It Is
 A private vector database of Ghanaian academic content.
@@ -124,11 +124,11 @@ Gives ResearchPadi knowledge no competitor has.
 | GES/NaCCA documents | Education policy | Direct |
 
 ### RAG Tech
-- Vector Database: pgvector (Supabase extension — free)
+- Vector Database: pgvector (Supabase extension â€” free)
 - Embedding Model: OpenAI text-embedding-3-small
 - Chunk Size: 500 words with 50-word overlap
 - Context Prefix: Added to every chunk before embedding
-  (Anthropic Contextual Retrieval method — 49% better accuracy)
+  (Anthropic Contextual Retrieval method â€” 49% better accuracy)
 - Retrieval: Hybrid search (vector + BM25 keyword)
 - Top K: Return 5 most relevant chunks per query
 - Refresh: Weekly cron job every Sunday 2:00 AM GMT
@@ -142,18 +142,18 @@ Based on research into what makes writing detectable as AI:
 
 ```
 WHAT AI WRITING DOES (and we avoid):
-Low perplexity   → always picks the predictable word
-Low burstiness   → all sentences same length/complexity
-Uniform style    → no voice variation across paragraphs
-Generic context  → could be from any country anywhere
-Marker words     → furthermore, moreover, delve into etc.
+Low perplexity   â†’ always picks the predictable word
+Low burstiness   â†’ all sentences same length/complexity
+Uniform style    â†’ no voice variation across paragraphs
+Generic context  â†’ could be from any country anywhere
+Marker words     â†’ furthermore, moreover, delve into etc.
 
 WHAT RESEARCHPADI PRODUCES:
-High perplexity  → varied, deliberate word choices
-High burstiness  → short sentences follow long ones
-Student voice    → researcher emerges in discussion
-Ghana context    → unmistakably Ghanaian content
-Natural language → banned AI words replaced throughout
+High perplexity  â†’ varied, deliberate word choices
+High burstiness  â†’ short sentences follow long ones
+Student voice    â†’ researcher emerges in discussion
+Ghana context    â†’ unmistakably Ghanaian content
+Natural language â†’ banned AI words replaced throughout
 ```
 
 ### Banned AI Marker Words (enforced in all prompts)
@@ -179,11 +179,11 @@ Alignment:    Justified throughout
 Page numbers: Roman (i,ii,iii) prelim / Arabic (1,2,3) Ch.1+
 
 DOCUMENT STRUCTURE:
-Title Page → Declaration → Dedication (optional)
-→ Acknowledgements → Abstract (250–350 words)
-→ Table of Contents → List of Tables → List of Figures
-→ Chapter 1 → Chapter 2 → Chapter 3 → Chapter 4
-→ Chapter 5 → References → Appendices
+Title Page â†’ Declaration â†’ Dedication (optional)
+â†’ Acknowledgements â†’ Abstract (250â€“350 words)
+â†’ Table of Contents â†’ List of Tables â†’ List of Figures
+â†’ Chapter 1 â†’ Chapter 2 â†’ Chapter 3 â†’ Chapter 4
+â†’ Chapter 5 â†’ References â†’ Appendices
 
 CITATION: APA 7th Edition (universal default)
           Harvard (some Technical University departments)
@@ -237,7 +237,7 @@ LANGUAGE:
 ### Payments
 | Component | Technology |
 |---|---|
-| Gateway | Hubtel API |
+| Gateway | Paystack API |
 | Methods | MTN Mobile Money + Vodafone Cash |
 | Currency | GHS |
 
@@ -292,7 +292,7 @@ CREATE TABLE transactions (
   amount_ghs DECIMAL NOT NULL,
   product TEXT,
   reference TEXT,
-  hubtel_reference TEXT,
+  Paystack_reference TEXT,
   status TEXT DEFAULT 'pending'
     CHECK (status IN ('pending', 'success', 'failed')),
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -468,8 +468,8 @@ POST  /api/assignment/notebooks/:id/citation  Citation Finder
 
 ### Payments
 ```
-POST  /api/payments/initiate      start Hubtel MoMo payment
-POST  /api/payments/callback      Hubtel webhook
+POST  /api/payments/initiate      start Paystack MoMo payment
+POST  /api/payments/callback      Paystack webhook
 GET   /api/payments/wallet        wallet balance
 GET   /api/payments/history       transaction history
 ```
@@ -529,108 +529,108 @@ STEP 4: Dashboard
 
 ```
 researchpadi/
-├── frontend/
-│   └── src/
-│       ├── components/
-│       │   ├── ui/               reusable UI components
-│       │   ├── layout/           Header, Sidebar, Footer
-│       │   ├── paper/            Full Paper components
-│       │   ├── workspace/        TipTap editor components
-│       │   ├── assignment/       Assignment Assistant components
-│       │   └── payment/          Payment flow components
-│       ├── pages/
-│       │   ├── Landing.tsx
-│       │   ├── Login.tsx
-│       │   ├── Register.tsx
-│       │   ├── Dashboard.tsx
-│       │   ├── NewPaper.tsx
-│       │   ├── FullPaperForm.tsx
-│       │   ├── PaperProcessing.tsx
-│       │   ├── PaperComplete.tsx
-│       │   ├── Workspace.tsx
-│       │   ├── WorkspaceEditor.tsx
-│       │   ├── AssignmentList.tsx
-│       │   ├── AssignmentNotebook.tsx
-│       │   ├── Wallet.tsx
-│       │   └── Settings.tsx
-│       ├── hooks/
-│       ├── store/
-│       ├── services/
-│       ├── types/
-│       └── utils/
-│
-├── backend/
-│   └── src/
-│       ├── routes/
-│       │   ├── auth.routes.ts
-│       │   ├── papers.routes.ts
-│       │   ├── workspace.routes.ts
-│       │   ├── assignment.routes.ts
-│       │   ├── payments.routes.ts
-│       │   └── rag.routes.ts
-│       ├── controllers/
-│       │   ├── auth.controller.ts
-│       │   ├── papers.controller.ts
-│       │   ├── workspace.controller.ts
-│       │   ├── assignment.controller.ts
-│       │   ├── payments.controller.ts
-│       │   └── rag.controller.ts
-│       ├── services/
-│       │   ├── pipeline/
-│       │   │   ├── research.service.ts
-│       │   │   ├── draft.service.ts
-│       │   │   ├── supervise.service.ts
-│       │   │   └── assemble.service.ts
-│       │   ├── rag/
-│       │   │   ├── harvester.service.ts
-│       │   │   ├── embedder.service.ts
-│       │   │   ├── retriever.service.ts
-│       │   │   └── chunker.service.ts
-│       │   ├── ai/
-│       │   │   ├── router.service.ts
-│       │   │   ├── sonnet.service.ts
-│       │   │   ├── opus.service.ts
-│       │   │   ├── gpt54.service.ts
-│       │   │   └── gpt55.service.ts
-│       │   ├── citations/
-│       │   │   ├── openalex.service.ts
-│       │   │   ├── semantic.service.ts
-│       │   │   └── formatter.service.ts
-│       │   ├── workspace/
-│       │   │   ├── suggest.service.ts
-│       │   │   ├── expand.service.ts
-│       │   │   ├── improve.service.ts
-│       │   │   └── citation.service.ts
-│       │   ├── assignment/
-│       │   │   ├── ask.service.ts
-│       │   │   ├── builder.service.ts
-│       │   │   ├── notes.service.ts
-│       │   │   ├── quiz.service.ts
-│       │   │   └── improve.service.ts
-│       │   ├── documents/
-│       │   │   ├── docx.service.ts
-│       │   │   └── pdf.service.ts
-│       │   └── payments/
-│       │       └── hubtel.service.ts
-│       ├── middleware/
-│       │   ├── auth.middleware.ts
-│       │   ├── subscription.middleware.ts
-│       │   ├── rateLimit.middleware.ts
-│       │   └── error.middleware.ts
-│       ├── jobs/
-│       │   └── harvest.job.ts
-│       ├── db/
-│       │   └── supabase.ts
-│       ├── config/
-│       │   └── index.ts
-│       └── app.ts
-│
-└── docs/
-    ├── ARCHITECTURE.md     ← this file
-    ├── OPENCODE_GUIDE.md   ← developer workflow
-    ├── PROMPTS.md          ← all AI prompts
-    ├── RAG_SETUP.md        ← RAG system guide
-    └── SESSION_STARTER.txt ← paste at start of OpenCode
+â”œâ”€â”€ frontend/
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ components/
+â”‚       â”‚   â”œâ”€â”€ ui/               reusable UI components
+â”‚       â”‚   â”œâ”€â”€ layout/           Header, Sidebar, Footer
+â”‚       â”‚   â”œâ”€â”€ paper/            Full Paper components
+â”‚       â”‚   â”œâ”€â”€ workspace/        TipTap editor components
+â”‚       â”‚   â”œâ”€â”€ assignment/       Assignment Assistant components
+â”‚       â”‚   â””â”€â”€ payment/          Payment flow components
+â”‚       â”œâ”€â”€ pages/
+â”‚       â”‚   â”œâ”€â”€ Landing.tsx
+â”‚       â”‚   â”œâ”€â”€ Login.tsx
+â”‚       â”‚   â”œâ”€â”€ Register.tsx
+â”‚       â”‚   â”œâ”€â”€ Dashboard.tsx
+â”‚       â”‚   â”œâ”€â”€ NewPaper.tsx
+â”‚       â”‚   â”œâ”€â”€ FullPaperForm.tsx
+â”‚       â”‚   â”œâ”€â”€ PaperProcessing.tsx
+â”‚       â”‚   â”œâ”€â”€ PaperComplete.tsx
+â”‚       â”‚   â”œâ”€â”€ Workspace.tsx
+â”‚       â”‚   â”œâ”€â”€ WorkspaceEditor.tsx
+â”‚       â”‚   â”œâ”€â”€ AssignmentList.tsx
+â”‚       â”‚   â”œâ”€â”€ AssignmentNotebook.tsx
+â”‚       â”‚   â”œâ”€â”€ Wallet.tsx
+â”‚       â”‚   â””â”€â”€ Settings.tsx
+â”‚       â”œâ”€â”€ hooks/
+â”‚       â”œâ”€â”€ store/
+â”‚       â”œâ”€â”€ services/
+â”‚       â”œâ”€â”€ types/
+â”‚       â””â”€â”€ utils/
+â”‚
+â”œâ”€â”€ backend/
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ routes/
+â”‚       â”‚   â”œâ”€â”€ auth.routes.ts
+â”‚       â”‚   â”œâ”€â”€ papers.routes.ts
+â”‚       â”‚   â”œâ”€â”€ workspace.routes.ts
+â”‚       â”‚   â”œâ”€â”€ assignment.routes.ts
+â”‚       â”‚   â”œâ”€â”€ payments.routes.ts
+â”‚       â”‚   â””â”€â”€ rag.routes.ts
+â”‚       â”œâ”€â”€ controllers/
+â”‚       â”‚   â”œâ”€â”€ auth.controller.ts
+â”‚       â”‚   â”œâ”€â”€ papers.controller.ts
+â”‚       â”‚   â”œâ”€â”€ workspace.controller.ts
+â”‚       â”‚   â”œâ”€â”€ assignment.controller.ts
+â”‚       â”‚   â”œâ”€â”€ payments.controller.ts
+â”‚       â”‚   â””â”€â”€ rag.controller.ts
+â”‚       â”œâ”€â”€ services/
+â”‚       â”‚   â”œâ”€â”€ pipeline/
+â”‚       â”‚   â”‚   â”œâ”€â”€ research.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ draft.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ supervise.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ assemble.service.ts
+â”‚       â”‚   â”œâ”€â”€ rag/
+â”‚       â”‚   â”‚   â”œâ”€â”€ harvester.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ embedder.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ retriever.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ chunker.service.ts
+â”‚       â”‚   â”œâ”€â”€ ai/
+â”‚       â”‚   â”‚   â”œâ”€â”€ router.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ sonnet.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ opus.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ gpt54.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ gpt55.service.ts
+â”‚       â”‚   â”œâ”€â”€ citations/
+â”‚       â”‚   â”‚   â”œâ”€â”€ openalex.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ semantic.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ formatter.service.ts
+â”‚       â”‚   â”œâ”€â”€ workspace/
+â”‚       â”‚   â”‚   â”œâ”€â”€ suggest.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ expand.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ improve.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ citation.service.ts
+â”‚       â”‚   â”œâ”€â”€ assignment/
+â”‚       â”‚   â”‚   â”œâ”€â”€ ask.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ builder.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ notes.service.ts
+â”‚       â”‚   â”‚   â”œâ”€â”€ quiz.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ improve.service.ts
+â”‚       â”‚   â”œâ”€â”€ documents/
+â”‚       â”‚   â”‚   â”œâ”€â”€ docx.service.ts
+â”‚       â”‚   â”‚   â””â”€â”€ pdf.service.ts
+â”‚       â”‚   â””â”€â”€ payments/
+â”‚       â”‚       â””â”€â”€ Paystack.service.ts
+â”‚       â”œâ”€â”€ middleware/
+â”‚       â”‚   â”œâ”€â”€ auth.middleware.ts
+â”‚       â”‚   â”œâ”€â”€ subscription.middleware.ts
+â”‚       â”‚   â”œâ”€â”€ rateLimit.middleware.ts
+â”‚       â”‚   â””â”€â”€ error.middleware.ts
+â”‚       â”œâ”€â”€ jobs/
+â”‚       â”‚   â””â”€â”€ harvest.job.ts
+â”‚       â”œâ”€â”€ db/
+â”‚       â”‚   â””â”€â”€ supabase.ts
+â”‚       â”œâ”€â”€ config/
+â”‚       â”‚   â””â”€â”€ index.ts
+â”‚       â””â”€â”€ app.ts
+â”‚
+â””â”€â”€ docs/
+    â”œâ”€â”€ ARCHITECTURE.md     â† this file
+    â”œâ”€â”€ OPENCODE_GUIDE.md   â† developer workflow
+    â”œâ”€â”€ PROMPTS.md          â† all AI prompts
+    â”œâ”€â”€ RAG_SETUP.md        â† RAG system guide
+    â””â”€â”€ SESSION_STARTER.txt â† paste at start of OpenCode
 ```
 
 ---
@@ -649,9 +649,9 @@ ANTHROPIC_API_KEY=your_anthropic_key
 OPENAI_API_KEY=your_openai_key
 PERPLEXITY_API_KEY=your_perplexity_key
 
-HUBTEL_CLIENT_ID=your_hubtel_client_id
-HUBTEL_CLIENT_SECRET=your_hubtel_client_secret
-HUBTEL_SENDER_ID=ResearchPadi
+Paystack_CLIENT_ID=your_Paystack_client_id
+Paystack_CLIENT_SECRET=your_Paystack_client_secret
+Paystack_SENDER_ID=ResearchPadi
 
 SUPABASE_STORAGE_BUCKET=papers
 JWT_SECRET=your_jwt_secret_min_32_chars
@@ -673,7 +673,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 ---
 
 ## 12. AI Config File
-# src/config/index.ts — controls model routing
+# src/config/index.ts â€” controls model routing
 
 ```typescript
 export const AI_CONFIG = {
@@ -704,7 +704,7 @@ export const AI_CONFIG = {
 
 ## 13. Build Phases
 
-### Phase 1 — Core (Revenue First) — Weeks 1–3
+### Phase 1 â€” Core (Revenue First) â€” Weeks 1â€“3
 - [ ] Project scaffold (frontend + backend)
 - [ ] Supabase tables + pgvector enabled
 - [ ] Auth (phone OTP login + register with institution)
@@ -715,11 +715,11 @@ export const AI_CONFIG = {
 - [ ] Assembly service (chapters + abstract + cover + declaration)
 - [ ] .docx generation
 - [ ] Full Paper form + processing page + completion page
-- [ ] MoMo payment (Hubtel)
+- [ ] MoMo payment (Paystack)
 - [ ] Wallet system
 - [ ] Dashboard
 
-### Phase 2 — RAG (Week 4)
+### Phase 2 â€” RAG (Week 4)
 - [ ] pgvector confirmed active
 - [ ] Document chunker
 - [ ] OpenAI embedder
@@ -732,7 +732,7 @@ export const AI_CONFIG = {
 - [ ] Weekly cron job
 - [ ] RAG integrated into research service
 
-### Phase 3 — Assisted Workspace (Week 5)
+### Phase 3 â€” Assisted Workspace (Week 5)
 - [ ] TipTap editor setup
 - [ ] Workspace sessions (save + resume)
 - [ ] AI sentence suggestions
@@ -742,7 +742,7 @@ export const AI_CONFIG = {
 - [ ] Subscription middleware (Standard check)
 - [ ] Export workspace to .docx
 
-### Phase 4 — Assignment Assistant (Week 6)
+### Phase 4 â€” Assignment Assistant (Week 6)
 - [ ] Course Notebook creation
 - [ ] Upload Your Materials feature (PDF + DOCX parsing)
 - [ ] Ask Anything tool
@@ -753,13 +753,14 @@ export const AI_CONFIG = {
 - [ ] Improve My Answer tool
 - [ ] Premium subscription gate
 
-### Phase 5 — Deployment & Launch
-- [ ] Frontend → Vercel
-- [ ] Backend → Render
+### Phase 5 â€” Deployment & Launch
+- [ ] Frontend â†’ Vercel
+- [ ] Backend â†’ Render
 - [ ] All env variables set in both platforms
-- [ ] End-to-end test (Full Paper → payment → download)
-- [ ] End-to-end test (Workspace → subscription → AI tools)
-- [ ] End-to-end test (Assignment → upload → Ask Anything)
+- [ ] End-to-end test (Full Paper â†’ payment â†’ download)
+- [ ] End-to-end test (Workspace â†’ subscription â†’ AI tools)
+- [ ] End-to-end test (Assignment â†’ upload â†’ Ask Anything)
 - [ ] Fix all bugs
 - [ ] Launch
+
 

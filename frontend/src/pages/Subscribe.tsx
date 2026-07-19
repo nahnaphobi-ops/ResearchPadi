@@ -98,7 +98,7 @@ export default function Subscribe() {
             </p>
             <button
               onClick={() => navigate('/workspace')}
-              className="w-full p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+              className="w-full p-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition"
             >
               Go to Workspace
             </button>
@@ -132,8 +132,8 @@ export default function Subscribe() {
             {Object.entries(PLANS).map(([key, plan]) => {
               const isSelected = selectedPlan === key;
               const canAfford = walletBalance >= plan.price;
-              const borderColor = plan.color === 'green' ? 'border-green-200' : 'border-blue-200';
-              const activeBorder = plan.color === 'green' ? 'border-green-500 ring-2 ring-green-200' : 'border-blue-500 ring-2 ring-blue-200';
+              const borderColor = plan.color === 'green' ? 'border-gray-200' : 'border-gray-200';
+              const activeBorder = plan.color === 'green' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-500 ring-2 ring-gray-200';
 
               return (
                 <div
@@ -179,7 +179,7 @@ export default function Subscribe() {
               <button
                 onClick={() => handleSubscribe(selectedPlan)}
                 disabled={loading || walletBalance < PLANS[selectedPlan!].price}
-                className="px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 disabled:bg-blue-300 transition"
+                className="px-8 py-4 bg-gray-800 text-white rounded-lg font-bold text-lg hover:bg-gray-900 disabled:bg-gray-400 transition"
               >
                 {loading ? 'Processing...' : `Subscribe to ${PLANS[selectedPlan!].name} - GHS ${PLANS[selectedPlan!].price}/mo`}
               </button>

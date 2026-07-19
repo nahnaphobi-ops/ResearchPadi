@@ -8,7 +8,7 @@ export default function NewPaper() {
       <h1 className="text-3xl font-bold mb-8 text-center">Choose Your Service</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-xl shadow-lg border-2 border-blue-100 hover:border-blue-500 transition cursor-pointer"
+        <div className="bg-white p-8 rounded-xl shadow-lg border-2 border-gray-200 hover:border-gray-500 transition cursor-pointer"
              onClick={() => navigate('/new-paper/full')}>
           <div className="text-4xl mb-4">📄</div>
           <h2 className="text-2xl font-bold mb-2">Full Paper Service</h2>
@@ -18,11 +18,11 @@ export default function NewPaper() {
             <li>• APA 7th Edition formatting</li>
             <li>• Human-like writing style</li>
           </ul>
-          <div className="text-xl font-bold text-blue-600">GHS 250</div>
+          <div className="text-xl font-bold text-gray-800">GHS 250</div>
         </div>
 
         <div
-          className="bg-white p-8 rounded-xl shadow-lg border-2 border-green-100 hover:border-green-500 transition cursor-pointer"
+          className="bg-white p-8 rounded-xl shadow-lg border-2 border-gray-200 hover:border-gray-500 transition cursor-pointer"
           onClick={() => navigate('/subscribe')}
         >
           <div className="text-4xl mb-4">✍️</div>

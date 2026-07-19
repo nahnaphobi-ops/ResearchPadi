@@ -23,7 +23,7 @@ export interface Transaction {
   amount_ghs: number;
   product?: string;
   reference?: string;
-  hubtel_reference?: string;
+  paystack_reference?: string;
   status: 'pending' | 'success' | 'failed';
   created_at: string;
 }

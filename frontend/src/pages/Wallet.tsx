@@ -90,7 +90,7 @@ export default function Wallet() {
           )}
 
           {verifyLoading && (
-            <div className="p-4 mb-6 rounded-lg text-sm bg-blue-100 text-blue-700 animate-pulse">
+            <div className="p-4 mb-6 rounded-lg text-sm bg-gray-100 text-gray-700 animate-pulse">
               Verifying payment...
             </div>
           )}
@@ -102,7 +102,7 @@ export default function Wallet() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Email (for Paystack receipt)</label>
               <input
                 type="email"
-                className="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-gray-500 outline-none"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -110,7 +110,7 @@ export default function Wallet() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Amount (GHS)</label>
               <input
                 type="number"
-                className="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-gray-500 outline-none"
                 placeholder="e.g. 50"
                 min="1"
                 value={amount}
@@ -119,7 +119,7 @@ export default function Wallet() {
               <button
                 disabled={loading}
                 onClick={handleTopUp}
-                className="w-full p-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:bg-blue-300 transition"
+                className="w-full p-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 disabled:bg-gray-400 transition"
               >
                 {loading ? 'Redirecting to Paystack...' : 'Top Up with Paystack'}
               </button>
