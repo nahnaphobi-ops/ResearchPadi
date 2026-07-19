@@ -2,8 +2,8 @@ services:
   - type: web
     name: researchpadi-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
     rootDir: backend
+    dockerfilePath: ./Dockerfile
     branch: main
     plan: free
     region: oregon
@@ -23,7 +23,5 @@ services:
         sync: false
       - key: PAYSTACK_SECRET_KEY
         sync: false
-      - key: REDIS_URL
-        value: redis://redis-service:6379
       - key: FRONTEND_URL
         value: https://researchpadi.app
