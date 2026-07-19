@@ -1,13 +1,13 @@
 import { Worker, Job } from 'bullmq';
-import { getRedis } from '../lib/redis';
-import { childLogger } from '../lib/logger';
-import { supabase } from '../db/supabase';
-import { performResearch } from '../services/pipeline/research.service';
-import { draftChapter } from '../services/pipeline/draft.service';
-import { supervisePaper } from '../services/pipeline/supervise.service';
-import { assembleFullPaper, generateAbstract, generateReferences } from '../services/pipeline/assemble.service';
-import { CHAPTER_STRUCTURE } from '../services/ai/prompts';
-import { runCitationVerification } from '../services/citations/verify/citation-verify.service';
+import { getRedis } from '../lib/redis.js';
+import { childLogger } from '../lib/logger.js';
+import { supabase } from '../db/supabase.js';
+import { performResearch } from '../services/pipeline/research.service.js';
+import { draftChapter } from '../services/pipeline/draft.service.js';
+import { supervisePaper } from '../services/pipeline/supervise.service.js';
+import { assembleFullPaper, generateAbstract, generateReferences } from '../services/pipeline/assemble.service.js';
+import { CHAPTER_STRUCTURE } from '../services/ai/prompts.js';
+import { runCitationVerification } from '../services/citations/verify/citation-verify.service.js';
 
 const log = childLogger('paper-worker');
 
@@ -130,7 +130,7 @@ export function startPaperWorker(): Worker {
   if (paperWorker) return paperWorker;
 
   paperWorker = new Worker<PaperJobData>('papers', runPipeline, {
-    connection: getRedis(),
+    connection: getRedis() as any,
     concurrency: 3,
     limiter: { max: 5, duration: 60000 },
   });
