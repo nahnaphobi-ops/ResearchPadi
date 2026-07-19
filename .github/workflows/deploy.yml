@@ -108,25 +108,35 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p $HOME/.kube
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "::warning::KUBE_CONFIG secret is not set — skipping deployment."
+            echo "Set a base64-encoded kubeconfig as the KUBE_CONFIG repo/organization secret to enable deploys."
+            echo "skip_deploy=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
       - name: Apply namespace & infra (idempotent)
+        if: ${{ env.skip_deploy != 'true' }}
         run: |
           kubectl apply -f ${{ env.K8S_DIR }}/namespace.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/secrets.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/redis-ha.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/pdb.yaml
       - name: Apply workloads
+        if: ${{ env.skip_deploy != 'true' }}
         run: |
           kubectl apply -f ${{ env.K8S_DIR }}/backend.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/worker.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/frontend.yaml
           kubectl apply -f ${{ env.K8S_DIR }}/ingress.yaml
       - name: Roll out pinned images
+        if: ${{ env.skip_deploy != 'true' }}
         run: |
           kubectl set image deployment/researchpadi-backend backend=${{ env.BACKEND_IMAGE }}:${{ github.sha }} -n researchpadi
           kubectl set image deployment/researchpadi-worker worker=${{ env.BACKEND_IMAGE }}:${{ github.sha }} -n researchpadi
           kubectl set image deployment/researchpadi-frontend frontend=${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -n researchpadi
       - name: Wait for rollout
+        if: ${{ env.skip_deploy != 'true' }}
         run: |
           kubectl rollout status deployment/researchpadi-backend -n researchpadi --timeout=300s
           kubectl rollout status deployment/researchpadi-worker -n researchpadi --timeout=300s
