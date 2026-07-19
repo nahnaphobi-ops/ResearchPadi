@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Pool } from 'pg';
-import { CONFIG } from '../config';
-import { childLogger } from '../lib/logger';
+import { CONFIG } from '../config/index.js';
+import { childLogger } from '../lib/logger.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,16 +15,19 @@ if (!supabaseUrl || !supabaseKey) {
   log.error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  db: {
-    schema: 'public',
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'researchpadi-backend',
-    },
-  },
-});
+export const supabase =
+  supabaseUrl && supabaseKey
+    ? createClient(supabaseUrl, supabaseKey, {
+        db: {
+          schema: 'public',
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'researchpadi-backend',
+          },
+        },
+      })
+    : (null as unknown as ReturnType<typeof createClient>);
 
 // --- Native PG pool for direct DB access with connection pooling ---
 let writePool: Pool | null = null;
