@@ -9,3 +9,22 @@
     buildCommand: npm install --legacy-peer-deps --no-audit --no-fund && npm run build
     startCommand: node dist/index.js
     healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      - key: SUPABASE_URL
+        value: https://bpmfpxkuknchflpctmbr.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbWZweGt1a25jaGZscGN0bWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTcxMzY0MSwiZXhwIjoyMDk3Mjg5NjQxfQ.6Ocm3mVytezSVLC78pRwERFChlx1URlniFVQJxdOB2g
+      - key: DATABASE_URL
+        value: "postgresql://postgres:%23Bigbo55man88%2F%2F@db.bpmfpxkuknchflpctmbr.supabase.co:5432/postgres"
+      - key: JWT_SECRET
+        value: researchpadi-demo-secret-114107571161025654111112521061131195311899
+      - key: FRONTEND_URL
+        value: https://researchpadi.onrender.com
+      - key: ADMIN_EMAIL
+        value: admin@researchpadi.com
+      - key: ADMIN_PASSWORD
+        value: ResearchPadi#Admin2026
