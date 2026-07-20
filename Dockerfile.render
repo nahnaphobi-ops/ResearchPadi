@@ -2,7 +2,7 @@
 # All backend paths are prefixed with backend/.
 FROM node:22-alpine AS builder
 WORKDIR /app
-COPY backend/package*.json ./
+COPY backend/package.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 COPY backend/ ./
 RUN npm run build
@@ -12,7 +12,7 @@ RUN apk add --no-cache tini
 WORKDIR /app
 RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001 -G appgroup
 COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
-COPY --from=builder --chown=appuser:appgroup /app/package*.json ./
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./
 RUN npm install --legacy-peer-deps --omit=dev --no-audit --no-fund && npm cache clean --force
 USER appuser
 EXPOSE 5000
