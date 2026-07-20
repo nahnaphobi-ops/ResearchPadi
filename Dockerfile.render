@@ -1,7 +1,7 @@
 # Render Docker build — context is the repo root.
 # All backend paths are prefixed with backend/.
-# Uses Debian-based node:22 (not -alpine) so native modules like
-# @napi-rs/canvas (pulled in by pdf-parse) get the correct glibc prebuilt binaries.
+# Debian-based node:22 (glibc) so native modules like @napi-rs/canvas
+# (pulled in by pdf-parse) get the correct prebuilt binaries.
 FROM node:22-bookworm AS builder
 WORKDIR /app
 ENV NPM_CONFIG_LEGACY_PEER_DEPS=true \
@@ -32,4 +32,4 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:5000/health/live || exit 1
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "node dist/scripts/create-admin-table.js && node dist/index.js"]
