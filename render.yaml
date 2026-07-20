@@ -1,14 +1,14 @@
 ﻿services:
   - type: web
     name: researchpadi-backend
-    runtime: docker
+    runtime: node
+    rootDir: backend
     branch: main
     plan: free
     region: oregon
-    dockerfilePath: ./Dockerfile.render
-    dockerContext: .
-    healthCheckPath: /health
+    buildCommand: npm install --legacy-peer-deps --no-audit --no-fund && npm run build
     startCommand: node dist/scripts/create-admin-table.js && node dist/index.js
+    healthCheckPath: /health
     envVars:
       - key: ADMIN_MFA
         value: "false"
