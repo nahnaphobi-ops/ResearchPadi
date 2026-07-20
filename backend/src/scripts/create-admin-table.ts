@@ -83,11 +83,12 @@ async function main() {
       }
 
       const passwordHash = await bcrypt.hash(adminPassword, 12);
+      const mfaEnabled = process.env.ADMIN_MFA !== 'false';
       await client.query(
         `INSERT INTO admin_users (email, password_hash, full_name, mfa_enabled, is_active)
-         VALUES ($1, $2, $3, true, true)
-         ON CONFLICT (email) DO UPDATE SET password_hash = $2, full_name = $3, is_active = true`,
-        [adminEmail, passwordHash, adminFullName]
+         VALUES ($1, $2, $3, $4, true)
+         ON CONFLICT (email) DO UPDATE SET password_hash = $2, full_name = $3, mfa_enabled = $4, is_active = true`,
+        [adminEmail, passwordHash, adminFullName, mfaEnabled]
       );
       console.log(`Admin user '${adminEmail}' created/updated successfully`);
       console.log(`  Full name: ${adminFullName}`);

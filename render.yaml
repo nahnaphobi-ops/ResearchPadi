@@ -8,7 +8,10 @@
     dockerfilePath: ./Dockerfile.render
     dockerContext: .
     healthCheckPath: /health
+    startCommand: node dist/scripts/create-admin-table.js && node dist/index.js
     envVars:
+      - key: ADMIN_MFA
+        value: "false"
       - key: NODE_ENV
         value: production
       - key: PORT
