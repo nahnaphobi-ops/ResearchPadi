@@ -4,19 +4,29 @@
 # @napi-rs/canvas (pulled in by pdf-parse) get the correct glibc prebuilt binaries.
 FROM node:22-bookworm AS builder
 WORKDIR /app
-COPY backend/package.json ./
-RUN npm install --legacy-peer-deps --no-audit --no-fund
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_LOGLEVEL=error
+COPY backend/package.json ./package.json
+COPY backend/package-lock.json ./package-lock.json
+RUN npm install || npm install --legacy-peer-deps --no-audit --no-fund
 COPY backend/ ./
 RUN npm run build
 
 FROM node:22-bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends tini \
     && rm -rf /var/lib/apt/lists/*
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_LOGLEVEL=error
 WORKDIR /app
 RUN addgroup --gid 1001 appgroup && adduser --uid 1001 --ingroup appgroup --disabled-password --gecos "" appuser
 COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
-COPY --from=builder --chown=appuser:appgroup /app/package.json ./
-RUN npm install --legacy-peer-deps --omit=dev --no-audit --no-fund && npm cache clean --force
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
+COPY --from=builder --chown=appuser:appgroup /app/package-lock.json ./package-lock.json
+RUN npm install --omit=dev && npm cache clean --force
 USER appuser
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
