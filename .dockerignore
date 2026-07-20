@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.git
+frontend
+web
+docs
+k8s
+loadtest
+supabase
+**/.env
+**/*.log
+.github

@@ -1,13 +1,12 @@
 ﻿services:
   - type: web
     name: researchpadi-backend
-    runtime: node
-    rootDir: backend
+    runtime: docker
     branch: main
     plan: free
     region: oregon
-    buildCommand: npm install --legacy-peer-deps --no-audit --no-fund && npm run build
-    startCommand: node dist/index.js
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
