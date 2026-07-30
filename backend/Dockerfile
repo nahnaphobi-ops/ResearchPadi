@@ -8,6 +8,7 @@ RUN npm ci --omit=dev=false
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY scripts ./scripts
 RUN npm run build
 
 # Prune dev dependencies for the runtime image
