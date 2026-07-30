@@ -3,7 +3,9 @@
     name: researchpadi-backend
     runtime: docker
     branch: main
-    plan: free
+    # Starter = always-on (no 15-min sleep). Requires a Render payment method.
+    # If billing isn't set up, change this back to "free" in the Dashboard.
+    plan: starter
     region: oregon
     dockerfilePath: ./Dockerfile.render
     dockerContext: .
@@ -17,19 +19,28 @@
         value: "5000"
       - key: FRONTEND_URL
         value: https://researchpadi.onrender.com
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: DATABASE_URL
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: ADMIN_EMAIL
-        sync: false
-      - key: ADMIN_PASSWORD
-        sync: false
-      - key: SUPABASE_ACCESS_TOKEN
-        sync: false
       - key: SUPABASE_PROJECT_REF
         value: bpmfpxkuknchflpctmbr
+      - key: SUPABASE_URL
+        value: https://bpmfpxkuknchflpctmbr.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbWZweGt1a25jaGZscGN0bWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTcxMzY0MSwiZXhwIjoyMDk3Mjg5NjQxfQ.6Ocm3mVytezSVLC78pRwERFChlx1URlniFVQJxdOB2g
+      - key: DATABASE_URL
+        value: "postgresql://postgres:%23Bigbo55man88%2F%2F@db.bpmfpxkuknchflpctmbr.supabase.co:5432/postgres"
+      - key: JWT_SECRET
+        value: researchpadi-demo-secret-114107571161025654111112521061131195311899
+      - key: ADMIN_EMAIL
+        value: admin@researchpadi.com
+      - key: ADMIN_PASSWORD
+        value: ResearchPadi#Admin2026
+      - key: SUPABASE_ACCESS_TOKEN
+        sync: false
+      # Set these in Render Dashboard for live AI demos (paper generation / writing assist)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
