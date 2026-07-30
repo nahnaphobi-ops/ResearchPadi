@@ -7,7 +7,7 @@
     region: oregon
     dockerfilePath: ./Dockerfile.render
     dockerContext: .
-    healthCheckPath: /health
+    healthCheckPath: /health/live
     envVars:
       - key: ADMIN_MFA
         value: "false"
@@ -15,17 +15,17 @@
         value: production
       - key: PORT
         value: "5000"
-      - key: SUPABASE_URL
-        value: https://bpmfpxkuknchflpctmbr.supabase.co
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbWZweGt1a25jaGZscGN0bWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTcxMzY0MSwiZXhwIjoyMDk3Mjg5NjQxfQ.6Ocm3mVytezSVLC78pRwERFChlx1URlniFVQJxdOB2g
-      - key: DATABASE_URL
-        value: "postgresql://postgres:%23Bigbo55man88%2F%2F@db.bpmfpxkuknchflpctmbr.supabase.co:5432/postgres"
-      - key: JWT_SECRET
-        value: researchpadi-demo-secret-114107571161025654111112521061131195311899
       - key: FRONTEND_URL
         value: https://researchpadi.onrender.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
       - key: ADMIN_EMAIL
-        value: admin@researchpadi.com
+        sync: false
       - key: ADMIN_PASSWORD
-        value: ResearchPadi#Admin2026
+        sync: false

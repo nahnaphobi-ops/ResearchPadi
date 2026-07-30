@@ -42,21 +42,31 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function needsSsl(connectionString: string): boolean {
+  if (/[?&]sslmode=/i.test(connectionString)) return false;
+  return (
+    process.env.NODE_ENV === 'production' ||
+    /supabase\.co/i.test(connectionString)
+  );
+}
+
 async function main() {
+  // Non-blocking for Render boot: log and exit 0 so the API can still start.
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    console.error('ERROR: DATABASE_URL environment variable is required');
-    console.error('');
-    console.error('Usage:');
-    console.error('  DATABASE_URL="postgresql://..." ADMIN_EMAIL="admin@researchpadi.com" ADMIN_PASSWORD="YourSecurePass123!" npx tsx src/scripts/create-admin-table.ts');
-    process.exit(1);
+    console.error('WARN: DATABASE_URL not set — skipping admin seed');
+    process.exit(0);
   }
 
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminFullName = process.env.ADMIN_FULL_NAME || 'Super Admin';
 
-  const client = new Client({ connectionString });
+  const client = new Client({
+    connectionString,
+    ...(needsSsl(connectionString) ? { ssl: { rejectUnauthorized: false } } : {}),
+  });
+
   try {
     await client.connect();
     console.log('Connected to database');
@@ -68,18 +78,17 @@ async function main() {
     console.log('admin_users columns updated');
 
     if (adminEmail && adminPassword) {
-      // Validate email
       if (!validateEmail(adminEmail)) {
-        console.error(`ERROR: Invalid email address: ${adminEmail}`);
-        process.exit(1);
+        console.error(`WARN: Invalid email address: ${adminEmail} — skipping admin user`);
+        return;
       }
 
-      // Validate password
       const pwCheck = validatePassword(adminPassword);
       if (!pwCheck.valid) {
-        console.error('ERROR: Password does not meet security requirements:');
+        console.error('WARN: Password does not meet security requirements:');
         pwCheck.errors.forEach(e => console.error(`  - ${e}`));
-        process.exit(1);
+        console.error('Skipping admin user creation');
+        return;
       }
 
       const passwordHash = await bcrypt.hash(adminPassword, 12);
@@ -92,20 +101,23 @@ async function main() {
       );
       console.log(`Admin user '${adminEmail}' created/updated successfully`);
       console.log(`  Full name: ${adminFullName}`);
-      console.log(`  MFA: enabled`);
+      console.log(`  MFA: ${mfaEnabled ? 'enabled' : 'disabled'}`);
       console.log(`  Role: admin`);
     } else {
       console.log('No ADMIN_EMAIL/ADMIN_PASSWORD env vars set. Skipping admin user creation.');
-      console.log('');
-      console.log('To create an admin user, run:');
-      console.log('  DATABASE_URL="postgresql://..." ADMIN_EMAIL="admin@researchpadi.com" ADMIN_PASSWORD="YourSecurePass123!" npx tsx src/scripts/create-admin-table.ts');
     }
   } catch (err: any) {
-    console.error('Error:', err.message);
-    process.exit(1);
+    console.error('WARN: Admin seed failed (continuing startup):', err.message);
   } finally {
-    await client.end();
+    try {
+      await client.end();
+    } catch {
+      // ignore close errors
+    }
   }
 }
 
-main();
+main().then(() => process.exit(0)).catch((err) => {
+  console.error('WARN: Admin seed unexpected error (continuing startup):', err?.message || err);
+  process.exit(0);
+});

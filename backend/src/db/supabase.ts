@@ -40,6 +40,16 @@ const POOL_CONFIG = {
   maxUses: 7500,
 };
 
+function pgSslOptions(connectionString: string | undefined) {
+  if (!connectionString) return {};
+  // Respect explicit sslmode in the URL; otherwise enable SSL for production / Supabase.
+  if (/[?&]sslmode=/i.test(connectionString)) return {};
+  if (process.env.NODE_ENV === 'production' || /supabase\.co/i.test(connectionString)) {
+    return { ssl: { rejectUnauthorized: false } };
+  }
+  return {};
+}
+
 export function getWritePool(): Pool {
   if (!writePool) {
     const connectionString = CONFIG.DATABASE_URL;
@@ -49,6 +59,7 @@ export function getWritePool(): Pool {
     writePool = new Pool({
       connectionString,
       ...POOL_CONFIG,
+      ...pgSslOptions(connectionString),
     });
 
     writePool.on('error', (err) => log.error({ err }, 'Write pool error'));
@@ -68,6 +79,7 @@ export function getReadPool(): Pool {
     readPool = new Pool({
       connectionString: readUrl,
       ...POOL_CONFIG,
+      ...pgSslOptions(readUrl),
     });
     readPool.on('error', (err) => log.error({ err }, 'Read pool error'));
     log.info({ max: POOL_CONFIG.max }, 'Database read pool created');
