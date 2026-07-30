@@ -1,0 +1,34 @@
+name: Render Keep Alive
+
+on:
+  schedule:
+    # Render free tier spins down after ~15 min idle. Ping every 10 min.
+    # Note: GitHub cron can drift a few minutes under load.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render health endpoint
+        env:
+          RENDER_URL: ${{ secrets.RENDER_URL }}
+        run: |
+          URL="${RENDER_URL:-https://researchpadi.onrender.com/health/live}"
+          echo "Pinging $URL"
+          for i in 1 2 3; do
+            CODE=$(curl -sS -o /tmp/render-keepalive-body.txt -w "%{http_code}" \
+              --max-time 90 \
+              --connect-timeout 30 \
+              "$URL" || echo "000")
+            echo "Attempt $i → HTTP $CODE"
+            if [ "$CODE" = "200" ] || [ "$CODE" = "204" ]; then
+              head -c 200 /tmp/render-keepalive-body.txt || true
+              echo
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Keepalive failed after retries"
+          exit 1
