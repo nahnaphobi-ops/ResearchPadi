@@ -158,7 +158,7 @@ export default function WorkspaceList() {
                   onClick={() => navigate(`/workspace/${session.id}`)}
                   className="group bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:border-[#2563eb] hover:-translate-y-0.5 transition cursor-pointer"
                 >
-                    <h3 className="font-bold text-lg mb-1 truncate group-hover:text-[#1e3a5f]">
+                    <h3 className="font-bold text-lg mb-1 truncate group-hover:text-[#2563eb]">
                     {session.title || 'Untitled Session'}
                   </h3>
                   {session.course && (

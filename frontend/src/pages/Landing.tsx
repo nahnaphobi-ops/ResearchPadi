@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import logo from '../assets/logo.svg';
-import heroGrad from '../assets/hero-grad.png';
+import heroGrad from '../assets/hero-grad-clean.png';
+import heroGradCutout from '../assets/hero-grad-transparent.png';
+import BrandLogo from '../components/common/BrandLogo';
 import { GradientShimmer } from '@/components/ui/gradient-shimmer';
 import {
   ChevronDown, CheckCircle, Shield, Zap, Play,
@@ -114,12 +115,14 @@ export default function Landing() {
     <div className="flex flex-col min-h-screen bg-white text-[#0f172a]">
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#e2e8f0]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5" aria-label="ResearchPadi home">
-            <img src={logo} alt="ResearchPadi" className="h-12 w-auto" />
-          </button>
+        <div className="relative w-full px-3 sm:px-4 h-[72px] flex items-center justify-between gap-3">
+          <BrandLogo
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            markClassName="h-10 w-auto"
+            className="shrink-0"
+          />
 
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
             {[
               { label: 'Home', id: 'top' },
               { label: 'About', id: 'about' },
@@ -137,105 +140,100 @@ export default function Landing() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <button onClick={() => navigate('/login')} className="text-[13px] font-semibold text-[#64748b] hover:text-[#0f172a]">
+          <div className="flex items-center gap-3 shrink-0">
+            <button onClick={() => navigate('/login')} className="hidden md:inline text-[13px] font-semibold text-[#64748b] hover:text-[#0f172a]">
               Log in
             </button>
-            <button onClick={() => navigate('/login')} className="btn-primary px-4 py-2.5 text-[13px] inline-flex items-center gap-2">
+            <button onClick={() => navigate('/login')} className="hidden md:inline-flex btn-primary px-4 py-2.5 text-[13px] items-center gap-2">
               <Phone size={14} /> Start writing
             </button>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-[#0f172a]" aria-label="Menu">
+              {mobileMenuOpen ? '×' : '☰'}
+            </button>
           </div>
-
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-[#0f172a]" aria-label="Menu">
-            {mobileMenuOpen ? '×' : '☰'}
-          </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#e2e8f0] bg-white px-5 py-4 space-y-2">
+          <div className="lg:hidden border-t border-[#e2e8f0] bg-white px-3 sm:px-4 py-4 space-y-2">
             {['About', 'Services', 'Pricing', 'FAQs'].map((label) => (
               <button key={label} onClick={() => scrollTo(label.toLowerCase())} className="block w-full text-left py-2 text-sm font-semibold text-[#64748b]">
                 {label}
               </button>
             ))}
-            <button onClick={() => navigate('/login')} className="btn-primary w-full py-2.5 text-sm mt-2">Start writing</button>
+            <button onClick={() => navigate('/login')} className="btn-primary w-full py-2.5 text-sm mt-2 md:hidden">Log in / Start writing</button>
           </div>
         )}
       </nav>
 
       {/* Hero */}
-      <section className="relative bg-[#2563eb] overflow-hidden pb-28 sm:pb-32">
-        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 50% 60% at 85% 40%, rgba(255,255,255,.25), transparent), radial-gradient(ellipse 40% 50% at 10% 80%, rgba(30,58,138,.45), transparent)',
-        }} />
+      <section className="relative bg-white overflow-visible sm:pb-28">
+        {/* Visual hero plane — cutout base sits on this block's bottom edge */}
+        <div className="relative overflow-visible">
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse 45% 50% at 90% 20%, rgba(37,99,235,.08), transparent), radial-gradient(ellipse 40% 45% at 5% 85%, rgba(219,234,254,.55), transparent)',
+          }} />
 
-        <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
-            <div className="text-white z-10">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-4 fade-up">Academic writing workspace</p>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.05] mb-5 fade-up fade-up-delay">
-                <span className="block mb-1">
-                  <GradientShimmer
-                    gradient="bay"
-                    duration={1.6}
-                    spread={2.4}
-                    angle={105}
-                    pauseBetween={1200}
-                    baseColor="rgba(255,255,255,0.55)"
-                    className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight"
-                  >
-                    ResearchPadi
-                  </GradientShimmer>
-                </span>
-                Connecting ideas,<br />building papers.
-              </h1>
-              <p className="text-sm sm:text-base text-white/80 leading-relaxed max-w-md mb-8 fade-up fade-up-delay-2">
-                The AI writing platform built for Ghanaian students — drafts, citations, and quality checks in one calm workspace.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 fade-up fade-up-delay-3">
-                <button onClick={() => navigate('/login')} className="bg-white text-[#2563eb] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#dbeafe] transition">
-                  Get started <ArrowRight size={16} />
-                </button>
-                <button onClick={() => scrollTo('how')} className="border border-white/40 text-white px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-white/10 transition">
-                  <Play size={14} fill="currentColor" /> Learn more
-                </button>
-              </div>
-            </div>
-
-            <div className="relative flex justify-center lg:justify-end fade-up fade-up-delay-2">
-              <div className="relative w-full max-w-md">
-                <div className="absolute -inset-4 rounded-[2rem] bg-white/10 blur-2xl" />
-                <img
-                  src={heroGrad}
-                  alt="Graduate celebrating academic success"
-                  className="relative w-full h-[380px] sm:h-[440px] object-cover object-top rounded-[1.75rem] shadow-2xl"
-                />
-                <div className="hero-float absolute -left-3 top-10 bg-white rounded-2xl px-3.5 py-3 shadow-xl hidden sm:flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center"><FileText size={16} /></div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#0f172a]">Paper ready</p>
-                    <p className="text-[10px] text-[#64748b]">APA · plagiarism-checked</p>
-                  </div>
-                </div>
-                <div className="hero-float absolute -right-2 bottom-16 bg-white rounded-2xl px-3.5 py-3 shadow-xl hidden sm:flex items-center gap-2.5" style={{ animationDelay: '1s' }}>
-                  <div className="w-9 h-9 rounded-xl bg-[#dcfce7] text-[#059669] grid place-items-center"><CheckCircle size={16} /></div>
-                  <div>
-                    <p className="text-[11px] font-bold text-[#0f172a]">Supervisor ready</p>
-                    <p className="text-[10px] text-[#64748b]">Quality guards passed</p>
-                  </div>
+          <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-10 sm:pt-20 lg:pt-24">
+            <div className="grid lg:grid-cols-2 gap-0 lg:gap-8 items-start">
+              <div className="text-[#0f172a] z-10 pb-2 sm:pb-6">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#64748b] mb-3 sm:mb-4 fade-up">Academic writing workspace</p>
+                <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.05] mb-4 sm:mb-5 fade-up fade-up-delay">
+                  <span className="block mb-1">
+                    <GradientShimmer
+                      gradient="bay"
+                      duration={1.6}
+                      spread={2.4}
+                      angle={105}
+                      pauseBetween={1200}
+                      baseColor="rgba(15,23,42,0.45)"
+                      className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight"
+                    >
+                      ResearchPadi
+                    </GradientShimmer>
+                  </span>
+                  Connecting ideas,<br />building papers.
+                </h1>
+                <p className="text-sm sm:text-base text-[#64748b] leading-relaxed max-w-md mb-6 sm:mb-8 fade-up fade-up-delay-2">
+                  The AI writing platform built for Ghanaian students — drafts, citations, and quality checks in one calm workspace.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 fade-up fade-up-delay-3">
+                  <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3.5 text-sm inline-flex items-center justify-center gap-2">
+                    Get started <ArrowRight size={16} />
+                  </button>
+                  <button onClick={() => scrollTo('how')} className="border border-[#cbd5e1] text-[#0f172a] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f4f7fc] transition">
+                    <Play size={14} fill="currentColor" /> Learn more
+                  </button>
                 </div>
               </div>
+
+              {/* Height reserved for the bottom-pinned cutout (keeps copy clear) */}
+              <div className="h-[250px] sm:h-[360px] lg:h-[480px]" aria-hidden />
             </div>
           </div>
+
+          {/* Cutout: base flush to hero edge on every breakpoint */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex justify-center px-5 sm:px-8 lg:justify-end lg:pr-[max(2rem,calc((100%-72rem)/2+2rem))] fade-up fade-up-delay-2">
+            <img
+              src={heroGradCutout}
+              alt="Graduate celebrating academic success"
+              className="block w-full max-w-[260px] sm:max-w-sm lg:max-w-md h-[250px] sm:h-[380px] lg:h-[540px] object-contain object-bottom drop-shadow-2xl"
+            />
+          </div>
+
+          {/* Soft wash at the hero base — light, not heavy */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-20 sm:h-28"
+            style={{ background: 'linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.7) 35%, transparent 100%)' }}
+          />
         </div>
 
-        {/* Overlapping feature cards */}
-        <div className="absolute inset-x-0 bottom-0 translate-y-1/2 px-5 sm:px-8">
-          <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-3 sm:gap-4">
+        {/* Feature cards sit on / below the hero edge */}
+        <div className="relative z-10 -mt-2 px-5 sm:px-8 sm:absolute sm:inset-x-0 sm:bottom-0 sm:mt-0 sm:translate-y-1/2">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             {heroFeatures.map((item, i) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className={`bg-white rounded-2xl p-5 shadow-xl border border-[#e2e8f0] reveal reveal-delay-${i + 1}`}>
+                <div key={item.title} className={`bg-white rounded-2xl p-4 sm:p-5 shadow-xl border border-[#e2e8f0] reveal reveal-delay-${i + 1}`}>
                   <div className="w-10 h-10 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center mb-3">
                     <Icon size={18} />
                   </div>
@@ -249,15 +247,22 @@ export default function Landing() {
       </section>
 
       {/* About / stats */}
-      <section id="about" className="pt-28 sm:pt-36 pb-20 sm:pb-28 bg-white">
+      <section id="about" className="pt-12 sm:pt-36 pb-20 sm:pb-28 bg-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="relative reveal">
+          <div className="relative reveal is-visible">
             <div className="rounded-[1.75rem] overflow-hidden bg-[#dbeafe]">
-              <img src={heroGrad} alt="" className="w-full h-[360px] object-cover object-[center_20%]" />
+              <img src={heroGrad} alt="Graduate celebrating academic success" className="w-full h-[280px] sm:h-[360px] object-cover object-[center_20%]" />
             </div>
-            <div className="absolute -bottom-5 -right-2 sm:right-6 bg-[#2563eb] text-white rounded-2xl px-5 py-4 shadow-xl">
-              <p className="text-2xl font-extrabold">Built for GH</p>
-              <p className="text-xs text-white/80">University-ready templates</p>
+            <div className="absolute left-3 top-3 sm:-left-2 sm:top-8 bg-white rounded-2xl px-3 py-2.5 shadow-xl flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center"><Zap size={14} /></div>
+              <div>
+                <p className="text-[11px] font-bold text-[#0f172a]">Fast Drafts</p>
+                <p className="text-[10px] text-[#64748b]">From brief to paper in minutes</p>
+              </div>
+            </div>
+            <div className="absolute -bottom-4 right-3 sm:-bottom-5 sm:right-6 bg-[#2563eb] text-white rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl">
+              <p className="text-xl sm:text-2xl font-extrabold">Built for GH</p>
+              <p className="text-[10px] sm:text-xs text-white/80">University-ready templates</p>
             </div>
           </div>
 
@@ -532,45 +537,21 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0f172a] pt-16 pb-8 text-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
-            <div className="col-span-2 md:col-span-1">
-              <img src={logo} alt="ResearchPadi" className="h-12 w-auto mb-4 brightness-0 invert opacity-90" />
-              <p className="text-sm text-[#94a3b8] leading-relaxed">
-                Ghana&apos;s academic writing workspace. Built for every tertiary student.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Product</h4>
-              <ul className="space-y-2.5">
-                {['Services', 'Pricing', 'FAQs'].map((item) => (
-                  <li key={item}>
-                    <button onClick={() => scrollTo(item.toLowerCase())} className="text-sm text-[#94a3b8] hover:text-white transition">{item}</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Company</h4>
-              <ul className="space-y-2.5 text-sm text-[#94a3b8]">
-                <li>About</li>
-                <li>Blog</li>
-                <li>Careers</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Stay updated</h4>
-              <p className="text-sm text-[#94a3b8] mb-3">Get writing tips for Ghanaian students.</p>
-              <button onClick={() => navigate('/login')} className="btn-primary px-4 py-2.5 text-sm">Subscribe</button>
-            </div>
+      <footer className="bg-[#0f172a] py-3 text-white">
+        <div className="max-w-4xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <BrandLogo onDark markClassName="h-5 w-auto" className="[&_span]:text-xs" />
+            <span className="hidden sm:inline text-[#334155]">·</span>
+            {['Services', 'Pricing', 'FAQs'].map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-[10px] text-[#94a3b8] hover:text-white transition">
+                {item}
+              </button>
+            ))}
           </div>
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between gap-3 text-xs text-[#64748b]">
-            <p>&copy; {new Date().getFullYear()} ResearchPadi by AbusuaITLabs, Kumasi, Ghana.</p>
-            <p className="inline-flex items-center gap-3">
-              <span className="inline-flex items-center gap-1"><Shield size={12} className="text-[#059669]" /> SSL</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle size={12} className="text-[#059669]" /> GDPR</span>
-            </p>
+          <div className="flex items-center gap-3 text-[10px] text-[#64748b]">
+            <p>&copy; {new Date().getFullYear()} ResearchPadi · Kumasi</p>
+            <span className="inline-flex items-center gap-1"><Shield size={9} className="text-[#059669]" /> SSL</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle size={9} className="text-[#059669]" /> GDPR</span>
           </div>
         </div>
       </footer>

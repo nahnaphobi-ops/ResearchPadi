@@ -15,7 +15,7 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
   const { activeSession } = useWorkspaceStore();
 
   return (
-    <div className="bg-[#1e3a5f] text-white border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
+    <div className="bg-[#2563eb] text-white border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/workspace')}
@@ -44,7 +44,7 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-4 py-2 bg-white text-[#1e3a5f] text-xs rounded-xl font-bold hover:bg-[#e9eef5] disabled:opacity-50 transition"
+          className="px-4 py-2 bg-white text-[#2563eb] text-xs rounded-xl font-bold hover:bg-[#dbeafe] disabled:opacity-50 transition"
         >
           Save
         </button>

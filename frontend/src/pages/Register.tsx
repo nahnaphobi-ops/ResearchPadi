@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -42,6 +43,9 @@ export default function Register() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-10 bg-gray-50">
       <div className="w-full max-w-lg p-8 bg-white rounded shadow-xl">
+        <div className="flex justify-center mb-4">
+          <BrandLogo markClassName="h-10 w-auto" />
+        </div>
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Complete Your Profile</h2>
         {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}
         

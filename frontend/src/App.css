@@ -18,8 +18,14 @@ h1, h2, h3, h4, .font-black, .font-bold, .display {
 .bg-green-600 { background-color: var(--success) !important; }
 .hover\:bg-green-700:hover { background-color: #047857 !important; }
 .bg-blue-600 { background-color: var(--primary) !important; }
+.bg-blue-100 { background-color: var(--accent-soft) !important; }
 .text-blue-600, .text-blue-700 { color: var(--primary) !important; }
 .bg-blue-50 { background-color: var(--accent-soft) !important; }
+.bg-purple-600, .bg-teal-600, .bg-indigo-600 { background-color: var(--primary) !important; }
+.bg-purple-100, .bg-teal-100, .bg-indigo-100 { background-color: var(--accent-soft) !important; }
+.text-purple-700, .text-teal-700, .text-indigo-600 { color: var(--primary) !important; }
+.hover\:bg-purple-700:hover, .hover\:bg-teal-700:hover, .hover\:bg-indigo-700:hover { background-color: var(--primary-hover) !important; }
+.hover\:bg-purple-200:hover { background-color: var(--highlight) !important; }
 .bg-green-100 { background-color: var(--success-soft) !important; }
 .text-green-700, .text-green-600, .text-green-500 { color: var(--success) !important; }
 .bg-orange-100, .bg-orange-50 { background-color: var(--warning-soft) !important; }

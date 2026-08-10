@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminService } from '../services/adminService';
 import { useAdminStore } from '../store/useAdminStore';
-import logo from '../assets/logo.svg';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -61,7 +61,9 @@ export default function AdminLogin() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded shadow-lg">
         <div className="text-center mb-6">
-          <img src={logo} alt="ResearchPadi" className="h-16 w-auto mx-auto mb-4" />
+          <div className="flex justify-center mb-4">
+            <BrandLogo markClassName="h-12 w-auto" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900">Admin Portal</h2>
         </div>
         {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}

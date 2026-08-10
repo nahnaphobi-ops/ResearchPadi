@@ -74,7 +74,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-          <div className="p-6 bg-[#1e3a5f] text-white rounded-2xl relative overflow-hidden">
+          <div className="p-6 bg-[#2563eb] text-white rounded-2xl relative overflow-hidden">
             <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full border border-white/10" />
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-sm font-medium text-white/65">Available balance</h3>
@@ -83,7 +83,7 @@ export default function Dashboard() {
             <p className="display text-3xl">GHS {walletBalance.toFixed(2)}</p>
             <button
               onClick={() => navigate('/wallet')}
-              className="mt-5 text-sm font-bold text-[#1e3a5f] bg-white px-3.5 py-2 rounded-xl hover:bg-[#e9eef5] transition inline-flex items-center gap-1"
+              className="mt-5 text-sm font-bold text-[#2563eb] bg-white px-3.5 py-2 rounded-xl hover:bg-[#dbeafe] transition inline-flex items-center gap-1"
             >
               Manage wallet <ArrowUpRight size={14} />
             </button>
@@ -123,7 +123,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
           {loading ? (
             <div className="p-14 text-center text-[#64748b]">
-              <div className="mx-auto mb-3 w-8 h-8 border-2 border-[#e2e8f0] border-t-[#1e3a5f] rounded-full animate-spin" />
+              <div className="mx-auto mb-3 w-8 h-8 border-2 border-[#e2e8f0] border-t-[#2563eb] rounded-full animate-spin" />
               Loading your research history...
             </div>
           ) : papers.length === 0 ? (
@@ -136,7 +136,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
-              <thead className="bg-[#f8fafc] text-[#64748b] uppercase text-[11px] font-bold tracking-wider">
+              <thead className="bg-[#f4f7fc] text-[#64748b] uppercase text-[11px] font-bold tracking-wider">
                 <tr>
                   <th className="p-4 border-b border-[#e2e8f0]">Topic</th>
                   <th className="p-4 border-b border-[#e2e8f0]">Status</th>
@@ -145,7 +145,7 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-[#e2e8f0]">
                 {papers.map((paper) => (
-                  <tr key={paper.id} className="hover:bg-[#f8fafc] transition">
+                  <tr key={paper.id} className="hover:bg-[#f4f7fc] transition">
                     <td className="p-4">
                       <div className="font-bold text-[#0f172a]">{paper.topic}</div>
                       <div className="text-xs text-[#64748b] mt-0.5">{paper.course} · {new Date(paper.created_at).toLocaleDateString()}</div>

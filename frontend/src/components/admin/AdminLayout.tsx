@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../store/useAdminStore';
 import { adminService } from '../../services/adminService';
+import BrandLogo from '../common/BrandLogo';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -22,11 +23,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen app-shell">
-      <nav className="bg-[#1e3a5f] border-b border-white/10 sticky top-0 z-50 text-white">
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-3 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2"><span className="grid place-items-center w-9 h-9 rounded-xl bg-white text-[#1e3a5f] font-bold text-lg">R</span><span className="font-bold">ResearchPadi <span className="text-white/45 font-normal">/ admin</span></span></div>
-            <div className="flex gap-1">
+      <nav className="bg-[#2563eb] border-b border-white/10 sticky top-0 z-50 text-white">
+        <div className="relative w-full px-3 sm:px-4 py-3 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          <div className="flex items-center gap-2 shrink-0">
+            <BrandLogo onDark markClassName="h-9 w-auto" className="[&_span]:text-base" />
+            <span className="text-white/45 font-normal text-sm">/ admin</span>
+          </div>
+          <div className="flex flex-wrap gap-1 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
               <button
                 onClick={() => navigate('/admin')}
                 className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
@@ -63,9 +66,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 Writing Assist
               </button>
-            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0 lg:ml-auto">
              <span className="text-sm text-white/55">{admin?.email}</span>
             <button
               onClick={handleLogout}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
-import logo from '../assets/logo.svg';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -99,16 +99,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#f8fafc]">
-      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-[#1e3a5f] text-white overflow-hidden">
+      <div className="min-h-screen grid lg:grid-cols-2 bg-[#f4f7fc]">
+      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-[#2563eb] text-white overflow-hidden">
+        <img
+          src="/login-study.jpg"
+          alt="Student working on academic research"
+          className="absolute inset-0 h-full w-full object-cover opacity-25"
+        />
         <div className="absolute inset-0 opacity-40 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 70% 50% at 20% 20%, rgba(37,99,235,.45), transparent), radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,255,255,.08), transparent)',
+          background: 'linear-gradient(180deg, rgba(37,99,235,.78), rgba(15,23,42,.82)), radial-gradient(ellipse 70% 50% at 20% 20%, rgba(37,99,235,.45), transparent)',
         }} />
         <div className="relative z-10">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
-            <span className="grid place-items-center w-10 h-10 rounded-xl bg-white text-[#1e3a5f] font-bold text-lg">R</span>
-            <span className="text-xl font-bold tracking-tight">ResearchPadi</span>
-          </button>
+          <BrandLogo onDark markClassName="h-10 w-auto" onClick={() => navigate('/')} />
         </div>
         <div className="relative z-10 max-w-md">
           <p className="display text-4xl leading-tight mb-4">Write papers your supervisors can trust.</p>
@@ -129,7 +131,9 @@ export default function Login() {
         </button>
 
         <div className="w-full max-w-md bg-white rounded-2xl border border-[#e2e8f0] p-8 shadow-sm">
-          <img src={logo} alt="ResearchPadi" className="h-14 w-auto mx-auto mb-2 lg:hidden" />
+          <div className="flex justify-center mb-4 lg:hidden">
+            <BrandLogo markClassName="h-12 w-auto" />
+          </div>
           <h1 className="display text-3xl text-center text-[#0f172a] mb-1">Welcome back</h1>
           <p className="text-sm text-center text-[#64748b] mb-8">
             {step === 1 ? 'Enter your phone number to receive a one-time code.' : `Enter the code sent to ${phone}`}
@@ -190,7 +194,7 @@ export default function Login() {
               type="button"
               onClick={handleTryDemo}
               disabled={loading}
-              className="w-full p-3.5 mb-3 bg-[#e9eef5] text-[#1e3a5f] rounded-xl font-bold text-sm hover:bg-[#dbe4f0] disabled:opacity-50 transition"
+              className="w-full p-3.5 mb-3 bg-[#dbeafe] text-[#2563eb] rounded-xl font-bold text-sm hover:bg-[#bfdbfe] disabled:opacity-50 transition"
             >
               {loading ? 'Loading demo...' : 'Try demo account'}
             </button>

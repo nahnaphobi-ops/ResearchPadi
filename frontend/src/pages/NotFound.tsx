@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import BrandLogo from '../components/common/BrandLogo';
 
 export default function NotFound() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <BrandLogo markClassName="h-10 w-auto" className="mb-6" onClick={() => navigate('/')} />
       <h1 className="text-6xl font-extrabold text-gray-300 mb-4">404</h1>
       <p className="text-xl text-gray-600 mb-8">Page not found</p>
       <button
