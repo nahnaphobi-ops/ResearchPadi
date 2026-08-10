@@ -2,26 +2,40 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import logo from '../assets/logo.svg';
 import heroGrad from '../assets/hero-grad.png';
+import { GradientShimmer } from '@/components/ui/gradient-shimmer';
 import {
-  ChevronDown, CheckCircle, Shield, Zap,
+  ChevronDown, CheckCircle, Shield, Zap, Play,
   FileText, BookOpen, GraduationCap, Award, PenTool,
-  Sparkles, Quote, ArrowRight
+  Sparkles, Quote, ArrowRight, Phone, Users, Clock, Target,
+  BadgeCheck, Mail
 } from 'lucide-react';
 
-const services = [
-  { title: 'Research papers', desc: 'Undergraduate to journal-ready drafts with local academic context.', icon: FileText },
-  { title: 'Essay writing', desc: 'Argumentative, expository, and coursework support that stays on-brief.', icon: PenTool },
-  { title: 'Thesis & dissertation', desc: 'Chapter-by-chapter structure for proposals through defense prep.', icon: GraduationCap },
-  { title: 'Literature review', desc: 'Systematic and narrative reviews grounded in African sources.', icon: BookOpen },
-  { title: 'Assignment help', desc: 'Coursework, case studies, and lab reports matched to your course.', icon: Award },
-  { title: 'Editing & proofreading', desc: 'Grammar, structure, citations, and university formatting.', icon: Sparkles },
+const heroFeatures = [
+  { title: 'Local Context', desc: 'Built for Ghanaian curricula', icon: GraduationCap },
+  { title: 'Quality Guards', desc: 'Accuracy checks before export', icon: Shield },
+  { title: 'Fast Drafts', desc: 'From brief to paper in minutes', icon: Zap },
 ];
 
-const steps = [
-  { num: '01', title: 'Brief your paper', desc: 'Share topic, level, and deadline. ResearchPadi maps Ghanaian university expectations.' },
-  { num: '02', title: 'Generate a draft', desc: 'Get a structured, cited draft in minutes — not a generic chatbot dump.' },
-  { num: '03', title: 'Review & refine', desc: 'Polish with quality guards, plagiarism checks, and formatting tools.' },
-  { num: '04', title: 'Submit with confidence', desc: 'Export Word or PDF ready for KNUST, UG, UCC, and beyond.' },
+const services = [
+  { title: 'Research Papers', desc: 'Undergraduate to journal-ready drafts with local academic context.', icon: FileText, tone: 'bg-[#2563eb]' },
+  { title: 'Thesis Support', desc: 'Chapter-by-chapter structure for proposals through defense prep.', icon: GraduationCap, tone: 'bg-[#3b82f6]' },
+  { title: 'Literature Review', desc: 'Systematic and narrative reviews grounded in African sources.', icon: BookOpen, tone: 'bg-[#1d4ed8]' },
+  { title: 'Editing & Cite', desc: 'Grammar, structure, citations, and university formatting.', icon: Sparkles, tone: 'bg-[#60a5fa]' },
+];
+
+const offerings = [
+  { title: 'Complete Paper', meta: 'End-to-end generation', price: 'GHS 250', tag: 'Per paper', icon: FileText },
+  { title: 'Standard Plan', meta: 'Assisted writing monthly', price: 'GHS 120', tag: 'Monthly', icon: PenTool },
+  { title: 'Premium Plan', meta: 'Thesis + priority review', price: 'GHS 200', tag: 'Monthly', icon: Award },
+  { title: 'Literature Mode', meta: 'Source-grounded reviews', price: 'Included', tag: 'Premium', icon: BookOpen },
+  { title: 'Citation Pack', meta: 'APA · MLA · Chicago · Harvard', price: 'Included', tag: 'All plans', icon: BadgeCheck },
+  { title: 'University Templates', meta: 'KNUST · UG · UCC · UPSA', price: 'Included', tag: 'All plans', icon: GraduationCap },
+];
+
+const reasons = [
+  { num: '01', title: 'Profile the right draft', desc: 'Brief your topic, level, and deadline — ResearchPadi maps Ghanaian university expectations.' },
+  { num: '02', title: 'Write with academic guardrails', desc: 'Citations, structure, and quality checks stay connected inside one workspace.' },
+  { num: '03', title: 'Submit with confidence', desc: 'Export Word or PDF ready for supervisors, departments, and journal formats.' },
 ];
 
 const pricingPlans = [
@@ -55,9 +69,9 @@ const pricingPlans = [
 ];
 
 const testimonials = [
-  { name: 'Anonymous', institution: 'Public University, Ghana', text: 'ResearchPadi changed how I approach academic writing. The AI understands my curriculum better than any generic tool I have tried.', role: 'Student' },
-  { name: 'Anonymous', institution: 'Technical University, Ghana', text: 'My supervisor was impressed by my literature review. ResearchPadi found local journals I never knew existed.', role: 'Student' },
-  { name: 'Anonymous', institution: 'Public University, Ghana', text: 'The quality guards and supervisor review are incredible. My drafts came back polished and ready to submit.', role: 'Student' },
+  { name: 'Akosua M.', institution: 'Public University, Ghana', text: 'ResearchPadi changed how I approach academic writing. The AI understands my curriculum better than any generic tool I have tried.', role: 'Student', initials: 'AM' },
+  { name: 'Kwame A.', institution: 'Technical University, Ghana', text: 'My supervisor was impressed by my literature review. ResearchPadi found local journals I never knew existed.', role: 'Student', initials: 'KA' },
+  { name: 'Efua B.', institution: 'Public University, Ghana', text: 'The quality guards and supervisor review are incredible. My drafts came back polished and ready to submit.', role: 'Student', initials: 'EB' },
 ];
 
 const faqs = [
@@ -71,12 +85,11 @@ const faqs = [
 export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     const nodes = document.querySelectorAll('.reveal');
     if (!nodes.length) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -88,140 +101,216 @@ export default function Landing() {
       },
       { threshold: 0.14, rootMargin: '0px 0px -8% 0px' }
     );
-
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, []);
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-[#0f172a]">
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-white/75 backdrop-blur-xl border-b border-[#e2e8f0]/70">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5 shrink-0" aria-label="ResearchPadi home">
-            <img src={logo} alt="ResearchPadi" className="h-11 w-auto" />
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#e2e8f0]">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-[72px] flex items-center justify-between">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5" aria-label="ResearchPadi home">
+            <img src={logo} alt="ResearchPadi" className="h-12 w-auto" />
           </button>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {[
+              { label: 'Home', id: 'top' },
+              { label: 'About', id: 'about' },
               { label: 'Services', id: 'services' },
               { label: 'Pricing', id: 'pricing' },
               { label: 'FAQs', id: 'faqs' },
             ].map((item) => (
-              <button key={item.id} onClick={() => scrollTo(item.id)} className="text-[13px] font-medium text-[#64748b] hover:text-[#0f172a] transition">
+              <button
+                key={item.id}
+                onClick={() => item.id === 'top' ? window.scrollTo({ top: 0, behavior: 'smooth' }) : scrollTo(item.id)}
+                className="text-[13px] font-semibold text-[#64748b] hover:text-[#2563eb] transition"
+              >
                 {item.label}
               </button>
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-2.5">
-            <button onClick={() => navigate('/login')} className="btn-ghost px-4 py-2 text-[13px]">Log in</button>
-            <button onClick={() => navigate('/login')} className="btn-primary px-4 py-2 text-[13px]">Start writing</button>
+          <div className="hidden md:flex items-center gap-3">
+            <button onClick={() => navigate('/login')} className="text-[13px] font-semibold text-[#64748b] hover:text-[#0f172a]">
+              Log in
+            </button>
+            <button onClick={() => navigate('/login')} className="btn-primary px-4 py-2.5 text-[13px] inline-flex items-center gap-2">
+              <Phone size={14} /> Start writing
+            </button>
           </div>
 
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-[#0f172a]" aria-label="Menu">
-            {mobileMenuOpen ? <span className="text-xl">&times;</span> : <span className="text-xl">&#9776;</span>}
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-[#0f172a]" aria-label="Menu">
+            {mobileMenuOpen ? '×' : '☰'}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-[#e2e8f0] px-5 py-4 space-y-2 shadow-lg">
-            {[
-              { label: 'Services', id: 'services' },
-              { label: 'Pricing', id: 'pricing' },
-              { label: 'FAQs', id: 'faqs' },
-            ].map((item) => (
-              <button key={item.id} onClick={() => scrollTo(item.id)} className="block w-full text-left text-sm font-medium text-[#64748b] py-2">
-                {item.label}
+          <div className="lg:hidden border-t border-[#e2e8f0] bg-white px-5 py-4 space-y-2">
+            {['About', 'Services', 'Pricing', 'FAQs'].map((label) => (
+              <button key={label} onClick={() => scrollTo(label.toLowerCase())} className="block w-full text-left py-2 text-sm font-semibold text-[#64748b]">
+                {label}
               </button>
             ))}
-            <div className="flex gap-2 pt-2">
-              <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="flex-1 btn-ghost py-2.5 text-sm">Log in</button>
-              <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="flex-1 btn-primary py-2.5 text-sm">Start writing</button>
-            </div>
+            <button onClick={() => navigate('/login')} className="btn-primary w-full py-2.5 text-sm mt-2">Start writing</button>
           </div>
         )}
       </nav>
 
-      {/* Hero — brand left, portrait clear on the right */}
-      <section className="relative pt-16 min-h-[88vh] lg:min-h-[92vh] overflow-hidden bg-[#1a2433]">
-        <img
-          src={heroGrad}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover object-[88%_12%] md:object-[92%_8%] lg:object-[95%_5%] hero-ken"
-          style={{ transformOrigin: '80% 8%' }}
-        />
-        {/* Soft left panel so copy never sits on the face */}
-        <div className="absolute inset-y-0 left-0 w-[88%] sm:w-[72%] md:w-[58%] lg:w-[48%] bg-gradient-to-r from-[#0f172a]/92 via-[#0f172a]/72 to-transparent" />
-        {/* Subtle base wash into next section */}
-        <div className="absolute inset-x-0 bottom-0 h-24 sm:h-28 bg-gradient-to-t from-[#f8fafc] to-transparent" />
+      {/* Hero */}
+      <section className="relative bg-[#2563eb] overflow-hidden pb-28 sm:pb-32">
+        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse 50% 60% at 85% 40%, rgba(255,255,255,.25), transparent), radial-gradient(ellipse 40% 50% at 10% 80%, rgba(30,58,138,.45), transparent)',
+        }} />
 
-        <div className="relative max-w-6xl mx-auto px-5 sm:px-8 min-h-[calc(88vh-4rem)] lg:min-h-[calc(92vh-4rem)] flex items-center py-16 sm:py-20">
-          <div className="w-full max-w-[17.5rem] sm:max-w-[19rem] md:max-w-[22rem]">
-            <p className="display text-4xl sm:text-5xl lg:text-[3.5rem] text-white leading-[0.95] mb-4 sm:mb-5 fade-up">
-              ResearchPadi
-            </p>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-white leading-snug mb-3 sm:mb-4 tracking-tight fade-up fade-up-delay">
-              Write papers your supervisors can trust.
-            </h1>
-            <p className="text-sm text-white/80 leading-relaxed mb-7 sm:mb-8 fade-up fade-up-delay-2">
-              The academic writing workspace built for Ghanaian students — drafts, citations, and quality checks in one calm place.
-            </p>
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3 fade-up fade-up-delay-3">
-              <button onClick={() => navigate('/login')} className="bg-white text-[#1e3a5f] px-5 py-3 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#e9eef5] hover:-translate-y-0.5 transition">
-                Start your first paper <ArrowRight size={16} />
-              </button>
-              <button onClick={() => scrollTo('how')} className="border border-white/35 text-white px-5 py-3 rounded-xl text-sm font-bold bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:-translate-y-0.5 transition">
-                See how it works
-              </button>
+        <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-14 sm:pt-20 lg:pt-24">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-8 items-center">
+            <div className="text-white z-10">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70 mb-4 fade-up">Academic writing workspace</p>
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.05] mb-5 fade-up fade-up-delay">
+                <span className="block mb-1">
+                  <GradientShimmer
+                    gradient="bay"
+                    duration={1.6}
+                    spread={2.4}
+                    angle={105}
+                    pauseBetween={1200}
+                    baseColor="rgba(255,255,255,0.55)"
+                    className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight"
+                  >
+                    ResearchPadi
+                  </GradientShimmer>
+                </span>
+                Connecting ideas,<br />building papers.
+              </h1>
+              <p className="text-sm sm:text-base text-white/80 leading-relaxed max-w-md mb-8 fade-up fade-up-delay-2">
+                The AI writing platform built for Ghanaian students — drafts, citations, and quality checks in one calm workspace.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 fade-up fade-up-delay-3">
+                <button onClick={() => navigate('/login')} className="bg-white text-[#2563eb] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#dbeafe] transition">
+                  Get started <ArrowRight size={16} />
+                </button>
+                <button onClick={() => scrollTo('how')} className="border border-white/40 text-white px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-white/10 transition">
+                  <Play size={14} fill="currentColor" /> Learn more
+                </button>
+              </div>
             </div>
+
+            <div className="relative flex justify-center lg:justify-end fade-up fade-up-delay-2">
+              <div className="relative w-full max-w-md">
+                <div className="absolute -inset-4 rounded-[2rem] bg-white/10 blur-2xl" />
+                <img
+                  src={heroGrad}
+                  alt="Graduate celebrating academic success"
+                  className="relative w-full h-[380px] sm:h-[440px] object-cover object-top rounded-[1.75rem] shadow-2xl"
+                />
+                <div className="hero-float absolute -left-3 top-10 bg-white rounded-2xl px-3.5 py-3 shadow-xl hidden sm:flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center"><FileText size={16} /></div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#0f172a]">Paper ready</p>
+                    <p className="text-[10px] text-[#64748b]">APA · plagiarism-checked</p>
+                  </div>
+                </div>
+                <div className="hero-float absolute -right-2 bottom-16 bg-white rounded-2xl px-3.5 py-3 shadow-xl hidden sm:flex items-center gap-2.5" style={{ animationDelay: '1s' }}>
+                  <div className="w-9 h-9 rounded-xl bg-[#dcfce7] text-[#059669] grid place-items-center"><CheckCircle size={16} /></div>
+                  <div>
+                    <p className="text-[11px] font-bold text-[#0f172a]">Supervisor ready</p>
+                    <p className="text-[10px] text-[#64748b]">Quality guards passed</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Overlapping feature cards */}
+        <div className="absolute inset-x-0 bottom-0 translate-y-1/2 px-5 sm:px-8">
+          <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-3 sm:gap-4">
+            {heroFeatures.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className={`bg-white rounded-2xl p-5 shadow-xl border border-[#e2e8f0] reveal reveal-delay-${i + 1}`}>
+                  <div className="w-10 h-10 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center mb-3">
+                    <Icon size={18} />
+                  </div>
+                  <p className="font-bold text-[#0f172a] text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-[#64748b]">{item.desc}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Trust strip */}
-      <section className="border-y border-[#e2e8f0] bg-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4 text-[12px] font-medium text-[#64748b] trust-marquee reveal">
-          <span className="inline-flex items-center gap-2"><Shield size={14} className="text-[#1e3a5f]" /> Plagiarism-aware drafts</span>
-          <span className="inline-flex items-center gap-2"><FileText size={14} className="text-[#1e3a5f]" /> APA · MLA · Chicago · Harvard</span>
-          <span className="inline-flex items-center gap-2"><GraduationCap size={14} className="text-[#1e3a5f]" /> KNUST · UG · UCC · UPSA</span>
-          <span className="inline-flex items-center gap-2"><CheckCircle size={14} className="text-[#059669]" /> Built for Ghanaian curricula</span>
+      {/* About / stats */}
+      <section id="about" className="pt-28 sm:pt-36 pb-20 sm:pb-28 bg-white">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="relative reveal">
+            <div className="rounded-[1.75rem] overflow-hidden bg-[#dbeafe]">
+              <img src={heroGrad} alt="" className="w-full h-[360px] object-cover object-[center_20%]" />
+            </div>
+            <div className="absolute -bottom-5 -right-2 sm:right-6 bg-[#2563eb] text-white rounded-2xl px-5 py-4 shadow-xl">
+              <p className="text-2xl font-extrabold">Built for GH</p>
+              <p className="text-xs text-white/80">University-ready templates</p>
+            </div>
+          </div>
+
+          <div className="reveal reveal-delay-1">
+            <p className="eyebrow mb-3">About ResearchPadi</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a] leading-tight mb-4">
+              Nurturing writers,<br />fueling research.
+            </h2>
+            <p className="text-sm text-[#64748b] leading-relaxed mb-8 max-w-md">
+              Generic AI was not built for Ghanaian universities. ResearchPadi keeps drafts, citations, and quality checks connected from brief to submission.
+            </p>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="rounded-2xl bg-[#f4f7fc] p-5">
+                <p className="text-2xl font-extrabold text-[#2563eb]">10k+</p>
+                <p className="text-xs text-[#64748b] mt-1">Students supported</p>
+              </div>
+              <div className="rounded-2xl bg-[#f4f7fc] p-5">
+                <p className="text-2xl font-extrabold text-[#2563eb]">4+</p>
+                <p className="text-xs text-[#64748b] mt-1">Citation formats</p>
+              </div>
+            </div>
+            <button onClick={() => navigate('/login')} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
+              Learn more <ArrowRight size={15} />
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Services */}
-      <section id="services" className="py-20 sm:py-28 bg-white">
+      <section id="services" className="py-20 sm:py-28 bg-[#f4f7fc]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="max-w-2xl mb-14 reveal">
+          <div className="text-center max-w-2xl mx-auto mb-12 reveal">
             <p className="eyebrow mb-3">Services</p>
-            <h2 className="display text-4xl sm:text-5xl text-[#0f172a] leading-tight mb-3">
-              Everything you need to finish the paper.
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">
+              Tailoring papers for excellence.
             </h2>
-            <p className="text-sm text-[#64748b] leading-relaxed">
-              From first brief to final export — one workspace for the writing Ghanaian students actually do.
-            </p>
           </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {services.map((service, i) => {
               const Icon = service.icon;
               return (
                 <button
                   key={service.title}
                   onClick={() => scrollTo('pricing')}
-                  className={`group text-left reveal reveal-delay-${(i % 3) + 1}`}
+                  className={`${service.tone} text-white rounded-2xl p-6 text-left min-h-[220px] flex flex-col justify-between hover:-translate-y-1 transition reveal reveal-delay-${(i % 4) + 1}`}
                 >
-                  <div className="w-11 h-11 rounded-xl bg-[#e9eef5] text-[#1e3a5f] flex items-center justify-center mb-4 group-hover:bg-[#1e3a5f] group-hover:text-white transition-all duration-300 group-hover:-translate-y-0.5">
+                  <div className="w-11 h-11 rounded-xl bg-white/15 grid place-items-center">
                     <Icon size={20} />
                   </div>
-                  <h3 className="text-lg font-bold text-[#0f172a] mb-1.5 group-hover:text-[#2563eb] transition-colors">{service.title}</h3>
-                  <p className="text-sm text-[#64748b] leading-relaxed">{service.desc}</p>
+                  <div>
+                    <h3 className="text-lg font-extrabold mb-2">{service.title}</h3>
+                    <p className="text-sm text-white/80 leading-relaxed">{service.desc}</p>
+                  </div>
                 </button>
               );
             })}
@@ -229,36 +318,64 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Why */}
-      <section className="py-20 sm:py-28 bg-[#f8fafc]">
+      {/* Offerings grid (job-card style) */}
+      <section className="py-20 sm:py-28 bg-gradient-to-b from-[#dbeafe]/60 to-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-            <div className="reveal">
-              <p className="eyebrow mb-3">Why ResearchPadi</p>
-              <h2 className="display text-4xl sm:text-5xl text-[#0f172a] leading-tight mb-4">
-                Not a chat app with writing bolted on.
-              </h2>
-              <p className="text-sm text-[#64748b] leading-relaxed mb-8 max-w-md">
-                Generic AI was not built for Ghanaian universities. ResearchPadi keeps drafts, citations, and quality checks connected from brief to submission.
-              </p>
-              <button onClick={() => navigate('/login')} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
-                Try it free <ArrowRight size={15} />
-              </button>
-            </div>
+          <div className="text-center max-w-2xl mx-auto mb-12 reveal">
+            <p className="eyebrow mb-3">Ready to write</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">
+              Plans and tools ready to apply.
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {offerings.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className={`bg-white rounded-2xl border border-[#e2e8f0] p-5 hover:shadow-lg hover:-translate-y-0.5 transition reveal reveal-delay-${(i % 3) + 1}`}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-11 h-11 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center">
+                      <Icon size={18} />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb] bg-[#dbeafe] px-2.5 py-1 rounded-lg">{item.tag}</span>
+                  </div>
+                  <h3 className="font-bold text-[#0f172a] mb-1">{item.title}</h3>
+                  <p className="text-xs text-[#64748b] mb-4">{item.meta}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-extrabold text-[#0f172a]">{item.price}</p>
+                    <button onClick={() => navigate('/login')} className="text-xs font-bold text-[#2563eb] hover:underline inline-flex items-center gap-1">
+                      Apply now <ArrowRight size={12} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-            <div className="space-y-0 border-t border-[#e2e8f0]">
-              {[
-                { aspect: 'Ghanaian academic context', rp: 'Trained on local curricula & standards' },
-                { aspect: 'Citation formats', rp: 'APA, MLA, Chicago, Harvard — Ghana-ready' },
-                { aspect: 'Quality guards', rp: 'Multi-layer review for accuracy & relevance' },
-                { aspect: 'University templates', rp: 'KNUST, UG, UCC, UPSA, GIMPA' },
-                { aspect: 'Student pricing', rp: 'From GHS 120/mo or GHS 250/paper' },
-              ].map((row, i) => (
-                <div key={row.aspect} className={`flex gap-4 py-5 border-b border-[#e2e8f0] reveal reveal-delay-${(i % 4) + 1}`}>
-                  <CheckCircle className="w-5 h-5 text-[#2563eb] shrink-0 mt-0.5" />
+      {/* Why choose us */}
+      <section id="how" className="py-20 sm:py-28 bg-white">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-2 gap-3 reveal">
+            {[Users, Target, Clock, BadgeCheck].map((Icon, i) => (
+              <div key={i} className={`rounded-2xl p-8 ${i % 2 === 0 ? 'bg-[#2563eb] text-white' : 'bg-[#dbeafe] text-[#1e3a8a]'} min-h-[140px] flex flex-col justify-between`}>
+                <Icon size={22} />
+                <p className="text-sm font-bold">{['Student-first', 'Source-aware', 'Fast turnaround', 'Export-ready'][i]}</p>
+              </div>
+            ))}
+          </div>
+          <div className="reveal reveal-delay-1">
+            <p className="eyebrow mb-3">Why ResearchPadi</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a] leading-tight mb-8">
+              Finding the right draft,<br />every time.
+            </h2>
+            <div className="space-y-5">
+              {reasons.map((item) => (
+                <div key={item.num} className="flex gap-4">
+                  <span className="text-sm font-extrabold text-[#2563eb] shrink-0">{item.num}</span>
                   <div>
-                    <p className="text-sm font-bold text-[#0f172a]">{row.aspect}</p>
-                    <p className="text-sm text-[#64748b] mt-0.5">{row.rp}</p>
+                    <h3 className="font-bold text-[#0f172a] mb-1">{item.title}</h3>
+                    <p className="text-sm text-[#64748b] leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -267,74 +384,63 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how" className="py-20 sm:py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-xl mx-auto mb-16 reveal">
-            <p className="eyebrow mb-3">Workflow</p>
-            <h2 className="display text-4xl sm:text-5xl text-[#0f172a] leading-tight">
-              Four steps from brief to submission.
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {steps.map((step, i) => (
-              <div key={step.num} className={`reveal reveal-delay-${i + 1}`}>
-                <p className="display text-5xl text-[#e2e8f0] mb-3">{step.num}</p>
-                <h3 className="text-base font-bold text-[#0f172a] mb-2">{step.title}</h3>
-                <p className="text-sm text-[#64748b] leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
-          </div>
+      {/* Banner CTA */}
+      <section className="relative py-24 sm:py-28 overflow-hidden">
+        <img src={heroGrad} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_15%]" />
+        <div className="absolute inset-0 bg-[#1e3a8a]/80" />
+        <div className="relative max-w-3xl mx-auto px-5 text-center text-white reveal">
+          <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-4">
+            Shaping futures, one paper at a time.
+          </h2>
+          <p className="text-sm text-white/75 mb-8 max-w-lg mx-auto">
+            Join Ghanaian students producing clearer, better-cited academic work.
+          </p>
+          <button onClick={() => navigate('/login')} className="bg-white text-[#2563eb] px-7 py-3.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 hover:bg-[#dbeafe] transition">
+            Start writing free <ArrowRight size={16} />
+          </button>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 sm:py-28 bg-[#f8fafc]">
+      <section id="pricing" className="py-20 sm:py-28 bg-[#f4f7fc]">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-xl mx-auto mb-14 reveal">
+          <div className="text-center max-w-xl mx-auto mb-12 reveal">
             <p className="eyebrow mb-3">Pricing</p>
-            <h2 className="display text-4xl sm:text-5xl text-[#0f172a] leading-tight mb-3">
-              Simple plans. No surprises.
-            </h2>
-            <p className="text-sm text-[#64748b]">Start free, upgrade when you need more.</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">Simple plans. Clear results.</h2>
           </div>
-
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {pricingPlans.map((plan, i) => (
               <div
                 key={plan.name}
                 className={`rounded-2xl p-7 transition hover:-translate-y-1 reveal reveal-delay-${i + 1} ${
                   plan.highlighted
-                    ? 'bg-[#1e3a5f] text-white shadow-xl'
-                    : 'bg-white border border-[#e2e8f0] hover:shadow-lg'
+                    ? 'bg-[#2563eb] text-white shadow-xl'
+                    : 'bg-white border border-[#e2e8f0]'
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="inline-flex items-center gap-1.5 bg-white/10 text-white text-[10px] font-bold px-3 py-1 rounded-lg mb-4 uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-1.5 bg-white/15 text-white text-[10px] font-bold px-3 py-1 rounded-lg mb-4 uppercase tracking-wider">
                     <Zap className="w-3 h-3" /> Most popular
                   </div>
                 )}
-                <h3 className={`text-lg font-bold mb-1 ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.name}</h3>
-                <p className={`text-xs mb-5 ${plan.highlighted ? 'text-white/60' : 'text-[#64748b]'}`}>{plan.desc}</p>
+                <h3 className={`text-lg font-extrabold mb-1 ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.name}</h3>
+                <p className={`text-xs mb-5 ${plan.highlighted ? 'text-white/70' : 'text-[#64748b]'}`}>{plan.desc}</p>
                 <div className="flex items-baseline gap-1 mb-6">
-                  <span className={`text-3xl font-bold ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.price}</span>
-                  {plan.period && <span className={`text-sm ${plan.highlighted ? 'text-white/55' : 'text-[#64748b]'}`}>{plan.period}</span>}
+                  <span className={`text-3xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.price}</span>
+                  <span className={`text-sm ${plan.highlighted ? 'text-white/60' : 'text-[#64748b]'}`}>{plan.period}</span>
                 </div>
                 <ul className="space-y-3 mb-7">
                   {plan.features.map((feat) => (
                     <li key={feat} className="flex items-start gap-2.5">
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-white/50' : 'text-[#2563eb]'}`} />
-                      <span className={`text-sm ${plan.highlighted ? 'text-white/80' : 'text-[#64748b]'}`}>{feat}</span>
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-white/70' : 'text-[#2563eb]'}`} />
+                      <span className={`text-sm ${plan.highlighted ? 'text-white/85' : 'text-[#64748b]'}`}>{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <button
                   onClick={() => navigate('/login')}
                   className={`w-full py-3 rounded-xl font-bold text-sm transition ${
-                    plan.highlighted
-                      ? 'bg-white text-[#1e3a5f] hover:bg-[#e9eef5]'
-                      : 'btn-primary'
+                    plan.highlighted ? 'bg-white text-[#2563eb] hover:bg-[#dbeafe]' : 'btn-primary'
                   }`}
                 >
                   {plan.cta}
@@ -348,119 +454,123 @@ export default function Landing() {
       {/* Testimonials */}
       <section className="py-20 sm:py-28 bg-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-14 reveal">
-            <p className="eyebrow mb-3">Students</p>
-            <h2 className="display text-4xl sm:text-5xl text-[#0f172a]">What writers say</h2>
+          <div className="text-center mb-12 reveal">
+            <p className="eyebrow mb-3">Client feedback</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">What students say</h2>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-5">
             {testimonials.map((t, i) => (
-              <blockquote key={t.institution + t.text.slice(0, 20)} className={`relative reveal reveal-delay-${i + 1}`}>
-                <Quote className="w-7 h-7 text-[#e2e8f0] mb-4" />
-                <p className="text-[15px] text-[#0f172a] leading-relaxed mb-6">“{t.text}”</p>
-                <footer>
-                  <p className="text-sm font-bold text-[#0f172a]">{t.name}</p>
-                  <p className="text-xs text-[#64748b] mt-0.5">{t.role} · {t.institution}</p>
-                </footer>
+              <blockquote key={t.initials} className={`rounded-2xl border border-[#e2e8f0] bg-[#f4f7fc] p-6 reveal reveal-delay-${i + 1}`}>
+                <Quote className="w-7 h-7 text-[#bfdbfe] mb-4" />
+                <p className="text-sm text-[#0f172a] leading-relaxed mb-6">“{t.text}”</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#2563eb] text-white text-xs font-bold grid place-items-center">{t.initials}</div>
+                  <div>
+                    <p className="text-sm font-bold text-[#0f172a]">{t.name}</p>
+                    <p className="text-xs text-[#64748b]">{t.role} · {t.institution}</p>
+                  </div>
+                </div>
               </blockquote>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section id="faqs" className="py-20 sm:py-28 bg-[#f8fafc]">
-        <div className="max-w-2xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-12 reveal">
-            <p className="eyebrow mb-3">FAQ</p>
-            <h2 className="display text-4xl sm:text-5xl text-[#0f172a]">Questions, answered</h2>
+      {/* Contact + FAQ */}
+      <section id="faqs" className="py-20 sm:py-28 bg-[#f4f7fc]">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-8 items-start">
+          <div className="bg-[#1e3a8a] text-white rounded-[1.75rem] p-7 sm:p-8 reveal">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60 mb-3">Contact</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-2">Ready to start your paper?</h2>
+            <p className="text-sm text-white/70 mb-8">Create an account and brief your first draft in minutes.</p>
+            <div className="space-y-3 mb-8">
+              <div className="flex items-center gap-3 text-sm text-white/85"><Mail size={16} /> hello@researchpadi.com</div>
+              <div className="flex items-center gap-3 text-sm text-white/85"><Phone size={16} /> Kumasi, Ghana</div>
+            </div>
+            <button onClick={() => navigate('/login')} className="bg-white text-[#1e3a8a] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 hover:bg-[#dbeafe] transition">
+              Start writing free <ArrowRight size={16} />
+            </button>
           </div>
 
-          <div className="space-y-2">
-            {faqs.map((faq, i) => (
-              <div key={faq.q} className={`rounded-xl border bg-white transition reveal reveal-delay-${(i % 4) + 1} ${openFaq === i ? 'border-[#cbd5e1]' : 'border-[#e2e8f0] hover:border-[#cbd5e1]'}`}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-5 py-4 text-left">
-                  <span className="text-sm font-bold text-[#0f172a] pr-4">{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-[#64748b] shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`} />
-                </button>
-                {openFaq === i && (
-                  <div className="px-5 pb-4">
-                    <p className="text-sm text-[#64748b] leading-relaxed">{faq.a}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="reveal reveal-delay-1">
+            <p className="eyebrow mb-3">FAQ</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] mb-6">Frequently asked questions</h2>
+            <div className="space-y-2">
+              {faqs.map((faq, i) => (
+                <div key={faq.q} className={`rounded-xl border bg-white transition ${openFaq === i ? 'border-[#bfdbfe]' : 'border-[#e2e8f0]'}`}>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-5 py-4 text-left">
+                    <span className="text-sm font-bold text-[#0f172a] pr-4">{faq.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-[#64748b] shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                  </button>
+                  {openFaq === i && (
+                    <div className="px-5 pb-4">
+                      <p className="text-sm text-[#64748b] leading-relaxed">{faq.a}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section id="contact" className="py-24 sm:py-32 bg-[#1e3a5f] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(37,99,235,.35), transparent)',
-        }} />
-        <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center relative z-10 reveal">
-          <h2 className="display text-4xl sm:text-5xl text-white leading-tight mb-4">
-            Ready to write your best paper?
-          </h2>
-          <p className="text-sm text-white/65 max-w-md mx-auto mb-8 leading-relaxed">
-            Join Ghanaian students producing clearer, better-cited academic work — starting free today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button onClick={() => navigate('/login')} className="bg-white text-[#1e3a5f] px-7 py-3.5 rounded-xl font-bold text-sm hover:bg-[#e9eef5] hover:-translate-y-0.5 transition">
-              Start writing for free
-            </button>
-            <button onClick={() => navigate('/login')} className="border border-white/25 text-white px-7 py-3.5 rounded-xl font-bold text-sm hover:bg-white/10 hover:-translate-y-0.5 transition">
-              Sign in
-            </button>
-          </div>
+      {/* Stats bar */}
+      <section className="bg-[#2563eb] text-white">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {[
+            ['10k+', 'Students'],
+            ['4+', 'Citation styles'],
+            ['99%', 'Original drafts'],
+            ['GH', 'University templates'],
+          ].map(([value, label]) => (
+            <div key={label}>
+              <p className="text-3xl font-extrabold">{value}</p>
+              <p className="text-xs text-white/70 mt-1">{label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0f172a] pt-16 pb-8">
+      <footer className="bg-[#0f172a] pt-16 pb-8 text-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <img src={logo} alt="ResearchPadi" className="h-14 w-auto mb-4 brightness-0 invert opacity-90" />
-              <p className="text-sm text-[#64748b] leading-relaxed max-w-xs">
-                Ghana's academic writing workspace. Built for every tertiary student.
+              <img src={logo} alt="ResearchPadi" className="h-12 w-auto mb-4 brightness-0 invert opacity-90" />
+              <p className="text-sm text-[#94a3b8] leading-relaxed">
+                Ghana&apos;s academic writing workspace. Built for every tertiary student.
               </p>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider mb-4">Product</h4>
+              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Product</h4>
               <ul className="space-y-2.5">
                 {['Services', 'Pricing', 'FAQs'].map((item) => (
                   <li key={item}>
-                    <button onClick={() => scrollTo(item.toLowerCase())} className="text-sm text-[#64748b] hover:text-white transition">{item}</button>
+                    <button onClick={() => scrollTo(item.toLowerCase())} className="text-sm text-[#94a3b8] hover:text-white transition">{item}</button>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider mb-4">Company</h4>
-              <ul className="space-y-2.5">
-                {['About', 'Blog', 'Careers'].map((item) => (
-                  <li key={item}><span className="text-sm text-[#64748b]">{item}</span></li>
-                ))}
+              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Company</h4>
+              <ul className="space-y-2.5 text-sm text-[#94a3b8]">
+                <li>About</li>
+                <li>Blog</li>
+                <li>Careers</li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-[#94a3b8] uppercase tracking-wider mb-4">Legal</h4>
-              <ul className="space-y-2.5">
-                {['Privacy Policy', 'Terms of Service'].map((item) => (
-                  <li key={item}><span className="text-sm text-[#64748b]">{item}</span></li>
-                ))}
-              </ul>
+              <h4 className="text-xs font-bold text-[#cbd5e1] uppercase tracking-wider mb-4">Stay updated</h4>
+              <p className="text-sm text-[#94a3b8] mb-3">Get writing tips for Ghanaian students.</p>
+              <button onClick={() => navigate('/login')} className="btn-primary px-4 py-2.5 text-sm">Subscribe</button>
             </div>
           </div>
-
-          <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-[#475569]">&copy; {new Date().getFullYear()} ResearchPadi by AbusuaITLabs, Kumasi, Ghana.</p>
-            <div className="flex items-center gap-4 text-xs text-[#475569]">
-              <span className="inline-flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-[#059669]" /> SSL Encrypted</span>
-              <span className="inline-flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> GDPR Compliant</span>
-            </div>
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between gap-3 text-xs text-[#64748b]">
+            <p>&copy; {new Date().getFullYear()} ResearchPadi by AbusuaITLabs, Kumasi, Ghana.</p>
+            <p className="inline-flex items-center gap-3">
+              <span className="inline-flex items-center gap-1"><Shield size={12} className="text-[#059669]" /> SSL</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle size={12} className="text-[#059669]" /> GDPR</span>
+            </p>
           </div>
         </div>
       </footer>

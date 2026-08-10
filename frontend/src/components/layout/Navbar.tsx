@@ -16,8 +16,8 @@ export default function Navbar() {
   const linkClass = (path: string) =>
     `px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 ${
       isActive(path)
-        ? 'bg-[#e9eef5] text-[#1e3a5f]'
-        : 'text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+        ? 'bg-[#dbeafe] text-[#1d4ed8]'
+        : 'text-[#64748b] hover:bg-[#f4f7fc] hover:text-[#0f172a]'
     }`;
 
   return (
@@ -25,7 +25,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-5 lg:px-8 py-3 flex justify-between items-center">
         <div className="flex items-center gap-8">
           <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2.5" aria-label="Go to dashboard">
-            <span className="grid place-items-center w-9 h-9 rounded-xl bg-[#1e3a5f] text-white font-bold text-lg">R</span>
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-[#2563eb] text-white font-bold text-lg">R</span>
             <span className="hidden sm:block text-lg font-bold tracking-tight text-[#0f172a]">
               Research<span className="text-[#2563eb]">Padi</span>
             </span>

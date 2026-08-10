@@ -9,17 +9,18 @@
 }
 
 :root {
-  /* Quiet Library — Pinterest academic SaaS */
-  --paper: #f8fafc;
+  /* Talent-inspired academic blue system */
+  --paper: #f4f7fc;
   --surface: #ffffff;
   --ink: #0f172a;
   --muted: #64748b;
   --rule: #e2e8f0;
 
-  --primary: #1e3a5f;
-  --primary-hover: #152942;
-  --accent: #2563eb;
-  --accent-soft: #e9eef5;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-deep: #1e3a8a;
+  --accent: #3b82f6;
+  --accent-soft: #dbeafe;
   --highlight: #bfdbfe;
 
   --success: #059669;
@@ -29,12 +30,11 @@
   --danger: #dc2626;
   --danger-soft: #fef2f2;
 
-  /* Legacy aliases */
-  --navy: var(--primary);
+  --navy: var(--primary-deep);
   --saffron: var(--accent);
   --sage: var(--accent-soft);
 
-  font-family: 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
   color: var(--ink);
   background: var(--paper);
   font-synthesis: none;
