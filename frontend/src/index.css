@@ -8,11 +8,60 @@
   box-sizing: border-box;
 }
 
-body {
-  min-height: 100vh;
-  background-color: #f9fafb;
+:root {
+  /* Quiet Library — Pinterest academic SaaS */
+  --paper: #f8fafc;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --rule: #e2e8f0;
+
+  --primary: #1e3a5f;
+  --primary-hover: #152942;
+  --accent: #2563eb;
+  --accent-soft: #e9eef5;
+  --highlight: #bfdbfe;
+
+  --success: #059669;
+  --success-soft: #ecfdf5;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+
+  /* Legacy aliases */
+  --navy: var(--primary);
+  --saffron: var(--accent);
+  --sage: var(--accent-soft);
+
+  font-family: 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-#root {
+html { scroll-behavior: smooth; }
+
+body {
   min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+#root { min-height: 100vh; }
+
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+
+::selection { background: var(--highlight); color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -4,6 +4,7 @@ import { workspaceService } from '../services/workspaceService';
 import { subscriptionService } from '../services/subscriptionService';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import Navbar from '../components/layout/Navbar';
+import { FilePenLine, Plus, Trash2 } from 'lucide-react';
 
 export default function WorkspaceList() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function WorkspaceList() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col app-shell">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">Loading workspace...</p>
@@ -81,20 +82,21 @@ export default function WorkspaceList() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col app-shell">
       <Navbar />
-      <div className="flex-1 p-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+      <main className="flex-1 px-5 py-10 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-9">
             <div>
-              <h1 className="text-3xl font-bold">Workspace</h1>
-              <p className="text-gray-600 mt-1">Write with real-time AI assistance</p>
+              <p className="eyebrow mb-2">Writing studio</p>
+              <h1 className="text-4xl font-bold">Your workspace</h1>
+              <p className="text-gray-600 mt-2">A focused place to think, draft, and refine with real-time AI assistance.</p>
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="px-6 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition"
+              className="px-5 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition inline-flex items-center gap-2"
             >
-              {showForm ? 'Cancel' : '+ New Session'}
+              {showForm ? 'Cancel' : <><Plus size={17} /> New session</>}
             </button>
           </div>
 
@@ -103,7 +105,7 @@ export default function WorkspaceList() {
           )}
 
           {showForm && (
-            <form onSubmit={handleCreate} className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <form onSubmit={handleCreate} className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-1 font-medium text-sm">Session Title</label>
@@ -138,7 +140,7 @@ export default function WorkspaceList() {
 
           {sessions.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-5xl mb-4">✍️</div>
+              <FilePenLine className="mx-auto mb-4 text-[#2563eb]" size={38} />
               <h3 className="text-xl font-bold text-gray-700 mb-2">No sessions yet</h3>
               <p className="text-gray-500 mb-6">Create your first workspace session to start writing with AI.</p>
               <button
@@ -154,9 +156,9 @@ export default function WorkspaceList() {
                 <div
                   key={session.id}
                   onClick={() => navigate(`/workspace/${session.id}`)}
-                  className="bg-white rounded-xl shadow-md p-6 border-2 border-gray-100 border-gray-200 transition cursor-pointer"
+                  className="group bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:border-[#2563eb] hover:-translate-y-0.5 transition cursor-pointer"
                 >
-                  <h3 className="font-bold text-lg mb-1 truncate">
+                    <h3 className="font-bold text-lg mb-1 truncate group-hover:text-[#1e3a5f]">
                     {session.title || 'Untitled Session'}
                   </h3>
                   {session.course && (
@@ -171,11 +173,11 @@ export default function WorkspaceList() {
                     <span className="text-xs text-gray-400">
                       {new Date(session.updated_at).toLocaleDateString()}
                     </span>
-                    <button
+                      <button
                       onClick={(e) => handleDelete(session.id, e)}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
-                    >
-                      Delete
+                       className="text-xs text-gray-400 hover:text-red-600 font-medium inline-flex items-center gap-1"
+                     >
+                       <Trash2 size={13} /> Delete
                     </button>
                   </div>
                 </div>
@@ -183,7 +185,7 @@ export default function WorkspaceList() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

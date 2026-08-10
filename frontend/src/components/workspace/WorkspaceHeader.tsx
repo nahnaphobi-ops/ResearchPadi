@@ -15,36 +15,36 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
   const { activeSession } = useWorkspaceStore();
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shrink-0">
+    <div className="bg-[#1e3a5f] text-white border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/workspace')}
-          className="text-gray-500 hover:text-gray-700 font-medium text-sm"
+          className="text-white/65 hover:text-white font-medium text-sm"
         >
           ← Back
         </button>
-        <h2 className="font-bold text-sm truncate max-w-xs">
+          <h2 className="font-bold text-sm truncate max-w-xs text-white">
           {activeSession?.title || 'Untitled'}
         </h2>
         {activeSession?.course && (
-          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+          <span className="text-xs bg-white/10 text-[#bfdbfe] px-2 py-0.5 rounded-lg">
             {activeSession.course}
           </span>
         )}
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-400">{wordCount.toLocaleString()} words</span>
-        <span className="text-xs text-gray-400">{charCount.toLocaleString()} chars</span>
+         <span className="text-xs text-white/55 hidden sm:inline">{wordCount.toLocaleString()} words</span>
+         <span className="text-xs text-white/55 hidden sm:inline">{charCount.toLocaleString()} chars</span>
         {lastSaved && (
-          <span className="text-xs text-gray-400">
+            <span className="text-xs text-white/55 hidden md:inline">
             Saved {lastSaved.toLocaleTimeString()}
           </span>
         )}
-        {saving && <span className="text-xs text-blue-500 animate-pulse">Saving...</span>}
+        {saving && <span className="text-xs text-[#bfdbfe] animate-pulse">Saving...</span>}
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-4 py-1.5 bg-blue-600 text-white text-xs rounded font-medium hover:bg-blue-700 disabled:bg-blue-300 transition"
+          className="px-4 py-2 bg-white text-[#1e3a5f] text-xs rounded-xl font-bold hover:bg-[#e9eef5] disabled:opacity-50 transition"
         >
           Save
         </button>

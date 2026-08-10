@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
 import logo from '../assets/logo.svg';
-import AdinkraBackground from '../components/common/AdinkraBackground';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -12,7 +11,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
-  
+
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -86,7 +85,7 @@ export default function Login() {
       const response = await authService.verifyOtp(phone, otp);
       const { token, user, isNewUser } = response.data;
       setAuth(token, user);
-      
+
       if (isNewUser) {
         navigate('/register');
       } else {
@@ -100,95 +99,105 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 relative overflow-hidden">
-      <AdinkraBackground count={10} />
-
-      <button
-        type="button"
-        onClick={() => navigate('/')}
-        className="absolute top-5 left-5 z-20 inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5" />
-          <path d="M12 19l-7-7 7-7" />
-        </svg>
-        Back to Home
-      </button>
-
-      <div className="w-full max-w-md p-8 bg-white rounded shadow-lg z-10">
-        <img src={logo} alt="ResearchPadi" className="h-20 w-auto mx-auto mb-6" />
-        {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}
-        
-        {step === 1 ? (
-          <form onSubmit={handleRequestOtp}>
-            <label className="block mb-2 font-medium" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>Phone Number</label>
-            <input 
-              type="text" 
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500" 
-              placeholder="e.g. 0244123456"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-            <button 
-              disabled={loading}
-              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
-              style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-            >
-              {loading ? 'Sending...' : 'Send OTP'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp}>
-            <p className="mb-4 text-sm text-gray-600 text-center" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>
-              Enter the 6-digit code sent to {phone}
-            </p>
-            <label className="block mb-2 font-medium" style={{ fontFamily: "'SlimSansSerif', sans-serif" }}>Enter OTP</label>
-            <input 
-              type="text" 
-              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-gray-500" 
-              placeholder="123456"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-              maxLength={6}
-            />
-            <button 
-              disabled={loading}
-              className="w-full p-3 bg-green-600 text-white rounded font-bold hover:bg-green-700 disabled:bg-green-300"
-              style={{ fontFamily: "'SlimSansSerif', sans-serif" }}
-            >
-              {loading ? 'Verifying...' : 'Verify & Login'}
-            </button>
-            <button 
-              type="button"
-              onClick={() => setStep(1)} 
-              className="w-full mt-4 text-gray-800 hover:underline"
-            >
-              Change Phone Number
-            </button>
-            <button 
-              type="button"
-              onClick={handleResendOtp}
-              disabled={resendTimer > 0 || loading}
-              className="w-full mt-2 text-sm text-gray-500 hover:text-gray-700 disabled:text-gray-300"
-            >
-              {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
-            </button>
-          </form>
-        )}
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={handleTryDemo}
-            disabled={loading}
-            className="w-full p-3 mb-4 bg-[#C5CEBD] text-gray-900 rounded font-bold hover:bg-[#a8b49e] disabled:bg-gray-400 transition"
-          >
-            {loading ? 'Loading Demo...' : 'Try Demo Account'}
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#f8fafc]">
+      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-[#1e3a5f] text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-40 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse 70% 50% at 20% 20%, rgba(37,99,235,.45), transparent), radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,255,255,.08), transparent)',
+        }} />
+        <div className="relative z-10">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2.5">
+            <span className="grid place-items-center w-10 h-10 rounded-xl bg-white text-[#1e3a5f] font-bold text-lg">R</span>
+            <span className="text-xl font-bold tracking-tight">ResearchPadi</span>
           </button>
-          <a href="/admin/login" className="text-xs text-gray-400 hover:text-gray-600 underline">
-            Admin Login
-          </a>
+        </div>
+        <div className="relative z-10 max-w-md">
+          <p className="display text-4xl leading-tight mb-4">Write papers your supervisors can trust.</p>
+          <p className="text-white/65 text-sm leading-relaxed">
+            Sign in to continue drafting, citing, and refining academic work built for Ghanaian universities.
+          </p>
+        </div>
+        <p className="relative z-10 text-xs text-white/40">AbusuaITLabs · Kumasi, Ghana</p>
+      </div>
+
+      <div className="flex flex-col items-center justify-center px-5 py-12 relative">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="absolute top-5 left-5 lg:hidden inline-flex items-center gap-1.5 text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition"
+        >
+          ← Back
+        </button>
+
+        <div className="w-full max-w-md bg-white rounded-2xl border border-[#e2e8f0] p-8 shadow-sm">
+          <img src={logo} alt="ResearchPadi" className="h-14 w-auto mx-auto mb-2 lg:hidden" />
+          <h1 className="display text-3xl text-center text-[#0f172a] mb-1">Welcome back</h1>
+          <p className="text-sm text-center text-[#64748b] mb-8">
+            {step === 1 ? 'Enter your phone number to receive a one-time code.' : `Enter the code sent to ${phone}`}
+          </p>
+
+          {error && <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-xl">{error}</div>}
+
+          {step === 1 ? (
+            <form onSubmit={handleRequestOtp} className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-[#0f172a]">Phone number</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border rounded-xl focus:ring-0"
+                  placeholder="e.g. 0244123456"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
+                {loading ? 'Sending...' : 'Send OTP'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium text-[#0f172a]">One-time code</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border rounded-xl text-center tracking-[0.35em] text-xl"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                />
+              </div>
+              <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
+                {loading ? 'Verifying...' : 'Verify & continue'}
+              </button>
+              <button type="button" onClick={() => setStep(1)} className="w-full text-sm text-[#2563eb] font-medium hover:underline">
+                Change phone number
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendTimer > 0 || loading}
+                className="w-full text-sm text-[#64748b] hover:text-[#0f172a] disabled:text-[#cbd5e1]"
+              >
+                {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-8 pt-6 border-t border-[#e2e8f0]">
+            <button
+              type="button"
+              onClick={handleTryDemo}
+              disabled={loading}
+              className="w-full p-3.5 mb-3 bg-[#e9eef5] text-[#1e3a5f] rounded-xl font-bold text-sm hover:bg-[#dbe4f0] disabled:opacity-50 transition"
+            >
+              {loading ? 'Loading demo...' : 'Try demo account'}
+            </button>
+            <a href="/admin/login" className="block text-center text-xs text-[#94a3b8] hover:text-[#64748b] underline">
+              Admin login
+            </a>
+          </div>
         </div>
       </div>
     </div>

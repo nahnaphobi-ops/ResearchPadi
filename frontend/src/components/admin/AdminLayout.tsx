@@ -1,7 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAdminStore } from '../../store/useAdminStore';
 import { adminService } from '../../services/adminService';
-import logo from '../../assets/logo.svg';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -22,55 +21,55 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div className="min-h-screen app-shell">
+      <nav className="bg-[#1e3a5f] border-b border-white/10 sticky top-0 z-50 text-white">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 py-3 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
           <div className="flex items-center gap-6">
-            <img src={logo} alt="ResearchPadi" className="h-10 w-auto" />
+            <div className="flex items-center gap-2"><span className="grid place-items-center w-9 h-9 rounded-xl bg-white text-[#1e3a5f] font-bold text-lg">R</span><span className="font-bold">ResearchPadi <span className="text-white/45 font-normal">/ admin</span></span></div>
             <div className="flex gap-1">
               <button
                 onClick={() => navigate('/admin')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Overview
               </button>
               <button
                 onClick={() => navigate('/admin/users')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin/users') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/users') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Users
               </button>
               <button
                 onClick={() => navigate('/admin/transactions')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin/transactions') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/transactions') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Transactions
               </button>
               <button
                 onClick={() => navigate('/admin/subscriptions')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin/subscriptions') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/subscriptions') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Subscriptions
               </button>
               <button
                 onClick={() => navigate('/admin/papers')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin/papers') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/papers') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Papers
               </button>
               <button
                 onClick={() => navigate('/admin/writing-assist')}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition ${isActive('/admin/writing-assist') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/writing-assist') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Writing Assist
               </button>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">{admin?.email}</span>
+             <span className="text-sm text-white/55">{admin?.email}</span>
             <button
               onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+               className="text-sm text-white/65 hover:text-white font-medium"
             >
               Logout
             </button>
