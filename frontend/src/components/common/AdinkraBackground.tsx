@@ -114,7 +114,7 @@ export default function AdinkraBackground({ count = 12, className = '' }: Adinkr
         >
           <svg
             viewBox="0 0 100 100"
-            className="w-full h-full text-[#2563eb]"
+            className="w-full h-full text-navy"
             aria-hidden="true"
           >
             <use href={`#${item.symbol.id}`} />

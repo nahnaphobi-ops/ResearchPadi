@@ -15,7 +15,7 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
   const { activeSession } = useWorkspaceStore();
 
   return (
-    <div className="bg-[#2563eb] text-white border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
+    <div className="bg-navy text-white border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/workspace')}
@@ -27,7 +27,7 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
           {activeSession?.title || 'Untitled'}
         </h2>
         {activeSession?.course && (
-          <span className="text-xs bg-white/10 text-[#bfdbfe] px-2 py-0.5 rounded-lg">
+          <span className="text-xs bg-white/10 text-white/85 px-2 py-0.5 rounded-lg">
             {activeSession.course}
           </span>
         )}
@@ -40,11 +40,11 @@ export const WorkspaceHeader: React.FC<Props> = ({ wordCount, charCount, lastSav
             Saved {lastSaved.toLocaleTimeString()}
           </span>
         )}
-        {saving && <span className="text-xs text-[#bfdbfe] animate-pulse">Saving...</span>}
+        {saving && <span className="text-xs text-white/80 animate-pulse">Saving...</span>}
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-4 py-2 bg-white text-[#2563eb] text-xs rounded-xl font-bold hover:bg-[#dbeafe] disabled:opacity-50 transition"
+          className="px-4 py-2 bg-brand text-white text-xs rounded-[10px] font-bold hover:bg-brand-hover disabled:opacity-50 transition"
         >
           Save
         </button>

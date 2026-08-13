@@ -13,7 +13,7 @@ export const EditorArea: React.FC<Props> = ({ editor, handleExportDocx, handleIn
     <div className="shrink-0">
       <Toolbar editor={editor} onExportDocx={handleExportDocx} onInsertToc={handleInsertToc} />
     </div>
-    <div className="flex-1 overflow-y-auto bg-[#f4f7fc] p-6">
+    <div className="flex-1 overflow-y-auto bg-navy-mist p-6">
       <div className="mx-auto bg-white shadow-xl border border-gray-300" style={{ maxWidth: '816px', minHeight: '1056px' }}>
         <EditorContent
           editor={editor}

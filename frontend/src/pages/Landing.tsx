@@ -1,42 +1,46 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import heroGrad from '../assets/hero-grad-clean.png';
-import heroGradCutout from '../assets/hero-grad-transparent.png';
 import BrandLogo from '../components/common/BrandLogo';
-import { GradientShimmer } from '@/components/ui/gradient-shimmer';
+import HeroStudent from '../components/brand/HeroStudent';
 import {
-  ChevronDown, CheckCircle, Shield, Zap, Play,
-  FileText, BookOpen, GraduationCap, Award, PenTool,
-  Sparkles, Quote, ArrowRight, Phone, Users, Clock, Target,
-  BadgeCheck, Mail
+  ChevronDown, CheckCircle, Shield, ArrowRight, Phone, Mail,
+  Search, ShoppingBag, Heart, Star, Clock, Users, BookOpen,
+  Headphones, GraduationCap, FileText, Quote, DollarSign, Repeat, Share2,
 } from 'lucide-react';
 
-const heroFeatures = [
-  { title: 'Local Context', desc: 'Built for Ghanaian curricula', icon: GraduationCap },
-  { title: 'Quality Guards', desc: 'Accuracy checks before export', icon: Shield },
-  { title: 'Fast Drafts', desc: 'From brief to paper in minutes', icon: Zap },
+const navItems = [
+  { label: 'Home', id: 'top' },
+  { label: 'Courses', id: 'courses' },
+  { label: 'Teachers', id: 'about' },
+  { label: 'Students', id: 'students' },
+  { label: 'Pricing', id: 'pricing' },
+  { label: 'Contact', id: 'contact' },
 ];
 
-const services = [
-  { title: 'Research Papers', desc: 'Undergraduate to journal-ready drafts with local academic context.', icon: FileText, tone: 'bg-[#2563eb]' },
-  { title: 'Thesis Support', desc: 'Chapter-by-chapter structure for proposals through defense prep.', icon: GraduationCap, tone: 'bg-[#3b82f6]' },
-  { title: 'Literature Review', desc: 'Systematic and narrative reviews grounded in African sources.', icon: BookOpen, tone: 'bg-[#1d4ed8]' },
-  { title: 'Editing & Cite', desc: 'Grammar, structure, citations, and university formatting.', icon: Sparkles, tone: 'bg-[#60a5fa]' },
+const features = [
+  { icon: GraduationCap, label: '10k+ student drafts' },
+  { icon: Repeat, label: 'Workspace access' },
+  { icon: DollarSign, label: 'Student pricing' },
+  { icon: Headphones, label: 'Priority support' },
+  { icon: Users, label: 'Ghana community' },
 ];
 
-const offerings = [
-  { title: 'Complete Paper', meta: 'End-to-end generation', price: 'GHS 250', tag: 'Per paper', icon: FileText },
-  { title: 'Standard Plan', meta: 'Assisted writing monthly', price: 'GHS 120', tag: 'Monthly', icon: PenTool },
-  { title: 'Premium Plan', meta: 'Thesis + priority review', price: 'GHS 200', tag: 'Monthly', icon: Award },
-  { title: 'Literature Mode', meta: 'Source-grounded reviews', price: 'Included', tag: 'Premium', icon: BookOpen },
-  { title: 'Citation Pack', meta: 'APA · MLA · Chicago · Harvard', price: 'Included', tag: 'All plans', icon: BadgeCheck },
-  { title: 'University Templates', meta: 'KNUST · UG · UCC · UPSA', price: 'Included', tag: 'All plans', icon: GraduationCap },
+const courseFilters = [
+  { key: 'research', title: 'Research Papers', count: '12 courses', icon: FileText },
+  { key: 'thesis', title: 'Thesis Support', count: '8 courses', icon: GraduationCap },
+  { key: 'review', title: 'Literature Review', count: '6 courses', icon: BookOpen },
+  { key: 'cite', title: 'Citations & Edit', count: '9 courses', icon: Quote },
 ];
 
-const reasons = [
-  { num: '01', title: 'Profile the right draft', desc: 'Brief your topic, level, and deadline — ResearchPadi maps Ghanaian university expectations.' },
-  { num: '02', title: 'Write with academic guardrails', desc: 'Citations, structure, and quality checks stay connected inside one workspace.' },
-  { num: '03', title: 'Submit with confidence', desc: 'Export Word or PDF ready for supervisors, departments, and journal formats.' },
+const allCourses = [
+  { filter: 'research', weeks: '04 WEEKS', title: 'Complete research paper from brief to export', lessons: 12, students: 2400, level: 'Beginner', teacher: 'Ama Boateng', price: 'GHS 250', tone: 'from-brand to-navy' },
+  { filter: 'thesis', weeks: '08 WEEKS', title: 'Thesis chapters with supervisor-ready structure', lessons: 18, students: 980, level: 'Advanced', teacher: 'Kwame Mensah', price: 'GHS 200', tone: 'from-gold to-[#E0B000]' },
+  { filter: 'review', weeks: '03 WEEKS', title: 'Literature reviews grounded in African journals', lessons: 10, students: 1600, level: 'Beginner', teacher: 'Efua Asante', price: 'FREE', tone: 'from-[#7EB6E9] to-brand' },
+  { filter: 'cite', weeks: '02 WEEKS', title: 'APA, MLA, Chicago and Harvard citation studio', lessons: 8, students: 2100, level: 'Beginner', teacher: 'Yaw Osei', price: 'FREE', tone: 'from-alert to-[#E03A3A]' },
+  { filter: 'research', weeks: '05 WEEKS', title: 'University templates for KNUST, UG, UCC and UPSA', lessons: 6, students: 3100, level: 'Beginner', teacher: 'Akosua Darko', price: 'FREE', tone: 'from-navy to-brand' },
+  { filter: 'thesis', weeks: '06 WEEKS', title: 'Quality guards before every submission', lessons: 9, students: 1200, level: 'Intermediate', teacher: 'Kojo Ampofo', price: 'GHS 120', tone: 'from-brand to-[#7EB6E9]' },
+  { filter: 'review', weeks: '04 WEEKS', title: 'Assisted writing workspace with live AI help', lessons: 14, students: 870, level: 'Intermediate', teacher: 'Abena Sarpong', price: 'GHS 120', tone: 'from-[#24356F] to-gold' },
+  { filter: 'cite', weeks: '10 WEEKS', title: 'Priority review and dissertation mode', lessons: 16, students: 540, level: 'Advanced', teacher: 'Nana Adjei', price: 'GHS 200', tone: 'from-navy to-alert' },
 ];
 
 const pricingPlans = [
@@ -87,6 +91,8 @@ export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [filter, setFilter] = useState('research');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const nodes = document.querySelectorAll('.reveal');
@@ -104,141 +110,135 @@ export default function Landing() {
     );
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, []);
+  }, [filter]);
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
+    if (id === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const visibleCourses = allCourses.filter((c) => c.filter === filter);
+
   return (
-    <div className="flex flex-col min-h-screen bg-white text-[#0f172a]">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#e2e8f0]">
-        <div className="relative w-full px-3 sm:px-4 h-[72px] flex items-center justify-between gap-3">
-          <BrandLogo
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            markClassName="h-10 w-auto"
-            className="shrink-0"
-          />
-
-          <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-            {[
-              { label: 'Home', id: 'top' },
-              { label: 'About', id: 'about' },
-              { label: 'Services', id: 'services' },
-              { label: 'Pricing', id: 'pricing' },
-              { label: 'FAQs', id: 'faqs' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => item.id === 'top' ? window.scrollTo({ top: 0, behavior: 'smooth' }) : scrollTo(item.id)}
-                className="text-[13px] font-semibold text-[#64748b] hover:text-[#2563eb] transition"
-              >
-                {item.label}
-              </button>
-            ))}
+    <div className="relative flex flex-col min-h-screen bg-white text-ink overflow-x-hidden">
+      <div className="bg-navy text-white text-xs">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4 text-white/80">
+            <span className="inline-flex items-center gap-1.5"><Phone size={12} /> Kumasi, Ghana</span>
+            <span className="inline-flex items-center gap-1.5"><Mail size={12} /> hello@researchpadi.com</span>
+            <span className="hidden sm:inline">Mon – Fri, 8am – 6pm</span>
           </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <button onClick={() => navigate('/login')} className="hidden md:inline text-[13px] font-semibold text-[#64748b] hover:text-[#0f172a]">
-              Log in
-            </button>
-            <button onClick={() => navigate('/login')} className="hidden md:inline-flex btn-primary px-4 py-2.5 text-[13px] items-center gap-2">
-              <Phone size={14} /> Start writing
-            </button>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-[#0f172a]" aria-label="Menu">
-              {mobileMenuOpen ? '×' : '☰'}
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-white/70">
+              <Share2 size={13} />
+            </div>
+            <button onClick={() => navigate('/login')} className="font-semibold hover:text-gold">
+              Login / Register
             </button>
           </div>
         </div>
+      </div>
 
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#e2e8f0] bg-white px-3 sm:px-4 py-4 space-y-2">
-            {['About', 'Services', 'Pricing', 'FAQs'].map((label) => (
-              <button key={label} onClick={() => scrollTo(label.toLowerCase())} className="block w-full text-left py-2 text-sm font-semibold text-[#64748b]">
-                {label}
+      <nav className="sticky top-0 z-50 bg-white border-b border-rule">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-8 h-[78px] flex items-center justify-between gap-4">
+          <BrandLogo markClassName="h-9 w-9" onClick={() => scrollTo('top')} />
+
+          <div className="hidden lg:flex items-center gap-6">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollTo(item.id)}
+                className="text-[12px] font-bold uppercase tracking-wide text-navy hover:text-brand transition inline-flex items-center gap-1"
+              >
+                {item.label}
+                {item.id !== 'contact' && item.id !== 'top' && <ChevronDown size={12} className="text-muted" />}
               </button>
             ))}
-            <button onClick={() => navigate('/login')} className="btn-primary w-full py-2.5 text-sm mt-2 md:hidden">Log in / Start writing</button>
+          </div>
+
+          <div className="hidden md:flex items-center gap-3">
+            <label className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') scrollTo('courses'); }}
+                placeholder="Search..."
+                className="h-10 w-40 lg:w-48 rounded-full border border-rule pl-9 pr-3 text-sm"
+              />
+            </label>
+            <button onClick={() => scrollTo('courses')} className="relative p-2 text-navy" aria-label="Saved">
+              <Heart size={18} />
+              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-alert text-white text-[10px] font-bold grid place-items-center">1</span>
+            </button>
+            <button onClick={() => scrollTo('pricing')} className="relative p-2 text-navy" aria-label="Plans">
+              <ShoppingBag size={18} />
+              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-alert text-white text-[10px] font-bold grid place-items-center">0</span>
+            </button>
+            <button onClick={() => scrollTo('contact')} className="btn-primary px-4 py-2.5 text-xs inline-flex items-center gap-1">
+              Contact us <ArrowRight size={13} />
+            </button>
+          </div>
+
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-navy text-xl" aria-label="Menu">
+            {mobileMenuOpen ? '×' : '☰'}
+          </button>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-rule bg-white px-4 py-4 space-y-1">
+            {navItems.map((item) => (
+              <button key={item.id} onClick={() => scrollTo(item.id)} className="block w-full text-left py-2 text-sm font-bold uppercase text-navy">
+                {item.label}
+              </button>
+            ))}
+            <button onClick={() => navigate('/login')} className="btn-primary w-full py-2.5 text-sm mt-2">Login / Register</button>
           </div>
         )}
       </nav>
 
-      {/* Hero */}
-      <section className="relative bg-white overflow-visible sm:pb-28">
-        {/* Visual hero plane — cutout base sits on this block's bottom edge */}
-        <div className="relative overflow-visible">
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'radial-gradient(ellipse 45% 50% at 90% 20%, rgba(37,99,235,.08), transparent), radial-gradient(ellipse 40% 45% at 5% 85%, rgba(219,234,254,.55), transparent)',
-          }} />
-
-          <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-10 sm:pt-20 lg:pt-24">
-            <div className="grid lg:grid-cols-2 gap-0 lg:gap-8 items-start">
-              <div className="text-[#0f172a] z-10 pb-2 sm:pb-6">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#64748b] mb-3 sm:mb-4 fade-up">Academic writing workspace</p>
-                <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.05] mb-4 sm:mb-5 fade-up fade-up-delay">
-                  <span className="block mb-1">
-                    <GradientShimmer
-                      gradient="bay"
-                      duration={1.6}
-                      spread={2.4}
-                      angle={105}
-                      pauseBetween={1200}
-                      baseColor="rgba(15,23,42,0.45)"
-                      className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold tracking-tight"
-                    >
-                      ResearchPadi
-                    </GradientShimmer>
-                  </span>
-                  Connecting ideas,<br />building papers.
-                </h1>
-                <p className="text-sm sm:text-base text-[#64748b] leading-relaxed max-w-md mb-6 sm:mb-8 fade-up fade-up-delay-2">
-                  The AI writing platform built for Ghanaian students — drafts, citations, and quality checks in one calm workspace.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 fade-up fade-up-delay-3">
-                  <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3.5 text-sm inline-flex items-center justify-center gap-2">
-                    Get started <ArrowRight size={16} />
-                  </button>
-                  <button onClick={() => scrollTo('how')} className="border border-[#cbd5e1] text-[#0f172a] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#f4f7fc] transition">
-                    <Play size={14} fill="currentColor" /> Learn more
-                  </button>
-                </div>
-              </div>
-
-              {/* Height reserved for the bottom-pinned cutout (keeps copy clear) */}
-              <div className="h-[250px] sm:h-[360px] lg:h-[480px]" aria-hidden />
+      <section className="relative overflow-hidden bg-navy-mist">
+        <div className="absolute left-[8%] top-16 h-32 w-32 rounded-full bg-brand/10" />
+        <div className="absolute right-[40%] bottom-10 h-20 w-20 rounded-full border-2 border-brand/20" />
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-10 grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-alert mb-4 fade-up">Online e-learning course</p>
+            <h1 className="text-[2.35rem] sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.12] text-navy mb-6 fade-up fade-up-delay">
+              Online education feels like a real classroom.
+            </h1>
+            <ul className="space-y-2 mb-7 fade-up fade-up-delay-2">
+              {['Get certified drafts', 'Gain job-ready skills', 'Great academic life'].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm font-semibold text-navy">
+                  <CheckCircle size={16} className="text-brand" /> {item}
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-3 fade-up fade-up-delay-3">
+              <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
+                Get started <ArrowRight size={15} />
+              </button>
+              <button onClick={() => scrollTo('courses')} className="bg-navy text-white px-6 py-3 rounded-[10px] text-sm font-bold inline-flex items-center gap-2 hover:bg-navy-hover">
+                Our courses <ArrowRight size={15} />
+              </button>
             </div>
           </div>
-
-          {/* Cutout: base flush to hero edge on every breakpoint */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] flex justify-center px-5 sm:px-8 lg:justify-end lg:pr-[max(2rem,calc((100%-72rem)/2+2rem))] fade-up fade-up-delay-2">
-            <img
-              src={heroGradCutout}
-              alt="Graduate celebrating academic success"
-              className="block w-full max-w-[260px] sm:max-w-sm lg:max-w-md h-[250px] sm:h-[380px] lg:h-[540px] object-contain object-bottom drop-shadow-2xl"
-            />
-          </div>
-
-          {/* Soft wash at the hero base — light, not heavy */}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-20 sm:h-28"
-            style={{ background: 'linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.7) 35%, transparent 100%)' }}
-          />
+          <HeroStudent className="max-w-[480px] mx-auto lg:ml-auto fade-up fade-up-delay" />
         </div>
 
-        {/* Feature cards sit on / below the hero edge */}
-        <div className="relative z-10 -mt-2 px-5 sm:px-8 sm:absolute sm:inset-x-0 sm:bottom-0 sm:mt-0 sm:translate-y-1/2">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {heroFeatures.map((item, i) => {
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-10">
+          <div className="bg-white rounded-2xl shadow-card grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-rule">
+            {features.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className={`bg-white rounded-2xl p-4 sm:p-5 shadow-xl border border-[#e2e8f0] reveal reveal-delay-${i + 1}`}>
-                  <div className="w-10 h-10 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center mb-3">
+                <div key={item.label} className="flex items-center gap-3 px-5 py-5">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-soft text-brand">
                     <Icon size={18} />
-                  </div>
-                  <p className="font-bold text-[#0f172a] text-sm mb-1">{item.title}</p>
-                  <p className="text-xs text-[#64748b]">{item.desc}</p>
+                  </span>
+                  <p className="text-sm font-bold text-navy leading-tight">{item.label}</p>
                 </div>
               );
             })}
@@ -246,206 +246,174 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* About / stats */}
-      <section id="about" className="pt-12 sm:pt-36 pb-20 sm:pb-28 bg-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="relative reveal is-visible">
-            <div className="rounded-[1.75rem] overflow-hidden bg-[#dbeafe]">
-              <img src={heroGrad} alt="Graduate celebrating academic success" className="w-full h-[280px] sm:h-[360px] object-cover object-[center_20%]" />
-            </div>
-            <div className="absolute left-3 top-3 sm:-left-2 sm:top-8 bg-white rounded-2xl px-3 py-2.5 shadow-xl flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center"><Zap size={14} /></div>
-              <div>
-                <p className="text-[11px] font-bold text-[#0f172a]">Fast Drafts</p>
-                <p className="text-[10px] text-[#64748b]">From brief to paper in minutes</p>
+      <section id="about" className="py-20 sm:py-28">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="relative reveal">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-44 rounded-2xl bg-brand" />
+              <div className="h-44 rounded-2xl bg-gold mt-8" />
+              <div className="h-36 rounded-2xl bg-navy" />
+              <div className="h-36 rounded-2xl bg-brand-soft -mt-4 flex items-center justify-center">
+                <GraduationCap className="text-brand" size={48} />
               </div>
             </div>
-            <div className="absolute -bottom-4 right-3 sm:-bottom-5 sm:right-6 bg-[#2563eb] text-white rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-xl">
-              <p className="text-xl sm:text-2xl font-extrabold">Built for GH</p>
-              <p className="text-[10px] sm:text-xs text-white/80">University-ready templates</p>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-28 w-28 rounded-full bg-navy text-white grid place-content-center text-center shadow-card">
+              <p className="text-xl font-extrabold leading-none">GH</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide mt-1">University ready</p>
             </div>
           </div>
-
           <div className="reveal reveal-delay-1">
-            <p className="eyebrow mb-3">About ResearchPadi</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a] leading-tight mb-4">
-              Nurturing writers,<br />fueling research.
+            <p className="eyebrow mb-3">Get to know about us</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy leading-tight mb-4">
+              Dive into our online courses and ignite your learning!
             </h2>
-            <p className="text-sm text-[#64748b] leading-relaxed mb-8 max-w-md">
-              Generic AI was not built for Ghanaian universities. ResearchPadi keeps drafts, citations, and quality checks connected from brief to submission.
+            <p className="text-sm text-muted leading-relaxed mb-6">
+              ResearchPadi keeps drafts, citations, and quality checks connected for Ghanaian universities — from brief to supervisor-ready export.
             </p>
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="rounded-2xl bg-[#f4f7fc] p-5">
-                <p className="text-2xl font-extrabold text-[#2563eb]">10k+</p>
-                <p className="text-xs text-[#64748b] mt-1">Students supported</p>
-              </div>
-              <div className="rounded-2xl bg-[#f4f7fc] p-5">
-                <p className="text-2xl font-extrabold text-[#2563eb]">4+</p>
-                <p className="text-xs text-[#64748b] mt-1">Citation formats</p>
-              </div>
-            </div>
-            <button onClick={() => navigate('/login')} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
-              Learn more <ArrowRight size={15} />
+            <ul className="space-y-3 mb-8">
+              {['Local academic context and university templates', 'Quality guards before every submission', 'Workspace writing with citations in one place'].map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm font-semibold text-navy">
+                  <CheckCircle size={16} className="text-brand mt-0.5 shrink-0" /> {item}
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
+              About more <ArrowRight size={15} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Services */}
-      <section id="services" className="py-20 sm:py-28 bg-[#f4f7fc]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 reveal">
-            <p className="eyebrow mb-3">Services</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">
-              Tailoring papers for excellence.
-            </h2>
+      <section id="courses" className="py-16 sm:py-24 bg-navy-mist">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center mb-10 reveal">
+            <p className="eyebrow mb-3">Popular courses</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Our popular online courses</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {services.map((service, i) => {
-              const Icon = service.icon;
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {courseFilters.map((item) => {
+              const Icon = item.icon;
+              const active = filter === item.key;
               return (
                 <button
-                  key={service.title}
-                  onClick={() => scrollTo('pricing')}
-                  className={`${service.tone} text-white rounded-2xl p-6 text-left min-h-[220px] flex flex-col justify-between hover:-translate-y-1 transition reveal reveal-delay-${(i % 4) + 1}`}
+                  key={item.key}
+                  onClick={() => setFilter(item.key)}
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-left transition ${
+                    active ? 'bg-brand text-white shadow-card' : 'bg-white text-navy border border-rule hover:border-brand/40'
+                  }`}
                 >
-                  <div className="w-11 h-11 rounded-xl bg-white/15 grid place-items-center">
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-extrabold mb-2">{service.title}</h3>
-                    <p className="text-sm text-white/80 leading-relaxed">{service.desc}</p>
-                  </div>
+                  <span className={`grid h-11 w-11 place-items-center rounded-xl ${active ? 'bg-white/15' : 'bg-brand-soft text-brand'}`}>
+                    <Icon size={18} />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-extrabold">{item.title}</span>
+                    <span className={`text-xs ${active ? 'text-white/75' : 'text-muted'}`}>{item.count}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-        </div>
-      </section>
 
-      {/* Offerings grid (job-card style) */}
-      <section className="py-20 sm:py-28 bg-gradient-to-b from-[#dbeafe]/60 to-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 reveal">
-            <p className="eyebrow mb-3">Ready to write</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">
-              Plans and tools ready to apply.
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {offerings.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className={`bg-white rounded-2xl border border-[#e2e8f0] p-5 hover:shadow-lg hover:-translate-y-0.5 transition reveal reveal-delay-${(i % 3) + 1}`}>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-11 h-11 rounded-xl bg-[#dbeafe] text-[#2563eb] grid place-items-center">
-                      <Icon size={18} />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb] bg-[#dbeafe] px-2.5 py-1 rounded-lg">{item.tag}</span>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {visibleCourses.map((course, i) => (
+              <article key={course.title} className={`bg-white rounded-2xl border border-rule overflow-hidden shadow-soft hover:-translate-y-1 transition reveal reveal-delay-${(i % 4) + 1}`}>
+                <div className={`relative h-36 bg-gradient-to-br ${course.tone}`}>
+                  <span className="absolute left-3 top-3 rounded bg-alert px-2 py-1 text-[10px] font-extrabold text-white">{course.weeks}</span>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-1 text-gold mb-2">
+                    {Array.from({ length: 5 }).map((_, s) => <Star key={s} size={12} fill="currentColor" />)}
+                    <span className="text-[11px] text-muted ml-1">(4.9)</span>
                   </div>
-                  <h3 className="font-bold text-[#0f172a] mb-1">{item.title}</h3>
-                  <p className="text-xs text-[#64748b] mb-4">{item.meta}</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-extrabold text-[#0f172a]">{item.price}</p>
-                    <button onClick={() => navigate('/login')} className="text-xs font-bold text-[#2563eb] hover:underline inline-flex items-center gap-1">
-                      Apply now <ArrowRight size={12} />
-                    </button>
+                  <h3 className="font-extrabold text-navy text-sm leading-snug mb-3 min-h-[40px]">{course.title}</h3>
+                  <div className="flex flex-wrap gap-3 text-[11px] text-muted mb-4">
+                    <span className="inline-flex items-center gap-1"><BookOpen size={12} /> {course.lessons} Lessons</span>
+                    <span className="inline-flex items-center gap-1"><Users size={12} /> {course.students}</span>
+                    <span className="inline-flex items-center gap-1"><Clock size={12} /> {course.level}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-rule">
+                    <div className="flex items-center gap-2">
+                      <span className="h-7 w-7 rounded-full bg-brand-soft text-brand text-[10px] font-bold grid place-items-center">
+                        {course.teacher.split(' ').map((n) => n[0]).join('')}
+                      </span>
+                      <p className="text-xs font-semibold text-navy">{course.teacher}</p>
+                    </div>
+                    <span className={`text-sm font-extrabold ${course.price === 'FREE' ? 'text-alert' : 'text-navy'}`}>{course.price}</span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Why choose us */}
-      <section id="how" className="py-20 sm:py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="grid grid-cols-2 gap-3 reveal">
-            {[Users, Target, Clock, BadgeCheck].map((Icon, i) => (
-              <div key={i} className={`rounded-2xl p-8 ${i % 2 === 0 ? 'bg-[#2563eb] text-white' : 'bg-[#dbeafe] text-[#1e3a8a]'} min-h-[140px] flex flex-col justify-between`}>
-                <Icon size={22} />
-                <p className="text-sm font-bold">{['Student-first', 'Source-aware', 'Fast turnaround', 'Export-ready'][i]}</p>
-              </div>
+              </article>
             ))}
           </div>
-          <div className="reveal reveal-delay-1">
-            <p className="eyebrow mb-3">Why ResearchPadi</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a] leading-tight mb-8">
-              Finding the right draft,<br />every time.
-            </h2>
-            <div className="space-y-5">
-              {reasons.map((item) => (
-                <div key={item.num} className="flex gap-4">
-                  <span className="text-sm font-extrabold text-[#2563eb] shrink-0">{item.num}</span>
-                  <div>
-                    <h3 className="font-bold text-[#0f172a] mb-1">{item.title}</h3>
-                    <p className="text-sm text-[#64748b] leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+
+          <div className="text-center mt-10">
+            <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
+              View all courses <ArrowRight size={15} />
+            </button>
           </div>
         </div>
       </section>
 
-      {/* Banner CTA */}
-      <section className="relative py-24 sm:py-28 overflow-hidden">
-        <img src={heroGrad} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_15%]" />
-        <div className="absolute inset-0 bg-[#1e3a8a]/80" />
-        <div className="relative max-w-3xl mx-auto px-5 text-center text-white reveal">
-          <h2 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-4">
-            Shaping futures, one paper at a time.
-          </h2>
-          <p className="text-sm text-white/75 mb-8 max-w-lg mx-auto">
-            Join Ghanaian students producing clearer, better-cited academic work.
-          </p>
-          <button onClick={() => navigate('/login')} className="bg-white text-[#2563eb] px-7 py-3.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 hover:bg-[#dbeafe] transition">
-            Start writing free <ArrowRight size={16} />
-          </button>
+      <section id="students" className="py-16 sm:py-24">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center mb-10 reveal">
+            <p className="eyebrow mb-3">Students</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">What students say</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {testimonials.map((t, i) => (
+              <blockquote key={t.initials} className={`rounded-2xl bg-navy-mist border border-rule p-6 reveal reveal-delay-${i + 1}`}>
+                <p className="text-sm text-ink leading-relaxed mb-6">“{t.text}”</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-brand text-white text-xs font-bold grid place-items-center">{t.initials}</div>
+                  <div>
+                    <p className="text-sm font-bold text-navy">{t.name}</p>
+                    <p className="text-xs text-muted">{t.role} · {t.institution}</p>
+                  </div>
+                </div>
+              </blockquote>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20 sm:py-28 bg-[#f4f7fc]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-xl mx-auto mb-12 reveal">
+      <section id="pricing" className="py-16 sm:py-24 bg-navy-mist">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center mb-12 reveal">
             <p className="eyebrow mb-3">Pricing</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">Simple plans. Clear results.</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Simple plans. Clear results.</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {pricingPlans.map((plan, i) => (
               <div
                 key={plan.name}
                 className={`rounded-2xl p-7 transition hover:-translate-y-1 reveal reveal-delay-${i + 1} ${
-                  plan.highlighted
-                    ? 'bg-[#2563eb] text-white shadow-xl'
-                    : 'bg-white border border-[#e2e8f0]'
+                  plan.highlighted ? 'bg-navy text-white shadow-card' : 'bg-white border border-rule'
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="inline-flex items-center gap-1.5 bg-white/15 text-white text-[10px] font-bold px-3 py-1 rounded-lg mb-4 uppercase tracking-wider">
-                    <Zap className="w-3 h-3" /> Most popular
+                  <div className="inline-flex bg-brand text-white text-[10px] font-bold px-3 py-1 rounded mb-4 uppercase tracking-wider">
+                    Most popular
                   </div>
                 )}
-                <h3 className={`text-lg font-extrabold mb-1 ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.name}</h3>
-                <p className={`text-xs mb-5 ${plan.highlighted ? 'text-white/70' : 'text-[#64748b]'}`}>{plan.desc}</p>
+                <h3 className={`text-lg font-extrabold mb-1 ${plan.highlighted ? 'text-white' : 'text-navy'}`}>{plan.name}</h3>
+                <p className={`text-xs mb-5 ${plan.highlighted ? 'text-white/70' : 'text-muted'}`}>{plan.desc}</p>
                 <div className="flex items-baseline gap-1 mb-6">
-                  <span className={`text-3xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-[#0f172a]'}`}>{plan.price}</span>
-                  <span className={`text-sm ${plan.highlighted ? 'text-white/60' : 'text-[#64748b]'}`}>{plan.period}</span>
+                  <span className={`text-3xl font-extrabold ${plan.highlighted ? 'text-white' : 'text-navy'}`}>{plan.price}</span>
+                  <span className={`text-sm ${plan.highlighted ? 'text-white/60' : 'text-muted'}`}>{plan.period}</span>
                 </div>
                 <ul className="space-y-3 mb-7">
                   {plan.features.map((feat) => (
                     <li key={feat} className="flex items-start gap-2.5">
-                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-white/70' : 'text-[#2563eb]'}`} />
-                      <span className={`text-sm ${plan.highlighted ? 'text-white/85' : 'text-[#64748b]'}`}>{feat}</span>
+                      <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlighted ? 'text-gold' : 'text-brand'}`} />
+                      <span className={`text-sm ${plan.highlighted ? 'text-white/85' : 'text-muted'}`}>{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <button
                   onClick={() => navigate('/login')}
-                  className={`w-full py-3 rounded-xl font-bold text-sm transition ${
-                    plan.highlighted ? 'bg-white text-[#2563eb] hover:bg-[#dbeafe]' : 'btn-primary'
+                  className={`w-full py-3 rounded-[10px] font-bold text-sm transition ${
+                    plan.highlighted ? 'bg-brand text-white hover:bg-brand-hover' : 'btn-primary'
                   }`}
                 >
                   {plan.cta}
@@ -456,60 +424,33 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 sm:py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="text-center mb-12 reveal">
-            <p className="eyebrow mb-3">Client feedback</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0f172a]">What students say</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            {testimonials.map((t, i) => (
-              <blockquote key={t.initials} className={`rounded-2xl border border-[#e2e8f0] bg-[#f4f7fc] p-6 reveal reveal-delay-${i + 1}`}>
-                <Quote className="w-7 h-7 text-[#bfdbfe] mb-4" />
-                <p className="text-sm text-[#0f172a] leading-relaxed mb-6">“{t.text}”</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2563eb] text-white text-xs font-bold grid place-items-center">{t.initials}</div>
-                  <div>
-                    <p className="text-sm font-bold text-[#0f172a]">{t.name}</p>
-                    <p className="text-xs text-[#64748b]">{t.role} · {t.institution}</p>
-                  </div>
-                </div>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact + FAQ */}
-      <section id="faqs" className="py-20 sm:py-28 bg-[#f4f7fc]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-8 items-start">
-          <div className="bg-[#1e3a8a] text-white rounded-[1.75rem] p-7 sm:p-8 reveal">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60 mb-3">Contact</p>
+      <section id="contact" className="py-16 sm:py-24">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-8 items-start">
+          <div className="bg-navy text-white rounded-2xl p-7 sm:p-8 reveal">
+            <p className="eyebrow text-gold mb-3">Contact</p>
             <h2 className="text-2xl sm:text-3xl font-extrabold mb-2">Ready to start your paper?</h2>
             <p className="text-sm text-white/70 mb-8">Create an account and brief your first draft in minutes.</p>
             <div className="space-y-3 mb-8">
               <div className="flex items-center gap-3 text-sm text-white/85"><Mail size={16} /> hello@researchpadi.com</div>
               <div className="flex items-center gap-3 text-sm text-white/85"><Phone size={16} /> Kumasi, Ghana</div>
             </div>
-            <button onClick={() => navigate('/login')} className="bg-white text-[#1e3a8a] px-6 py-3.5 rounded-xl text-sm font-bold inline-flex items-center gap-2 hover:bg-[#dbeafe] transition">
+            <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
               Start writing free <ArrowRight size={16} />
             </button>
           </div>
 
-          <div className="reveal reveal-delay-1">
-            <p className="eyebrow mb-3">FAQ</p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] mb-6">Frequently asked questions</h2>
+          <div id="faqs" className="reveal reveal-delay-1">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-navy mb-6">Frequently asked questions</h2>
             <div className="space-y-2">
               {faqs.map((faq, i) => (
-                <div key={faq.q} className={`rounded-xl border bg-white transition ${openFaq === i ? 'border-[#bfdbfe]' : 'border-[#e2e8f0]'}`}>
+                <div key={faq.q} className={`rounded-xl border bg-white transition ${openFaq === i ? 'border-brand/40' : 'border-rule'}`}>
                   <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-5 py-4 text-left">
-                    <span className="text-sm font-bold text-[#0f172a] pr-4">{faq.q}</span>
-                    <ChevronDown className={`w-4 h-4 text-[#64748b] shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                    <span className="text-sm font-bold text-ink pr-4">{faq.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-muted shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                   </button>
                   {openFaq === i && (
                     <div className="px-5 pb-4">
-                      <p className="text-sm text-[#64748b] leading-relaxed">{faq.a}</p>
+                      <p className="text-sm text-muted leading-relaxed">{faq.a}</p>
                     </div>
                   )}
                 </div>
@@ -519,39 +460,20 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="bg-[#2563eb] text-white">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            ['10k+', 'Students'],
-            ['4+', 'Citation styles'],
-            ['99%', 'Original drafts'],
-            ['GH', 'University templates'],
-          ].map(([value, label]) => (
-            <div key={label}>
-              <p className="text-3xl font-extrabold">{value}</p>
-              <p className="text-xs text-white/70 mt-1">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#0f172a] py-3 text-white">
-        <div className="max-w-4xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <BrandLogo onDark markClassName="h-5 w-auto" className="[&_span]:text-xs" />
-            <span className="hidden sm:inline text-[#334155]">·</span>
-            {['Services', 'Pricing', 'FAQs'].map((item) => (
-              <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-[10px] text-[#94a3b8] hover:text-white transition">
+      <footer className="bg-navy py-8 text-white">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <BrandLogo onDark markClassName="h-8 w-8" className="[&_span]:text-sm [&_span]:normal-case" />
+            {['Courses', 'Pricing', 'Contact'].map((item) => (
+              <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-xs text-white/60 hover:text-white transition">
                 {item}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-3 text-[10px] text-[#64748b]">
+          <div className="flex items-center gap-3 text-xs text-white/50">
             <p>&copy; {new Date().getFullYear()} ResearchPadi · Kumasi</p>
-            <span className="inline-flex items-center gap-1"><Shield size={9} className="text-[#059669]" /> SSL</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle size={9} className="text-[#059669]" /> GDPR</span>
+            <span className="inline-flex items-center gap-1"><Shield size={11} className="text-gold" /> SSL</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle size={11} className="text-gold" /> GDPR</span>
           </div>
         </div>
       </footer>

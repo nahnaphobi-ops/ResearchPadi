@@ -41,7 +41,7 @@ function ToolbarButton({
       title={title}
       className={`p-1.5 rounded text-sm transition ${
         active
-          ? 'bg-blue-100 text-blue-700 shadow-sm'
+          ? 'bg-navy-soft text-navy shadow-sm'
           : 'text-gray-700 hover:bg-gray-100'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
     >
@@ -80,8 +80,8 @@ function Dropdown({
               <button
                 key={opt.value}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 ${
-                  opt.value === value ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700'
+                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-navy-soft ${
+                  opt.value === value ? 'bg-navy-soft text-navy font-medium' : 'text-ink'
                 }`}
               >
                 {renderOption ? renderOption(opt) : opt.label}

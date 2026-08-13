@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
 import BrandLogo from '../components/common/BrandLogo';
+import HeroStudent from '../components/brand/HeroStudent';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -99,24 +100,19 @@ export default function Login() {
   };
 
   return (
-      <div className="min-h-screen grid lg:grid-cols-2 bg-[#f4f7fc]">
-      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-[#2563eb] text-white overflow-hidden">
-        <img
-          src="/login-study.jpg"
-          alt="Student working on academic research"
-          className="absolute inset-0 h-full w-full object-cover opacity-25"
-        />
-        <div className="absolute inset-0 opacity-40 pointer-events-none" style={{
-          background: 'linear-gradient(180deg, rgba(37,99,235,.78), rgba(15,23,42,.82)), radial-gradient(ellipse 70% 50% at 20% 20%, rgba(37,99,235,.45), transparent)',
-        }} />
+    <div className="min-h-screen grid lg:grid-cols-2 bg-navy-mist">
+      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-navy text-white overflow-hidden">
         <div className="relative z-10">
-          <BrandLogo onDark markClassName="h-10 w-auto" onClick={() => navigate('/')} />
+          <BrandLogo onDark markClassName="h-10 w-10" onClick={() => navigate('/')} />
         </div>
-        <div className="relative z-10 max-w-md">
-          <p className="display text-4xl leading-tight mb-4">Write papers your supervisors can trust.</p>
-          <p className="text-white/65 text-sm leading-relaxed">
-            Sign in to continue drafting, citing, and refining academic work built for Ghanaian universities.
-          </p>
+        <div className="relative z-10 flex flex-col items-start gap-8">
+          <HeroStudent className="w-full max-w-sm" />
+          <div className="max-w-md">
+            <p className="display text-4xl leading-tight mb-4">Online education feels like a real classroom.</p>
+            <p className="text-white/70 text-sm leading-relaxed">
+              Sign in to continue drafting, citing, and refining academic work built for Ghanaian universities.
+            </p>
+          </div>
         </div>
         <p className="relative z-10 text-xs text-white/40">AbusuaITLabs · Kumasi, Ghana</p>
       </div>
@@ -125,17 +121,17 @@ export default function Login() {
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="absolute top-5 left-5 lg:hidden inline-flex items-center gap-1.5 text-sm font-medium text-[#64748b] hover:text-[#0f172a] transition"
+          className="absolute top-5 left-5 lg:hidden inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition"
         >
           ← Back
         </button>
 
-        <div className="w-full max-w-md bg-white rounded-2xl border border-[#e2e8f0] p-8 shadow-sm">
+        <div className="w-full max-w-md bg-white rounded-[14px] border border-rule p-8 shadow-soft">
           <div className="flex justify-center mb-4 lg:hidden">
             <BrandLogo markClassName="h-12 w-auto" />
           </div>
-          <h1 className="display text-3xl text-center text-[#0f172a] mb-1">Welcome back</h1>
-          <p className="text-sm text-center text-[#64748b] mb-8">
+          <h1 className="display text-3xl text-center text-navy mb-1">Welcome back</h1>
+          <p className="text-sm text-center text-muted mb-8">
             {step === 1 ? 'Enter your phone number to receive a one-time code.' : `Enter the code sent to ${phone}`}
           </p>
 
@@ -144,10 +140,10 @@ export default function Login() {
           {step === 1 ? (
             <form onSubmit={handleRequestOtp} className="space-y-4">
               <div>
-                <label className="block mb-2 text-sm font-medium text-[#0f172a]">Phone number</label>
+                <label className="block mb-2 text-sm font-medium text-ink">Phone number</label>
                 <input
                   type="text"
-                  className="w-full p-3 border rounded-xl focus:ring-0"
+                  className="w-full p-3 border rounded-[10px] focus:ring-0"
                   placeholder="e.g. 0244123456"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -161,10 +157,10 @@ export default function Login() {
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
-                <label className="block mb-2 text-sm font-medium text-[#0f172a]">One-time code</label>
+                <label className="block mb-2 text-sm font-medium text-ink">One-time code</label>
                 <input
                   type="text"
-                  className="w-full p-3 border rounded-xl text-center tracking-[0.35em] text-xl"
+                  className="w-full p-3 border rounded-[10px] text-center tracking-[0.35em] text-xl"
                   placeholder="123456"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
@@ -175,30 +171,30 @@ export default function Login() {
               <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
                 {loading ? 'Verifying...' : 'Verify & continue'}
               </button>
-              <button type="button" onClick={() => setStep(1)} className="w-full text-sm text-[#2563eb] font-medium hover:underline">
+              <button type="button" onClick={() => setStep(1)} className="w-full text-sm text-navy font-medium hover:underline">
                 Change phone number
               </button>
               <button
                 type="button"
                 onClick={handleResendOtp}
                 disabled={resendTimer > 0 || loading}
-                className="w-full text-sm text-[#64748b] hover:text-[#0f172a] disabled:text-[#cbd5e1]"
+                className="w-full text-sm text-muted hover:text-ink disabled:text-rule"
               >
                 {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
               </button>
             </form>
           )}
 
-          <div className="mt-8 pt-6 border-t border-[#e2e8f0]">
+          <div className="mt-8 pt-6 border-t border-rule">
             <button
               type="button"
               onClick={handleTryDemo}
               disabled={loading}
-              className="w-full p-3.5 mb-3 bg-[#dbeafe] text-[#2563eb] rounded-xl font-bold text-sm hover:bg-[#bfdbfe] disabled:opacity-50 transition"
+              className="w-full p-3.5 mb-3 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition"
             >
               {loading ? 'Loading demo...' : 'Try demo account'}
             </button>
-            <a href="/admin/login" className="block text-center text-xs text-[#94a3b8] hover:text-[#64748b] underline">
+            <a href="/admin/login" className="block text-center text-xs text-muted hover:text-ink underline">
               Admin login
             </a>
           </div>

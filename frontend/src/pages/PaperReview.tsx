@@ -47,7 +47,7 @@ export default function PaperReview() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading paper...</div>;
+    return <div className="p-8 text-center text-muted">Loading paper...</div>;
   }
 
   if (!paper) {
@@ -57,19 +57,19 @@ export default function PaperReview() {
   const content = tab === 'supervised' && supervised ? supervised : paper.final_content || '';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="w-full px-3 sm:px-4 py-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/dashboard')} className="text-gray-500 hover:text-gray-800">&larr; Dashboard</button>
+    <div className="min-h-screen bg-navy-mist">
+      <div className="bg-navy text-white sticky top-0 z-10">
+        <div className="w-full px-3 sm:px-5 py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4 min-w-0">
+            <button onClick={() => navigate('/dashboard')} className="text-white/70 hover:text-white shrink-0">&larr; Dashboard</button>
             <h1 className="text-lg font-bold truncate max-w-md">{paper.topic}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {!supervised && (
               <button
                 onClick={handleSupervise}
                 disabled={supervising}
-                className="px-5 py-2 bg-gray-800 text-white rounded-lg font-bold text-sm hover:bg-gray-900 disabled:bg-gray-400"
+                className="px-5 py-2 bg-white text-navy rounded-[10px] font-bold text-sm hover:bg-navy-soft disabled:opacity-50"
               >
                 {supervising ? 'Running Review...' : 'Run AI Supervisor Review'}
               </button>
@@ -78,13 +78,13 @@ export default function PaperReview() {
               <>
                 <button
                   onClick={handleAccept}
-                  className="px-5 py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-700"
+                  className="px-5 py-2 bg-accent-green text-white rounded-[10px] font-bold text-sm hover:opacity-90"
                 >
                   Accept & Save
                 </button>
                 <button
                   onClick={() => paperService.downloadDocx(id!, paper.topic)}
-                  className="px-5 py-2 bg-gray-800 text-white rounded-lg font-bold text-sm hover:bg-gray-900"
+                  className="px-5 py-2 bg-white text-navy rounded-[10px] font-bold text-sm hover:bg-navy-soft"
                 >
                   Download
                 </button>
@@ -95,36 +95,36 @@ export default function PaperReview() {
       </div>
 
       <div className="max-w-4xl mx-auto px-8 py-6">
-        {error && <div className="p-4 mb-6 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+        {error && <div className="p-4 mb-6 bg-red-100 text-red-700 rounded-[10px]">{error}</div>}
 
         {supervised && (
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setTab('original')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'original' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-[10px] text-sm font-bold transition ${tab === 'original' ? 'bg-navy text-white' : 'bg-white text-ink border border-rule hover:bg-navy-soft'}`}
             >
               Original
             </button>
             <button
               onClick={() => setTab('supervised')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition ${tab === 'supervised' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-[10px] text-sm font-bold transition ${tab === 'supervised' ? 'bg-navy text-white' : 'bg-white text-ink border border-rule hover:bg-navy-soft'}`}
             >
-              Supervised {tab === 'supervised' && <span className="ml-1 text-yellow-300">&#9679;</span>}
+              Supervised {tab === 'supervised' && <span className="ml-1 text-accent-gold">&#9679;</span>}
             </button>
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow border border-gray-100 p-8">
-          <div className="prose max-w-none whitespace-pre-wrap font-serif text-gray-800 leading-relaxed text-sm">
-            {content || <span className="text-gray-400 italic">No content available</span>}
+        <div className="bg-white rounded-[14px] shadow-soft border border-rule p-8">
+          <div className="prose max-w-none whitespace-pre-wrap font-serif text-ink leading-relaxed text-sm">
+            {content || <span className="text-muted italic">No content available</span>}
           </div>
         </div>
 
         {!paper.final_content && paper.status !== 'completed' && (
-          <div className="mt-6 p-6 bg-orange-50 border border-orange-200 rounded-xl text-center">
+          <div className="mt-6 p-6 bg-orange-50 border border-orange-200 rounded-[14px] text-center">
             <p className="text-orange-700 font-bold mb-2">Paper is still being processed</p>
             <p className="text-orange-600 text-sm">Current step: {paper.progress_step}</p>
-            <button onClick={() => navigate('/dashboard')} className="mt-4 text-gray-800 font-bold text-sm hover:underline">
+            <button onClick={() => navigate('/dashboard')} className="mt-4 text-navy font-bold text-sm hover:underline">
               Back to Dashboard
             </button>
           </div>

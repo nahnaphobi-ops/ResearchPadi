@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
+import AppShell from '../components/layout/AppShell';
 
 export default function FullPaperForm() {
   const user = useAuthStore(state => state.user);
@@ -76,20 +77,21 @@ export default function FullPaperForm() {
   };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">New Full Paper</h1>
-      <p className="mb-6 text-gray-600">Provide your paper details below. Our AI pipeline will research, draft, and review a complete academic paper.</p>
+    <AppShell>
+      <p className="eyebrow mb-2">Full paper</p>
+      <h1 className="text-3xl font-bold mb-2 text-navy">New full paper</h1>
+      <p className="mb-6 text-muted">Provide your paper details below. Our AI pipeline will research, draft, and review a complete academic paper.</p>
 
-      {error && <div className="p-4 mb-6 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+      {error && <div className="p-4 mb-6 bg-red-100 text-red-700 rounded-[10px]">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
         <div>
-          <label className="block font-bold mb-1">Research Topic</label>
+          <label className="block font-bold mb-1 text-ink">Research Topic</label>
           <div className="flex gap-2">
             <input
               name="topic"
-              className="flex-1 p-3 border-2 rounded-lg focus:border-gray-500"
+              className="flex-1 p-3 border-2 rounded-[10px]"
               placeholder="e.g. The Impact of Mobile Money on Small Scale Businesses in Kumasi"
               required
               onChange={handleChange}
@@ -99,40 +101,40 @@ export default function FullPaperForm() {
               type="button"
               onClick={handleRefine}
               disabled={refining || !formData.topic.trim()}
-              className="px-4 py-3 bg-gray-800 text-white rounded-lg text-sm font-semibold hover:bg-gray-900 disabled:bg-gray-400 whitespace-nowrap"
+              className="btn-primary px-4 py-3 text-sm disabled:opacity-50 whitespace-nowrap"
             >
               {refining ? 'Refining...' : 'Refine with AI'}
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-1">Click "Refine with AI" to sharpen your topic for academic writing.</p>
+          <p className="text-xs text-muted mt-1">Click "Refine with AI" to sharpen your topic for academic writing.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block font-bold mb-1">Course/Subject</label>
-            <input name="course" className="w-full p-3 border rounded-lg focus:border-gray-500" required onChange={handleChange} placeholder="e.g. Economics" value={formData.course} />
+            <label className="block font-bold mb-1 text-ink">Course/Subject</label>
+            <input name="course" className="w-full p-3 border rounded-[10px]" required onChange={handleChange} placeholder="e.g. Economics" value={formData.course} />
           </div>
           <div>
-            <label className="block font-bold mb-1">Supervisor Name (Optional)</label>
-            <input name="supervisor_name" className="w-full p-3 border rounded-lg focus:border-gray-500" onChange={handleChange} placeholder="e.g. Dr. Owusu" value={formData.supervisor_name} />
+            <label className="block font-bold mb-1 text-ink">Supervisor Name (Optional)</label>
+            <input name="supervisor_name" className="w-full p-3 border rounded-[10px]" onChange={handleChange} placeholder="e.g. Dr. Owusu" value={formData.supervisor_name} />
           </div>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="block font-bold">Research Questions / Hypothesis</label>
+            <label className="block font-bold text-ink">Research Questions / Hypothesis</label>
             <button
               type="button"
               onClick={handleGenerateQuestions}
               disabled={generatingQuestions || !formData.topic.trim()}
-              className="text-sm text-gray-800 font-semibold hover:text-gray-900 disabled:text-gray-400"
+              className="text-sm text-navy font-semibold hover:underline disabled:text-muted"
             >
               {generatingQuestions ? 'Generating...' : 'Generate from Topic'}
             </button>
           </div>
           <textarea
             name="research_questions"
-            className="w-full p-3 border rounded-lg focus:border-gray-500 text-sm"
+            className="w-full p-3 border rounded-[10px] text-sm"
             placeholder="Enter your research questions or hypothesis. You can write them yourself or click 'Generate from Topic' to have AI create them."
             onChange={handleChange}
             value={formData.research_questions}
@@ -141,8 +143,8 @@ export default function FullPaperForm() {
         </div>
 
         <div>
-          <label className="block font-bold mb-1">
-            Target Word Count: <span className="text-gray-800">{formData.target_word_count.toLocaleString()}</span> words
+          <label className="block font-bold mb-1 text-ink">
+            Target Word Count: <span className="text-navy">{formData.target_word_count.toLocaleString()}</span> words
           </label>
           <input
             type="range"
@@ -152,44 +154,44 @@ export default function FullPaperForm() {
             step={500}
             value={formData.target_word_count}
             onChange={handleChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-600"
+            className="w-full h-2 bg-rule rounded-lg appearance-none cursor-pointer accent-navy"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-muted mt-1">
             <span>3,000</span>
             <span>12,000 (typical)</span>
             <span>25,000</span>
           </div>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h3 className="font-bold mb-4 text-gray-800">Review Institution Details</h3>
+        <div className="bg-navy-mist p-6 rounded-[14px] border border-rule">
+          <h3 className="font-bold mb-4 text-navy">Review Institution Details</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-gray-600 mb-1">Institution</label>
-              <input name="institution_name" className="w-full p-2 border rounded" value={formData.institution_name} onChange={handleChange} />
+              <label className="block text-muted mb-1">Institution</label>
+              <input name="institution_name" className="w-full p-2 border rounded-[10px]" value={formData.institution_name} onChange={handleChange} />
             </div>
             <div>
-              <label className="block text-gray-600 mb-1">Programme</label>
-              <input name="programme" className="w-full p-2 border rounded" value={formData.programme} onChange={handleChange} />
+              <label className="block text-muted mb-1">Programme</label>
+              <input name="programme" className="w-full p-2 border rounded-[10px]" value={formData.programme} onChange={handleChange} />
             </div>
           </div>
         </div>
 
-        <div className="p-6 bg-gray-100 rounded-lg">
+        <div className="p-6 bg-navy text-white rounded-[14px]">
           <div className="flex justify-between items-center mb-4">
             <span className="font-bold">Service Fee</span>
-            <span className="text-xl font-bold text-gray-800">GHS 250.00</span>
+            <span className="text-xl font-bold">GHS 250.00</span>
           </div>
-          <p className="text-xs text-gray-500">By clicking 'Start Pipeline', the amount will be deducted from your wallet balance. Ensure you have sufficient funds.</p>
+          <p className="text-xs text-white/70">By clicking 'Start Pipeline', the amount will be deducted from your wallet balance. Ensure you have sufficient funds.</p>
         </div>
 
         <button
           disabled={loading}
-          className="w-full p-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-900 disabled:bg-gray-400 transition"
+          className="btn-primary w-full p-4 text-lg disabled:opacity-50"
         >
           {loading ? 'Initiating Pipeline...' : 'Start Research & Drafting'}
         </button>
       </form>
-    </div>
+    </AppShell>
   );
 }

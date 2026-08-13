@@ -89,12 +89,12 @@ export default function WorkspaceList() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-9">
             <div>
               <p className="eyebrow mb-2">Writing studio</p>
-              <h1 className="text-4xl font-bold">Your workspace</h1>
-              <p className="text-gray-600 mt-2">A focused place to think, draft, and refine with real-time AI assistance.</p>
+              <h1 className="text-4xl font-bold text-navy">Your workspace</h1>
+              <p className="text-muted mt-2">A focused place to think, draft, and refine with real-time AI assistance.</p>
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="px-5 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition inline-flex items-center gap-2"
+              className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2"
             >
               {showForm ? 'Cancel' : <><Plus size={17} /> New session</>}
             </button>
@@ -105,7 +105,7 @@ export default function WorkspaceList() {
           )}
 
           {showForm && (
-            <form onSubmit={handleCreate} className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+            <form onSubmit={handleCreate} className="bg-white rounded-[14px] shadow-soft p-6 mb-8 border border-rule">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block mb-1 font-medium text-sm">Session Title</label>
@@ -131,7 +131,7 @@ export default function WorkspaceList() {
               <button
                 type="submit"
                 disabled={creating}
-                className="mt-4 px-6 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:bg-green-300 transition"
+                className="btn-primary mt-4 px-6 py-3 text-sm disabled:opacity-50"
               >
                 {creating ? 'Creating...' : 'Create Session'}
               </button>
@@ -140,12 +140,12 @@ export default function WorkspaceList() {
 
           {sessions.length === 0 ? (
             <div className="text-center py-16">
-              <FilePenLine className="mx-auto mb-4 text-[#2563eb]" size={38} />
-              <h3 className="text-xl font-bold text-gray-700 mb-2">No sessions yet</h3>
-              <p className="text-gray-500 mb-6">Create your first workspace session to start writing with AI.</p>
+              <FilePenLine className="mx-auto mb-4 text-navy" size={38} />
+              <h3 className="text-xl font-bold text-navy mb-2">No sessions yet</h3>
+              <p className="text-muted mb-6">Create your first workspace session to start writing with AI.</p>
               <button
                 onClick={() => setShowForm(true)}
-                className="px-6 py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition"
+                className="btn-primary px-6 py-3 text-sm"
               >
                 Create First Session
               </button>
@@ -156,9 +156,9 @@ export default function WorkspaceList() {
                 <div
                   key={session.id}
                   onClick={() => navigate(`/workspace/${session.id}`)}
-                  className="group bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:border-[#2563eb] hover:-translate-y-0.5 transition cursor-pointer"
+                  className="group bg-white rounded-[14px] shadow-soft p-6 border border-rule hover:border-navy hover:-translate-y-0.5 transition cursor-pointer"
                 >
-                    <h3 className="font-bold text-lg mb-1 truncate group-hover:text-[#2563eb]">
+                    <h3 className="font-bold text-lg mb-1 truncate text-ink group-hover:text-navy">
                     {session.title || 'Untitled Session'}
                   </h3>
                   {session.course && (

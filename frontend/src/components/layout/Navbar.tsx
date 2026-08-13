@@ -15,16 +15,16 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const linkClass = (path: string) =>
-    `px-3 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 ${
+    `px-3 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 ${
       isActive(path)
-        ? 'bg-[#dbeafe] text-[#1d4ed8]'
-        : 'text-[#64748b] hover:bg-[#f4f7fc] hover:text-[#0f172a]'
+        ? 'bg-brand-soft text-brand'
+        : 'text-muted hover:bg-navy-mist hover:text-navy'
     }`;
 
   return (
-    <nav className="bg-white/80 backdrop-blur-xl border-b border-[#e2e8f0] sticky top-0 z-50">
-      <div className="relative w-full px-3 sm:px-4 py-3 flex items-center justify-between gap-3">
-        <BrandLogo markClassName="h-9 w-auto" onClick={() => navigate('/dashboard')} />
+    <nav className="bg-white/95 backdrop-blur-xl border-b border-rule sticky top-0 z-50">
+      <div className="relative w-full px-3 sm:px-5 py-3 flex items-center justify-between gap-3">
+        <BrandLogo markClassName="h-8 w-8" onClick={() => navigate('/dashboard')} />
 
         <div className="hidden md:flex gap-1 absolute left-1/2 -translate-x-1/2">
           <button onClick={() => navigate('/dashboard')} className={linkClass('/dashboard')}>
@@ -42,12 +42,12 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <span className="text-sm text-[#64748b] hidden sm:inline">
+          <span className="hidden sm:inline text-sm text-muted">
             {user?.full_name?.split(' ')[0]}
           </span>
           <button
             onClick={() => { logout(); navigate('/login'); }}
-            className="text-sm text-[#64748b] hover:text-[#0f172a] font-medium flex items-center gap-1.5"
+            className="text-sm text-muted hover:text-navy font-medium flex items-center gap-1.5"
           >
             <LogOut size={15} />
             Logout

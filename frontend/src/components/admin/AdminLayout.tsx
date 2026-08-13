@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen app-shell">
-      <nav className="bg-[#2563eb] border-b border-white/10 sticky top-0 z-50 text-white">
+      <nav className="bg-navy-deep border-b border-white/10 sticky top-0 z-50 text-white">
         <div className="relative w-full px-3 sm:px-4 py-3 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
           <div className="flex items-center gap-2 shrink-0">
             <BrandLogo onDark markClassName="h-9 w-auto" className="[&_span]:text-base" />
@@ -32,37 +32,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex flex-wrap gap-1 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
               <button
                 onClick={() => navigate('/admin')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Overview
               </button>
               <button
                 onClick={() => navigate('/admin/users')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/users') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin/users') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Users
               </button>
               <button
                 onClick={() => navigate('/admin/transactions')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/transactions') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin/transactions') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Transactions
               </button>
               <button
                 onClick={() => navigate('/admin/subscriptions')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/subscriptions') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin/subscriptions') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Subscriptions
               </button>
               <button
                 onClick={() => navigate('/admin/papers')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/papers') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin/papers') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Papers
               </button>
               <button
                 onClick={() => navigate('/admin/writing-assist')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition ${isActive('/admin/writing-assist') ? 'bg-white/10 text-[#bfdbfe]' : 'text-white/65 hover:bg-white/10'}`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition ${isActive('/admin/writing-assist') ? 'bg-brand text-white' : 'text-white/65 hover:bg-white/10'}`}
               >
                 Writing Assist
               </button>

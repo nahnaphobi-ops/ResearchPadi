@@ -9,32 +9,32 @@
 }
 
 :root {
-  /* Talent-inspired academic blue system */
-  --paper: #f4f7fc;
+  --paper: #ffffff;
   --surface: #ffffff;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --rule: #e2e8f0;
+  --ink: #0e1b4d;
+  --muted: #6b7c93;
+  --rule: #e6eaf4;
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-deep: #1e3a8a;
-  --accent: #3b82f6;
-  --accent-soft: #dbeafe;
-  --highlight: #bfdbfe;
+  --primary: #3b6eff;
+  --primary-hover: #2f5ce8;
+  --primary-deep: #0e1b4d;
+  --accent: #3b6eff;
+  --accent-soft: #e8efff;
+  --highlight: #d6e2ff;
+  --wave: #f5c400;
 
-  --success: #059669;
+  --success: #16a34a;
   --success-soft: #ecfdf5;
-  --warning: #b45309;
-  --warning-soft: #fffbeb;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
+  --warning: #f5c400;
+  --warning-soft: #fff8db;
+  --danger: #ff4b4b;
+  --danger-soft: #ffe8e8;
 
   --navy: var(--primary-deep);
-  --saffron: var(--accent);
+  --saffron: var(--wave);
   --sage: var(--accent-soft);
 
-  font-family: 'Plus Jakarta Sans', 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
   color: var(--ink);
   background: var(--paper);
   font-synthesis: none;
@@ -47,7 +47,6 @@ body {
   min-height: 100vh;
   background-color: var(--paper);
   color: var(--ink);
-  letter-spacing: -0.01em;
 }
 
 #root { min-height: 100vh; }

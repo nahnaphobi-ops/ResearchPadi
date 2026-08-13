@@ -58,51 +58,51 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-navy-mist">
+      <div className="w-full max-w-md p-8 bg-white rounded-[14px] border border-rule shadow-soft">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <BrandLogo markClassName="h-12 w-auto" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Admin Portal</h2>
+          <h2 className="text-2xl font-bold text-navy">Admin portal</h2>
         </div>
-        {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">{error}</div>}
+        {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-[10px]">{error}</div>}
 
         {step === 'credentials' ? (
           <form onSubmit={handleCredentialsSubmit}>
-            <label className="block mb-2 font-medium">Email</label>
+            <label className="block mb-2 font-medium text-ink">Email</label>
             <input
               type="email"
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500"
+              className="w-full p-3 mb-4 border rounded-[10px]"
               placeholder="admin@researchpadi.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <label className="block mb-2 font-medium">Password</label>
+            <label className="block mb-2 font-medium text-ink">Password</label>
             <input
               type="password"
-              className="w-full p-3 mb-4 border rounded focus:ring-2 focus:ring-gray-500"
+              className="w-full p-3 mb-4 border rounded-[10px]"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
             <button
               disabled={loading}
-              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
+              className="btn-primary w-full p-3 text-sm disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleOtpSubmit}>
-            <p className="mb-4 text-sm text-gray-600 text-center">
+            <p className="mb-4 text-sm text-muted text-center">
               Enter the 6-digit OTP sent to your email
             </p>
-            <label className="block mb-2 font-medium">OTP Code</label>
+            <label className="block mb-2 font-medium text-ink">OTP Code</label>
             <input
               type="text"
-              className="w-full p-3 mb-4 border rounded text-center tracking-widest text-xl focus:ring-2 focus:ring-gray-500"
+              className="w-full p-3 mb-4 border rounded-[10px] text-center tracking-widest text-xl"
               placeholder="123456"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
@@ -112,14 +112,14 @@ export default function AdminLogin() {
             />
             <button
               disabled={loading}
-              className="w-full p-3 bg-gray-800 text-white rounded font-bold hover:bg-gray-900 disabled:bg-gray-400"
+              className="btn-primary w-full p-3 text-sm disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Verify OTP'}
             </button>
             <button
               type="button"
               onClick={handleBackToLogin}
-              className="w-full mt-4 text-gray-800 hover:underline"
+              className="w-full mt-4 text-navy hover:underline"
             >
               Back to Login
             </button>
