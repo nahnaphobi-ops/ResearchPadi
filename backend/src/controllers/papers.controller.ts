@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { supabase } from '../db/supabase.js';
 import { supervisePaper } from '../services/pipeline/supervise.service.js';
+import { humanizePaper } from '../services/pipeline/humanize.service.js';
+import { detectAIContent, getDisclosureTemplates, getDisclosureTemplate, suggestDisclosureTemplateId } from '../services/ai/ai-detector.service.js';
 import { routeDrafting } from '../services/ai/router.service.js';
 import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts.js';
 import { generateDocx } from '../services/documents/docx.service.js';
@@ -108,7 +110,11 @@ export const getJobStatus = async (req: Request, res: Response) => {
 
 export const listPapers = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const { data, error } = await supabase.from('papers').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('papers')
+    .select('id, title, topic, course, institution_name, status, progress_step, created_at, completed_at, file_url_docx, file_url_pdf')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 };
@@ -122,17 +128,57 @@ export const getPaperDetails = async (req: Request, res: Response) => {
 
 export const downloadPaper = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { data: paper, error } = await supabase.from('papers').select('*').eq('id', id).single();
+  const userId = (req as any).user?.id;
+  const disclosureId = String(req.query.disclosureId || '');
+  const includeStatement = String(req.query.includeStatement || 'true') !== 'false';
+
+  if (!disclosureId) {
+    return res.status(400).json({ error: 'Select an AI disclosure template before downloading' });
+  }
+
+  const template = getDisclosureTemplate(disclosureId);
+  if (!template) {
+    return res.status(400).json({ error: 'Unknown disclosure template' });
+  }
+
+  const { data: paper, error } = await supabase
+    .from('papers')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single();
 
   if (error || !paper || !paper.final_content) {
     return res.status(404).json({ error: 'Paper not found or not completed' });
   }
 
-  const docxBuffer = await generateDocx(paper.topic, paper.final_content);
+  const generatedAt = new Date().toISOString();
+  const docxBuffer = await generateDocx(paper.topic, paper.final_content, {
+    paperId: paper.id,
+    generatedAt,
+    disclosureId: template.id,
+    disclosureName: template.name,
+    disclosureText: template.content,
+    includeStatement,
+    toolName: 'ResearchPadi',
+    toolVersion: '1.0',
+  });
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   res.setHeader('Content-Disposition', `attachment; filename="${paper.topic.replace(/\s+/g, '_')}.docx"`);
+  res.setHeader('X-AI-Generated', 'true');
+  res.setHeader('X-AI-Disclosure-Id', template.id);
+  res.setHeader('X-EU-AI-Act-Article', '50');
   res.send(docxBuffer);
+};
+
+export const listDisclosureTemplates = async (req: Request, res: Response) => {
+  const { category, institution } = req.query;
+  const templates = getDisclosureTemplates(category as string | undefined);
+  res.json({
+    templates,
+    suggestedId: suggestDisclosureTemplateId(institution as string | undefined),
+  });
 };
 
 export const superviseCompletedPaper = async (req: Request, res: Response) => {
@@ -203,4 +249,76 @@ export const deletePaper = async (req: Request, res: Response) => {
   const { error } = await supabase.from('papers').delete().eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'Paper deleted' });
+};
+
+/**
+ * GET /api/papers/:id/ai-score
+ * Returns an AI-pattern detectability score for the paper's current content.
+ * Uses the local heuristic analyser — no external API call required.
+ */
+export const getAiScore = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = (req as any).user?.id;
+
+  const { data: paper, error } = await supabase
+    .from('papers')
+    .select('final_content, status, topic')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !paper) {
+    return res.status(404).json({ error: 'Paper not found' });
+  }
+
+  if (paper.status !== 'completed' || !paper.final_content) {
+    return res.status(400).json({ error: 'Paper must be completed before scoring' });
+  }
+
+  const result = detectAIContent(paper.final_content);
+  res.json(result);
+};
+
+/**
+ * POST /api/papers/:id/humanize
+ * Runs the prose-naturalisation pass on the paper's current content.
+ * Returns humanized text + before/after AI scores.
+ * Does NOT defeat cryptographic watermarks — improves prose quality only.
+ */
+export const humanizePaperHandler = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = (req as any).user?.id;
+
+  const { data: paper, error } = await supabase
+    .from('papers')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !paper) {
+    return res.status(404).json({ error: 'Paper not found' });
+  }
+
+  if (paper.status !== 'completed' || !paper.final_content) {
+    return res.status(400).json({ error: 'Paper must be completed before humanizing' });
+  }
+
+  try {
+    const result = await humanizePaper(paper.final_content, {
+      topic: paper.topic,
+      course: paper.course,
+      institution_type: paper.institution_type,
+    });
+
+    res.json({
+      humanized: result.humanized,
+      beforeScore: result.beforeScore,
+      afterScore: result.afterScore,
+      paperId: id,
+    });
+  } catch (err: any) {
+    log.error({ paperId: id, err: err.message }, 'Humanize failed');
+    res.status(500).json({ error: `Humanize failed: ${err.message}` });
+  }
 };

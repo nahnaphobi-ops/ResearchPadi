@@ -15,10 +15,18 @@ export const paperService = {
   submitFullPaper: (data: any) => api.post('/papers/full', data),
   listPapers: () => api.get('/papers'),
   getPaperDetails: (id: string) => api.get(`/papers/${id}`),
+  listDisclosureTemplates: (institution?: string) =>
+    api.get('/papers/disclosure-templates', { params: institution ? { institution } : {} }),
   supervisePaper: (id: string) => api.post(`/papers/${id}/supervise`),
   acceptSupervision: (id: string, supervised: string) => api.post(`/papers/${id}/accept-review`, { supervised }),
-  downloadDocx: (id: string, topic: string) => 
-    api.get(`/papers/${id}/download`, { responseType: 'blob' }).then(response => {
+  downloadDocx: (id: string, topic: string, options: { disclosureId: string; includeStatement?: boolean }) =>
+    api.get(`/papers/${id}/download`, {
+      responseType: 'blob',
+      params: {
+        disclosureId: options.disclosureId,
+        includeStatement: options.includeStatement === false ? 'false' : 'true',
+      },
+    }).then(response => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -28,4 +36,6 @@ export const paperService = {
       link.remove();
     }),
   deletePaper: (id: string) => api.delete(`/papers/${id}`),
+  getAiScore: (id: string) => api.get(`/papers/${id}/ai-score`),
+  humanizePaper: (id: string) => api.post(`/papers/${id}/humanize`),
 };

@@ -5,12 +5,14 @@ import { paymentService } from '../services/paymentService';
 import { useAuthStore } from '../store/useAuthStore';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
+import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
 import { ArrowUpRight, FileText, Plus, RefreshCw, WalletCards } from 'lucide-react';
 
 export default function Dashboard() {
   const [papers, setPapers] = useState<any[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [downloadTarget, setDownloadTarget] = useState<{ id: string; topic: string; institution?: string } | null>(null);
   const user = useAuthStore(state => state.user);
   const navigate = useNavigate();
 
@@ -43,12 +45,8 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDownload = async (id: string, topic: string) => {
-    try {
-      await paperService.downloadDocx(id, topic);
-    } catch {
-      alert('Download failed');
-    }
+  const handleDownload = (id: string, topic: string, institution?: string) => {
+    setDownloadTarget({ id, topic, institution });
   };
 
   const firstName = user?.full_name?.split(' ')[0] || 'Researcher';
@@ -60,42 +58,51 @@ export default function Dashboard() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
             <p className="eyebrow mb-3">Research desk</p>
-            <h1 className="display text-4xl lg:text-5xl text-navy">Good to see you, {firstName}.</h1>
+            <h1 className="display text-4xl lg:text-5xl text-navy">Welcome back, {firstName}.</h1>
             <p className="text-muted mt-3 max-w-xl text-sm leading-relaxed">
-              Pick up where you left off, or start something new. Papers, writing sessions, and wallet live here.
+              Your papers, writing workspace, and wallet — all in one place. Pick up where you left off or start a new draft.
             </p>
           </div>
-          <button
-            onClick={() => navigate('/new-paper')}
-            className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2 self-start lg:self-auto"
-          >
-            <Plus size={17} /> New research paper
-          </button>
+          <div className="flex flex-wrap gap-3 self-start lg:self-auto">
+            <button
+              onClick={() => navigate('/new-paper')}
+              className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2"
+            >
+              <Plus size={17} /> New AI paper
+            </button>
+            <button
+              onClick={() => navigate('/workspace')}
+              className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2"
+            >
+              Open workspace
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           <div className="p-6 bg-brand text-white rounded-2xl relative overflow-hidden">
             <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full border border-white/10" />
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-medium text-white/65">Available balance</h3>
+            <div className="absolute -left-4 bottom-0 w-20 h-20 rounded-full bg-white/5" />
+            <div className="flex items-center justify-between mb-5 relative z-10">
+              <h3 className="text-sm font-medium text-white/65">Wallet balance</h3>
               <WalletCards size={18} className="text-white/50" />
             </div>
-            <p className="display text-3xl">GHS {walletBalance.toFixed(2)}</p>
+            <p className="display text-3xl relative z-10">GHS {walletBalance.toFixed(2)}</p>
             <button
               onClick={() => navigate('/wallet')}
-              className="mt-5 text-sm font-bold text-brand bg-white px-3.5 py-2 rounded-[10px] hover:bg-brand-soft transition inline-flex items-center gap-1"
+              className="mt-5 text-sm font-bold text-brand bg-white px-3.5 py-2 rounded-[10px] hover:bg-brand-soft transition inline-flex items-center gap-1 relative z-10"
             >
-              Manage wallet <ArrowUpRight size={14} />
+              Manage <ArrowUpRight size={14} />
             </button>
           </div>
           <div className="p-6 bg-white rounded-[14px] border border-rule">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-medium text-muted">Completed</h3>
+              <h3 className="text-sm font-medium text-muted">Papers completed</h3>
               <FileText size={18} className="text-brand" />
             </div>
             <p className="display text-3xl text-navy">
               {papers.filter(p => p.status === 'completed').length}
-              <span className="text-sm text-muted font-normal ml-2 tracking-normal">all time</span>
+              <span className="text-sm text-muted font-normal ml-2 tracking-normal">total</span>
             </p>
           </div>
           <div className="p-6 bg-white rounded-[14px] border border-rule">
@@ -105,19 +112,37 @@ export default function Dashboard() {
             </div>
             <p className="display text-3xl text-navy">
               {papers.filter(p => p.status === 'processing').length}
-              <span className="text-sm text-muted font-normal ml-2 tracking-normal">active</span>
+              <span className="text-sm text-muted font-normal ml-2 tracking-normal">generating</span>
             </p>
+          </div>
+          <div className="p-6 bg-navy-mist rounded-[14px] border border-rule flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-medium text-muted">Writing workspace</h3>
+              <ArrowUpRight size={18} className="text-brand" />
+            </div>
+            <p className="text-sm text-navy font-semibold leading-snug mb-4">AI-assisted writing, citations &amp; quality checks — all in one tab.</p>
+            <button
+              onClick={() => navigate('/workspace')}
+              className="btn-primary px-3.5 py-2 text-sm inline-flex items-center gap-1 self-start"
+            >
+              Open workspace <ArrowUpRight size={14} />
+            </button>
           </div>
         </div>
 
         <div className="flex items-end justify-between mb-5">
           <div>
-            <p className="eyebrow mb-1">Library</p>
-            <h2 className="display text-3xl text-navy">Your papers</h2>
+            <p className="eyebrow mb-1">Paper library</p>
+            <h2 className="display text-3xl text-navy">Your research papers</h2>
           </div>
-          <span className="text-xs text-muted inline-flex items-center gap-1.5">
-            <RefreshCw size={12} /> updates every 10s
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted inline-flex items-center gap-1.5">
+              <RefreshCw size={12} /> auto-refreshes every 10s
+            </span>
+            <button onClick={() => navigate('/new-paper')} className="btn-primary px-4 py-2 text-xs inline-flex items-center gap-1.5">
+              <Plus size={14} /> New paper
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-[14px] border border-rule overflow-hidden">
@@ -127,11 +152,14 @@ export default function Dashboard() {
               Loading your research history...
             </div>
           ) : papers.length === 0 ? (
-            <div className="p-14 text-center text-muted">
-              <FileText className="mx-auto mb-4 text-navy" size={28} />
-              <p className="mb-4 text-lg text-navy">You haven&apos;t started any research papers yet.</p>
-              <button onClick={() => navigate('/new-paper')} className="text-navy font-bold hover:underline">
-                Start your first paper →
+            <div className="p-16 text-center">
+              <div className="w-16 h-16 bg-brand-soft rounded-2xl grid place-items-center mx-auto mb-5">
+                <FileText className="text-brand" size={28} />
+              </div>
+              <p className="mb-2 text-lg font-bold text-navy">No papers yet</p>
+              <p className="text-sm text-muted mb-6 max-w-xs mx-auto">Provide a topic and brief — ResearchPadi will generate a complete, supervisor-ready draft.</p>
+              <button onClick={() => navigate('/new-paper')} className="btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-2">
+                <Plus size={15} /> Generate your first paper
               </button>
             </div>
           ) : (
@@ -172,7 +200,7 @@ export default function Dashboard() {
                             Review
                           </button>
                           <button
-                            onClick={() => handleDownload(paper.id, paper.topic)}
+                            onClick={() => handleDownload(paper.id, paper.topic, paper.institution_name)}
                             className="bg-green-600 text-white px-3.5 py-2 rounded-[10px] text-sm font-bold hover:bg-green-700 transition"
                           >
                             Download
@@ -195,6 +223,14 @@ export default function Dashboard() {
         </div>
       </main>
       <Footer />
+      {downloadTarget && (
+        <DownloadDisclosureModal
+          paperId={downloadTarget.id}
+          topic={downloadTarget.topic}
+          institutionName={downloadTarget.institution}
+          onClose={() => setDownloadTarget(null)}
+        />
+      )}
     </div>
   );
 }

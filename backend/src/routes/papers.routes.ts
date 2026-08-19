@@ -10,10 +10,13 @@ router.post('/refine-topic', papersController.refineTopic);
 router.post('/generate-questions', papersController.generateResearchQuestions);
 router.post('/full', papersController.submitFullPaper);
 router.get('/', papersController.listPapers);
+router.get('/disclosure-templates', papersController.listDisclosureTemplates);
 router.get('/:id', papersController.getPaperDetails);
 router.get('/:id/status', papersController.getJobStatus);
 router.post('/:id/supervise', papersController.superviseCompletedPaper);
 router.post('/:id/accept-review', papersController.acceptSupervision);
+router.get('/:id/ai-score', papersController.getAiScore);
+router.post('/:id/humanize', papersController.humanizePaperHandler);
 router.get('/:id/download', papersController.downloadPaper);
 router.delete('/:id', papersController.deletePaper);
 

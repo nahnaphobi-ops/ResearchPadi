@@ -102,19 +102,31 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-navy-mist">
       <div className="hidden lg:flex relative flex-col justify-between p-12 bg-navy text-white overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full border border-white/5" />
+        <div className="absolute -left-8 bottom-32 w-40 h-40 rounded-full bg-brand/10" />
         <div className="relative z-10">
-          <BrandLogo onDark markClassName="h-10 w-10" onClick={() => navigate('/')} />
+          <BrandLogo onDark markClassName="h-11 w-11" onClick={() => navigate('/')} />
         </div>
         <div className="relative z-10 flex flex-col items-start gap-8">
           <HeroStudent className="w-full max-w-sm" />
           <div className="max-w-md">
-            <p className="display text-4xl leading-tight mb-4">Online education feels like a real classroom.</p>
-            <p className="text-white/70 text-sm leading-relaxed">
-              Sign in to continue drafting, citing, and refining academic work built for Ghanaian universities.
+            <p className="display text-4xl leading-tight mb-4">
+              From brief to <span className="text-gold">supervisor-ready</span> draft.
             </p>
+            <p className="text-white/70 text-sm leading-relaxed mb-6">
+              The AI writing platform built specifically for KNUST, UG, UCC, UPSA and every Ghanaian university format.
+            </p>
+            <div className="flex flex-col gap-2">
+              {['Local university templates & citation styles', 'AI writing workspace with live suggestions', 'Plagiarism guard before every submission'].map(item => (
+                <div key={item} className="flex items-center gap-2 text-sm text-white/80">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <p className="relative z-10 text-xs text-white/40">AbusuaITLabs · Kumasi, Ghana</p>
+        <p className="relative z-10 text-xs text-white/40">ResearchPadi · AbusuaITLabs · Kumasi, Ghana</p>
       </div>
 
       <div className="flex flex-col items-center justify-center px-5 py-12 relative">
@@ -128,11 +140,11 @@ export default function Login() {
 
         <div className="w-full max-w-md bg-white rounded-[14px] border border-rule p-8 shadow-soft">
           <div className="flex justify-center mb-4 lg:hidden">
-            <BrandLogo markClassName="h-12 w-auto" />
+            <BrandLogo markClassName="h-12 w-12" />
           </div>
           <h1 className="display text-3xl text-center text-navy mb-1">Welcome back</h1>
           <p className="text-sm text-center text-muted mb-8">
-            {step === 1 ? 'Enter your phone number to receive a one-time code.' : `Enter the code sent to ${phone}`}
+            {step === 1 ? 'Enter your Ghanaian phone number to receive a one-time code.' : `Enter the 6-digit code sent to ${phone}`}
           </p>
 
           {error && <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-xl">{error}</div>}
@@ -186,13 +198,14 @@ export default function Login() {
           )}
 
           <div className="mt-8 pt-6 border-t border-rule">
+            <p className="text-center text-xs text-muted mb-3">Want to explore first?</p>
             <button
               type="button"
               onClick={handleTryDemo}
               disabled={loading}
-              className="w-full p-3.5 mb-3 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition"
+              className="w-full p-3.5 mb-3 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition inline-flex items-center justify-center gap-2"
             >
-              {loading ? 'Loading demo...' : 'Try demo account'}
+              {loading ? 'Loading demo...' : '✦ Try demo — no phone needed'}
             </button>
             <a href="/admin/login" className="block text-center text-xs text-muted hover:text-ink underline">
               Admin login

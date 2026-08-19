@@ -62,7 +62,7 @@ export default function AdminLogin() {
       <div className="w-full max-w-md p-8 bg-white rounded-[14px] border border-rule shadow-soft">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
-            <BrandLogo markClassName="h-12 w-auto" />
+            <BrandLogo markClassName="h-12 w-12" />
           </div>
           <h2 className="text-2xl font-bold text-navy">Admin portal</h2>
         </div>

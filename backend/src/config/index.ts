@@ -27,8 +27,8 @@ export const CONFIG = {
     TOP_K: parseInt(process.env.RAG_TOP_K || '5'),
   },
   QUEUE: {
-    PAPER_CONCURRENCY: parseInt(process.env.PAPER_CONCURRENCY || '3', 10),
-    AI_RATE_LIMIT_MAX: parseInt(process.env.AI_RATE_LIMIT_MAX || '5', 10),
+    PAPER_CONCURRENCY: parseInt(process.env.PAPER_CONCURRENCY || '6', 10),
+    AI_RATE_LIMIT_MAX: parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10),
     AI_RATE_LIMIT_WINDOW: parseInt(process.env.AI_RATE_LIMIT_WINDOW || '60000', 10),
   },
   AI_GATEWAY: {

@@ -44,7 +44,7 @@ export default function Register() {
     <div className="flex flex-col items-center justify-center min-h-screen py-10 bg-navy-mist">
       <div className="w-full max-w-lg p-8 bg-white rounded-[14px] border border-rule shadow-soft">
         <div className="flex justify-center mb-4">
-          <BrandLogo markClassName="h-10 w-auto" />
+          <BrandLogo markClassName="h-10 w-10" />
         </div>
         <h2 className="text-2xl font-bold mb-2 text-center text-navy">Complete your profile</h2>
         <p className="text-sm text-muted text-center mb-6">Tell us where you study so drafts match your university.</p>

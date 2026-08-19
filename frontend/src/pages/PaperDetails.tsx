@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import AppShell from '../components/layout/AppShell';
+import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
 
 export default function PaperDetails() {
   const { id } = useParams<{ id: string }>();
@@ -9,6 +10,7 @@ export default function PaperDetails() {
   const [paper, setPaper] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showDownload, setShowDownload] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -18,13 +20,9 @@ export default function PaperDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     if (!id || !paper) return;
-    try {
-      await paperService.downloadDocx(id, paper.topic);
-    } catch {
-      alert('Download failed');
-    }
+    setShowDownload(true);
   };
 
   if (loading) {
@@ -91,6 +89,14 @@ export default function PaperDetails() {
           </button>
         )}
       </div>
+      {showDownload && id && (
+        <DownloadDisclosureModal
+          paperId={id}
+          topic={paper.topic}
+          institutionName={paper.institution_name}
+          onClose={() => setShowDownload(false)}
+        />
+      )}
     </AppShell>
   );
 }

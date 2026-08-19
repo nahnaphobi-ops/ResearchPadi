@@ -1,5 +1,6 @@
 import { Worker, Job } from 'bullmq';
-import { getRedis } from '../lib/redis.js';
+import { getRedis, redisSupportsBullmq } from '../lib/redis.js';
+import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
 import { supabase } from '../db/supabase.js';
 import { performResearch } from '../services/pipeline/research.service.js';
@@ -126,19 +127,19 @@ async function runPipeline(job: Job<PaperJobData>) {
 
 let paperWorker: Worker | null = null;
 
-export function startPaperWorker(): Worker | null {
+export async function startPaperWorker(): Promise<Worker | null> {
   if (paperWorker) return paperWorker;
 
   const connection = getRedis();
-  if (!connection) {
-    log.warn('Redis not configured — paper worker disabled');
+  if (!connection || !(await redisSupportsBullmq())) {
+    log.warn('Paper worker disabled — Redis missing or too old for BullMQ');
     return null;
   }
 
   paperWorker = new Worker<PaperJobData>('papers', runPipeline, {
     connection: connection as any,
-    concurrency: 3,
-    limiter: { max: 5, duration: 60000 },
+    concurrency: CONFIG.QUEUE.PAPER_CONCURRENCY,
+    limiter: { max: CONFIG.QUEUE.PAPER_CONCURRENCY * 2, duration: 60000 },
   });
 
   paperWorker.on('failed', (job, err) => {

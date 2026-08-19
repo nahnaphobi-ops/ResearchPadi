@@ -26,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <nav className="bg-navy-deep border-b border-white/10 sticky top-0 z-50 text-white">
         <div className="relative w-full px-3 sm:px-4 py-3 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
           <div className="flex items-center gap-2 shrink-0">
-            <BrandLogo onDark markClassName="h-9 w-auto" className="[&_span]:text-base" />
+            <BrandLogo onDark markClassName="h-9 w-9" className="[&_span]:text-base" />
             <span className="text-white/45 font-normal text-sm">/ admin</span>
           </div>
           <div className="flex flex-wrap gap-1 lg:absolute lg:left-1/2 lg:-translate-x-1/2">

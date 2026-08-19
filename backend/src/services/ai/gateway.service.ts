@@ -46,24 +46,37 @@ function hasProvider(provider: Provider): boolean {
 }
 
 // --- Rate limiting (Redis-backed, works across pods) ---
+// Global per-provider ceiling protects the shared API key / provider RPM.
 const RATE_LIMITS: Record<Provider, { max: number; windowMs: number }> = {
   anthropic: { max: 40, windowMs: 60_000 },
   openai: { max: 50, windowMs: 60_000 },
   perplexity: { max: 20, windowMs: 60_000 },
 };
 
-async function checkRateLimit(provider: Provider): Promise<boolean> {
+// Per-user fairness cap so one heavy user can't consume the whole bucket.
+const PER_USER_AI_MAX = parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10);
+
+async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
   const limit = RATE_LIMITS[provider];
-  const key = `rl:ai:${provider}:${Math.floor(Date.now() / limit.windowMs)}`;
+  const window = Math.floor(Date.now() / limit.windowMs);
+  const redis = getRedis();
+  if (!redis) return true;
 
   try {
-    const redis = getRedis();
-    if (!redis) return true;
-    const current = await redis.incr(key);
-    if (current === 1) {
-      await redis.pexpire(key, limit.windowMs);
+    // Global provider ceiling
+    const globalKey = `rl:ai:${provider}:g:${window}`;
+    const globalCount = await redis.incr(globalKey);
+    if (globalCount === 1) await redis.pexpire(globalKey, limit.windowMs);
+    if (globalCount > limit.max) return false;
+
+    // Per-user cap
+    if (userId) {
+      const userKey = `rl:ai:${provider}:u:${userId}:${window}`;
+      const userCount = await redis.incr(userKey);
+      if (userCount === 1) await redis.pexpire(userKey, limit.windowMs);
+      if (userCount > PER_USER_AI_MAX) return false;
     }
-    return current <= limit.max;
+    return true;
   } catch {
     // Fallback to allow if Redis is down
     return true;
@@ -175,7 +188,7 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
       continue;
     }
 
-    if (!(await checkRateLimit(model.provider))) {
+    if (!(await checkRateLimit(model.provider, userId))) {
       log.warn({ provider: model.provider }, 'Rate limit hit, trying next provider');
       continue;
     }

@@ -8,29 +8,19 @@ interface BrandLogoProps {
   onClick?: () => void;
 }
 
-function LogoMark({
-  className = '',
-  invert = false,
-}: {
-  className?: string;
-  invert?: boolean;
-}) {
-  const fill = invert ? '#ffffff' : '#3B6EFF';
-
+function LogoMark({ className = '' }: { className?: string }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 48 48"
-      fill="none"
-      className={className}
+    <span
+      className={`${className} inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand shadow-sm`}
       aria-hidden="true"
-      focusable="false"
     >
-      <circle cx="24" cy="24" r="24" fill={fill} />
-      <path d="M24 10 L40 18 L24 26 L8 18 Z" fill={invert ? '#3B6EFF' : '#fff'} />
-      <path d="M14 20 V30 c0 5.5 20 5.5 20 0 V20" fill={invert ? '#3B6EFF' : '#fff'} />
-      <circle cx="24" cy="18" r="2" fill={invert ? '#fff' : '#3B6EFF'} />
-    </svg>
+      <img
+        src="/brand-mark-white.png"
+        alt=""
+        draggable={false}
+        className="h-[118%] w-[118%] max-w-none object-contain"
+      />
+    </span>
   );
 }
 
@@ -47,7 +37,7 @@ export default function BrandLogo({
 
   const content = (
     <>
-      <LogoMark className={`${markClassName} shrink-0 rounded-full`} invert={invert || onDark} />
+      <LogoMark className={markClassName} />
       {wordmark && (
         <span className={`font-extrabold tracking-tight leading-none uppercase ${researchColor} ${stacked ? 'text-[13px] sm:text-sm' : 'text-[15px] sm:text-[17px]'}`}>
           ResearchPadi

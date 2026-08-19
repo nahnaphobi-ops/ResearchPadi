@@ -1,5 +1,5 @@
 import { Queue, QueueEvents } from 'bullmq';
-import { getRedis } from './redis.js';
+import { getRedis, redisSupportsBullmq } from './redis.js';
 import { childLogger } from './logger.js';
 
 const log = childLogger('queue');
@@ -25,13 +25,20 @@ function createQueue(name: string): Queue | null {
   return new Queue(name, getQueueOpts());
 }
 
-export const paperQueue = createQueue('papers');
-export const researchQueue = createQueue('research');
-export const embeddingQueue = createQueue('embeddings');
+export let paperQueue: Queue | null = null;
+export let researchQueue: Queue | null = null;
+export let embeddingQueue: Queue | null = null;
+
+export async function initQueues(): Promise<void> {
+  if (!(await redisSupportsBullmq())) return;
+  paperQueue = createQueue('papers');
+  researchQueue = createQueue('research');
+  embeddingQueue = createQueue('embeddings');
+}
 
 export function setupQueueEvents() {
   const connection = getRedis();
-  if (!connection) return null;
+  if (!connection || !paperQueue) return null;
 
   const paperEvents = new QueueEvents('papers', { connection: connection as any });
 

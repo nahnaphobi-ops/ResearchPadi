@@ -232,3 +232,11 @@ export function getDisclosureTemplates(category?: string): DisclosureTemplate[] 
 export function getDisclosureTemplate(id: string): DisclosureTemplate | undefined {
   return DISCLOSURE_TEMPLATES.find(t => t.id === id);
 }
+
+export function suggestDisclosureTemplateId(institutionName?: string): string {
+  const name = (institutionName || '').toLowerCase();
+  if (name.includes('knust') || name.includes('kwame nkrumah')) return 'knust-standard';
+  if (name.includes('university of ghana') || name.includes('legon') || /\bug\b/.test(name)) return 'ug-standard';
+  if (name.includes('ghana') || name.includes('ucc') || name.includes('upsa') || name.includes('gimpa')) return 'ghanau-apa';
+  return 'apa-ai-general';
+}

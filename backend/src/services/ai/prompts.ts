@@ -886,3 +886,72 @@ export const CHAPTER_STRUCTURE = {
     wordTarget: 1500
   }
 };
+
+/**
+ * Prompt for the writing naturalizer / AI-pattern removal pass.
+ * This does NOT attempt to defeat cryptographic watermarks — it improves
+ * the human readability and naturalness of academic prose by rewriting
+ * formulaic AI-style patterns into varied, authentic academic writing.
+ */
+export const buildHumanizePrompt = (
+  text: string,
+  topic: string,
+  course: string,
+  institutionType: string
+): string => {
+  return `
+You are an expert academic writing editor specialising in Ghanaian university standards.
+Your task is to naturalise and improve the prose style of the research paper below.
+
+WHAT TO FIX — work through every paragraph:
+
+1. BANNED WORDS — replace every instance with a more precise alternative:
+   furthermore, moreover, notably, it is worth noting, it is important to note,
+   delve into, underscore, pivotal, paramount, multifaceted, shed light on,
+   in the realm of, leverage, embark on, robust, groundbreaking, cutting-edge,
+   comprehensive, crucial, significant, vital, essential, innovative,
+   it can be argued, it is evident, in summary, in conclusion (except final chapter),
+   the study found, the research shows, the results indicate, this paper explores
+
+2. SENTENCE RHYTHM — where three or more consecutive sentences are similar in length,
+   restructure at least two of them. Vary between short, punchy sentences and
+   longer analytical ones. Academic writing should breathe.
+
+3. TRANSITION WORDS — reduce overused connectors. Instead of always starting with
+   "However," "Therefore," "Thus," restructure the sentence so the logical link
+   is implicit in the phrasing itself.
+
+4. HEDGING — remove unnecessary hedging phrases (it may be, it is possible that,
+   it seems as though) unless the hedging is genuinely academically appropriate
+   (uncertain empirical claims).
+
+5. FORMULAIC SENTENCE STARTERS — rewrite any sentence that starts with:
+   "This paper aims to...", "The purpose of this study is...",
+   "As mentioned above...", "As previously discussed...",
+   "The following section will...", "In this section we will..."
+
+6. GHANA GROUNDING — anywhere a point could apply to any country, add a specific
+   Ghanaian context: an institution name, a local statistic, a Ghanaian scholar,
+   or a Ghana-specific example. Do not invent data — only add what is plausible
+   and already supported by context in the paper.
+
+7. PRESERVE ALL CITATIONS — do not change, add, or remove any (Author, Year)
+   in-text citations or any content in the References section.
+
+8. PRESERVE ALL HEADINGS, STRUCTURE, AND WORD COUNT — only improve prose, do not
+   reorganise sections or change the paper's argument.
+
+PAPER DETAILS:
+Topic: ${topic}
+Course: ${course}
+Institution Type: ${institutionType}
+
+PAPER TO NATURALISE:
+${text}
+
+OUTPUT INSTRUCTIONS:
+Return the COMPLETE REVISED PAPER only.
+Begin directly with the title page content.
+No preamble, no commentary, no summary of changes.
+  `.trim();
+};

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../db/supabase.js';
-import { getRedis } from '../lib/redis.js';
+import { getRedis, redisSupportsBullmq } from '../lib/redis.js';
 import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('health');
@@ -116,12 +116,14 @@ async function checkAiProviders(): Promise<CheckResult> {
 
 async function checkQueues(): Promise<CheckResult> {
   try {
-    // Just check Redis is reachable for queues
     const redis = getRedis();
     if (!redis) {
       return { status: 'ok', message: 'Redis not configured (queues optional)' };
     }
     await redis.ping();
+    if (!(await redisSupportsBullmq())) {
+      return { status: 'ok', message: 'Redis reachable; BullMQ disabled (need Redis 5+)' };
+    }
     return { status: 'ok', message: 'Queues operational' };
   } catch {
     return { status: 'error', message: 'Queue backend (Redis) unreachable' };

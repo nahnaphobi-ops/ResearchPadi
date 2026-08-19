@@ -7,6 +7,9 @@ let redis: Redis | null = null;
 let redisSubscriber: Redis | null = null;
 let redisTried = false;
 let redisSubscriberTried = false;
+let bullmqCompatible: boolean | null = null;
+
+const BULLMQ_MIN_MAJOR = 5;
 
 export function getRedis(): Redis | null {
   if (redis) return redis;
@@ -73,6 +76,41 @@ export function getRedisSubscriber(): Redis | null {
   redisSubscriber.on('end', () => { redisSubscriber = null; });
 
   return redisSubscriber;
+}
+
+/**
+ * BullMQ requires Redis 5+. Windows Redis/Memurai 3.x is still usable as a cache,
+ * but constructing BullMQ queues against it throws on every reconnect.
+ */
+export async function redisSupportsBullmq(): Promise<boolean> {
+  if (bullmqCompatible !== null) return bullmqCompatible;
+
+  const client = getRedis();
+  if (!client) {
+    bullmqCompatible = false;
+    return false;
+  }
+
+  try {
+    const info = await client.info('server');
+    const match = info.match(/redis_version:(\d+)\.(\d+)/);
+    const major = match ? parseInt(match[1], 10) : 0;
+    const version = match ? `${match[1]}.${match[2]}` : 'unknown';
+    bullmqCompatible = major >= BULLMQ_MIN_MAJOR;
+    if (!bullmqCompatible) {
+      log.warn(
+        { version, required: `${BULLMQ_MIN_MAJOR}+` },
+        'Local Redis is too old for BullMQ — paper queue disabled. Supabase is unaffected. Install Redis 7 (or Memurai 4+) to enable workers.'
+      );
+    } else {
+      log.info({ version }, 'Redis version is compatible with BullMQ');
+    }
+  } catch (err: any) {
+    log.warn({ err: err.message }, 'Could not read Redis version — treating as incompatible with BullMQ');
+    bullmqCompatible = false;
+  }
+
+  return bullmqCompatible;
 }
 
 /**
