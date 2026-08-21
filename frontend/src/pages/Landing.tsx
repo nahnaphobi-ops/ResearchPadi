@@ -2,17 +2,17 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import BrandLogo from '../components/common/BrandLogo';
 import HeroStudent from '../components/brand/HeroStudent';
+import { testimonials } from '../data/testimonials';
 import {
   ChevronDown, CheckCircle, Shield, ArrowRight, Phone, Mail,
-  Search, ShoppingBag, Heart, Star, Clock, Users, BookOpen,
+  Search, Star, Clock, Users, BookOpen,
   Headphones, GraduationCap, FileText, Quote, DollarSign, Repeat, Share2,
 } from 'lucide-react';
 
 const navItems = [
   { label: 'Home', id: 'top' },
   { label: 'Features', id: 'about' },
-  { label: 'Courses', id: 'courses' },
-  { label: 'Students', id: 'students' },
+  { label: 'Offer', id: 'courses' },
   { label: 'Pricing', id: 'pricing' },
   { label: 'Contact', id: 'contact' },
 ];
@@ -37,7 +37,7 @@ const allCourses = [
   { filter: 'thesis', weeks: '08 WEEKS', title: 'Thesis chapters with supervisor-ready structure', lessons: 18, students: 980, level: 'Advanced', teacher: 'Kwame Mensah', price: 'GHS 200', tone: 'from-gold to-[#E0B000]', image: '/landing/course-thesis.jpg', imageAlt: 'Postgraduate student working through thesis chapters' },
   { filter: 'review', weeks: '03 WEEKS', title: 'Literature reviews grounded in African journals', lessons: 10, students: 1600, level: 'Beginner', teacher: 'Efua Asante', price: 'FREE', tone: 'from-[#7EB6E9] to-brand', image: '/landing/course-literature.jpg', imageAlt: 'Academic journals and notes for a literature review' },
   { filter: 'cite', weeks: '02 WEEKS', title: 'APA, MLA, Chicago and Harvard citation studio', lessons: 8, students: 2100, level: 'Beginner', teacher: 'Yaw Osei', price: 'FREE', tone: 'from-alert to-[#E03A3A]', image: '/landing/course-citations.jpg', imageAlt: 'Student preparing academic citations at a desk' },
-  { filter: 'research', weeks: '05 WEEKS', title: 'University templates for KNUST, UG, UCC and UPSA', lessons: 6, students: 3100, level: 'Beginner', teacher: 'Akosua Darko', price: 'FREE', tone: 'from-navy to-brand', image: '/landing/course-templates.jpg', imageAlt: 'Students on a Ghanaian university campus' },
+  { filter: 'research', weeks: '05 WEEKS', title: 'University templates for KNUST, UG, UCC and UPSA', lessons: 6, students: 3100, level: 'Beginner', teacher: 'Akosua Darko', price: 'FREE', tone: 'from-navy to-brand', image: '/landing/course-templates.jpg', imageAlt: 'University of Ghana, Legon campus in Accra' },
   { filter: 'thesis', weeks: '06 WEEKS', title: 'Quality guards before every submission', lessons: 9, students: 1200, level: 'Intermediate', teacher: 'Kojo Ampofo', price: 'GHS 120', tone: 'from-brand to-[#7EB6E9]', image: '/landing/course-quality.jpg', imageAlt: 'Student reviewing a paper before submission' },
   { filter: 'review', weeks: '04 WEEKS', title: 'Assisted writing workspace with live AI help', lessons: 14, students: 870, level: 'Intermediate', teacher: 'Abena Sarpong', price: 'GHS 120', tone: 'from-[#24356F] to-gold', image: '/landing/course-workspace.jpg', imageAlt: 'Student writing in a campus study space' },
   { filter: 'cite', weeks: '10 WEEKS', title: 'Priority review and dissertation mode', lessons: 16, students: 540, level: 'Advanced', teacher: 'Nana Adjei', price: 'GHS 200', tone: 'from-navy to-alert', image: '/landing/course-dissertation.jpg', imageAlt: 'Postgraduate students reviewing a dissertation draft' },
@@ -71,12 +71,6 @@ const pricingPlans = [
     cta: 'Start Premium',
     highlighted: false,
   },
-];
-
-const testimonials = [
-  { name: 'Akosua M.', institution: 'KNUST, Kumasi', text: 'ResearchPadi generated my methodology chapter overnight. My supervisor approved it first review — I couldn\'t believe how well-formatted and locally referenced it was.', role: 'BSc Computer Science', initials: 'AM' },
-  { name: 'Kwame A.', institution: 'University of Ghana, Legon', text: 'The literature review AI found Ghanaian and African journal sources I never knew existed. No other tool does that — it\'s built for us, not just adapted for us.', role: 'MA Development Studies', initials: 'KA' },
-  { name: 'Efua B.', institution: 'UCC, Cape Coast', text: 'I submitted my final-year project two weeks ahead of schedule. The quality guard caught citation gaps before I sent it to my supervisor. Absolute lifesaver.', role: 'BSc Business Admin', initials: 'EB' },
 ];
 
 const faqs = [
@@ -130,7 +124,6 @@ export default function Landing() {
           <div className="flex flex-wrap items-center gap-4 text-white/80">
             <span className="inline-flex items-center gap-1.5"><Phone size={12} /> Kumasi, Ghana</span>
             <span className="inline-flex items-center gap-1.5"><Mail size={12} /> hello@researchpadi.com</span>
-            <span className="hidden sm:inline">Mon – Fri, 8am – 6pm</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex items-center gap-2 text-white/70">
@@ -171,14 +164,6 @@ export default function Landing() {
                 className="h-10 w-40 lg:w-48 rounded-full border border-rule pl-9 pr-3 text-sm"
               />
             </label>
-            <button onClick={() => scrollTo('courses')} className="relative p-2 text-navy" aria-label="Saved">
-              <Heart size={18} />
-              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-alert text-white text-[10px] font-bold grid place-items-center">1</span>
-            </button>
-            <button onClick={() => scrollTo('pricing')} className="relative p-2 text-navy" aria-label="Plans">
-              <ShoppingBag size={18} />
-              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 rounded-full bg-alert text-white text-[10px] font-bold grid place-items-center">0</span>
-            </button>
             <button onClick={() => scrollTo('contact')} className="btn-primary px-4 py-2.5 text-xs inline-flex items-center gap-1">
               Contact us <ArrowRight size={13} />
             </button>
@@ -239,13 +224,13 @@ export default function Landing() {
             {features.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.label} className="flex items-center gap-3 px-5 py-5">
+                <div key={item.label} className="flex items-center gap-3 px-4 sm:px-5 py-5 min-w-0 overflow-hidden">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-soft text-brand shrink-0">
                     <Icon size={18} />
                   </span>
-                  <div>
-                    <p className="text-sm font-bold text-navy leading-tight">{item.label}</p>
-                    <p className="text-[11px] text-muted mt-0.5 leading-tight">{item.sub}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-navy leading-tight break-words">{item.label}</p>
+                    <p className="text-[11px] text-muted mt-0.5 leading-tight break-words">{item.sub}</p>
                   </div>
                 </div>
               );
@@ -379,21 +364,18 @@ export default function Landing() {
 
           <div className="text-center mt-10">
             <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
-              View all courses <ArrowRight size={15} />
+              View all offers <ArrowRight size={15} />
             </button>
           </div>
         </div>
       </section>
 
+      {testimonials.length > 0 && (
       <section id="students" className="py-16 sm:py-24">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center mb-10 reveal">
-            <p className="eyebrow mb-3">Real students. Real results.</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Ghanaian students trust ResearchPadi</h2>
-            <div className="flex items-center justify-center gap-1 mt-3">
-              {Array.from({ length: 5 }).map((_, s) => <Star key={s} size={14} className="text-gold" fill="currentColor" />)}
-              <span className="text-xs text-muted ml-2">4.9 · 10k+ submissions</span>
-            </div>
+            <p className="eyebrow mb-3">From real students</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">What Ghanaian students say</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {testimonials.map((t, i) => (
@@ -415,6 +397,7 @@ export default function Landing() {
           </div>
         </div>
       </section>
+      )}
 
       <section id="pricing" className="py-16 sm:py-24 bg-navy-mist">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -511,7 +494,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <BrandLogo onDark markClassName="h-9 w-9" className="[&_span]:text-sm [&_span]:normal-case" />
-            {[{ label: 'Features', id: 'about' }, { label: 'Courses', id: 'courses' }, { label: 'Pricing', id: 'pricing' }, { label: 'Contact', id: 'contact' }].map((item) => (
+            {[{ label: 'Features', id: 'about' }, { label: 'Offer', id: 'courses' }, { label: 'Pricing', id: 'pricing' }, { label: 'Contact', id: 'contact' }].map((item) => (
               <button key={item.id} onClick={() => scrollTo(item.id)} className="text-xs text-white/60 hover:text-white transition">
                 {item.label}
               </button>

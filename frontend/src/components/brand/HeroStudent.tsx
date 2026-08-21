@@ -11,7 +11,7 @@ export default function HeroStudent({ className = '' }: { className?: string }) 
 
       <div className="relative z-10 hero-float">
         <img
-          src="/hero-student.png?v=5"
+          src="/hero-student.png?v=8"
           alt="Student with a laptop giving a thumbs up"
           draggable={false}
           className="relative z-10 mx-auto w-full max-w-[420px] object-contain select-none drop-shadow-[0_18px_24px_rgba(14,27,77,0.16)]"
