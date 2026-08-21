@@ -23,13 +23,33 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', 1);
+
+function allowedOrigins(): string[] {
+  const configured = (process.env.FRONTEND_URL || 'http://localhost:5173')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (CONFIG.NODE_ENV !== 'production') {
+    for (const origin of ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173']) {
+      if (!configured.includes(origin)) configured.push(origin);
+    }
+  }
+  return configured;
+}
+
+const ORIGINS = allowedOrigins();
+
 // Security
 app.use(helmet({
   contentSecurityPolicy: CONFIG.NODE_ENV === 'production' ? undefined : false,
   crossOriginEmbedderPolicy: false,
 }));
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    if (!origin || ORIGINS.includes(origin)) return callback(null, true);
+    callback(null, false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -48,7 +68,12 @@ app.use(compression({
 // Global rate limit: Redis-backed for distributed pods
 app.use(createGlobalRateLimit());
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, _res, buf) => {
+    (req as any).rawBody = buf;
+  },
+}));
 
 // Request logging
 app.use(requestLogger);
@@ -57,11 +82,7 @@ app.use(requestLogger);
 if (CONFIG.NODE_ENV === 'production') {
   app.use('/api', (req, res, next) => {
     if (req.method === 'GET') {
-      const noCache = req.headers['cache-control'] === 'no-cache' || req.query._nocache;
-      if (!noCache) {
-        res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
-        res.setHeader('X-Cache-Tier', 'api');
-      }
+      res.setHeader('Cache-Control', 'private, no-store');
     }
     next();
   });

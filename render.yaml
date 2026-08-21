@@ -23,19 +23,19 @@
         value: bpmfpxkuknchflpctmbr
       - key: SUPABASE_URL
         value: https://bpmfpxkuknchflpctmbr.supabase.co
+      # Set secrets in the Render Dashboard. Do not commit live credentials.
       - key: SUPABASE_SERVICE_ROLE_KEY
-        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbWZweGt1a25jaGZscGN0bWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTcxMzY0MSwiZXhwIjoyMDk3Mjg5NjQxfQ.6Ocm3mVytezSVLC78pRwERFChlx1URlniFVQJxdOB2g
+        sync: false
       - key: DATABASE_URL
-        value: "postgresql://postgres:%23Bigbo55man88%2F%2F@db.bpmfpxkuknchflpctmbr.supabase.co:5432/postgres"
+        sync: false
       - key: JWT_SECRET
-        value: researchpadi-demo-secret-114107571161025654111112521061131195311899
+        sync: false
       - key: ADMIN_EMAIL
-        value: admin@researchpadi.com
+        sync: false
       - key: ADMIN_PASSWORD
-        value: ResearchPadi#Admin2026
+        sync: false
       - key: SUPABASE_ACCESS_TOKEN
         sync: false
-      # Set these in Render Dashboard for live AI demos (paper generation / writing assist)
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -44,3 +44,9 @@
         sync: false
       - key: PAYSTACK_SECRET_KEY
         sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: METRICS_TOKEN
+        sync: false
+      - key: ALLOW_DEMO_LOGIN
+        value: "false"

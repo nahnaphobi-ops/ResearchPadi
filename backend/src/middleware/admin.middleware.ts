@@ -14,7 +14,7 @@ export function requireAdmin(req: AdminRequest, res: Response, next: NextFunctio
 
   const token = authHeader.substring(7);
   try {
-    const decoded = jwt.verify(token, CONFIG.JWT_SECRET) as { id: string; email: string; isAdmin?: boolean };
+    const decoded = jwt.verify(token, CONFIG.JWT_SECRET, { algorithms: ['HS256'] }) as { id: string; email: string; isAdmin?: boolean };
     if (!decoded.isAdmin) {
       return res.status(403).json({ error: 'Not authorized as admin' });
     }

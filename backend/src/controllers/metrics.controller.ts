@@ -11,6 +11,16 @@ const log = childLogger('metrics');
  * GET /metrics — exposes key operational metrics in text format.
  */
 export async function metricsEndpoint(req: Request, res: Response) {
+  const metricsToken = process.env.METRICS_TOKEN;
+  if (metricsToken) {
+    const header = req.headers.authorization || '';
+    if (header !== `Bearer ${metricsToken}`) {
+      return res.status(401).end();
+    }
+  } else if (process.env.NODE_ENV === 'production') {
+    return res.status(404).end();
+  }
+
   try {
     const mem = process.memoryUsage();
     const cpuUsage = process.cpuUsage();

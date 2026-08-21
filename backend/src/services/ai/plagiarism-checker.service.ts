@@ -1,6 +1,6 @@
 import { supabase } from '../../db/supabase.js';
 import { generateEmbedding } from '../rag/embedder.service.js';
-import { CONFIG } from '../../config/index.js';
+import { sanitizeIlikeTerm, ilikeContains } from '../../lib/postgrest-filter.js';
 
 export interface PlagiarismMatch {
   originalText: string;
@@ -101,7 +101,7 @@ async function findSimilarInKnowledgeBase(
   const { data: textResults } = await supabase
     .from('knowledge_chunks')
     .select('chunk_text, source_name, source_url')
-    .or(`chunk_text.ilike.%${sentence.substring(0, 50)}%`)
+    .ilike('chunk_text', ilikeContains(sanitizeIlikeTerm(sentence.substring(0, 50), 50)))
     .limit(5);
 
   if (textResults) {
@@ -129,7 +129,8 @@ async function findSimilarInKnowledgeBase(
 }
 
 export async function checkPlagiarism(text: string): Promise<PlagiarismReport> {
-  const sentences = extractSentences(text);
+  const capped = text.slice(0, 20_000);
+  const sentences = extractSentences(capped).slice(0, 15);
   const words = text.split(/\s+/);
   const uniqueWords = new Set(words.map(w => w.toLowerCase().replace(/[^\w]/g, '')));
 

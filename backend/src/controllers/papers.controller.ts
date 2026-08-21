@@ -95,10 +95,12 @@ export const submitFullPaper = async (req: Request, res: Response) => {
 
 export const getJobStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const userId = (req as any).user?.id;
   const { data: paper, error } = await supabase
     .from('papers')
     .select('id, status, progress_step, created_at, completed_at')
     .eq('id', id)
+    .eq('user_id', userId)
     .single();
 
   if (error || !paper) {
@@ -121,8 +123,14 @@ export const listPapers = async (req: Request, res: Response) => {
 
 export const getPaperDetails = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { data, error } = await supabase.from('papers').select('*').eq('id', id).single();
-  if (error) return res.status(500).json({ error: error.message });
+  const userId = (req as any).user?.id;
+  const { data, error } = await supabase
+    .from('papers')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single();
+  if (error || !data) return res.status(404).json({ error: 'Paper not found' });
   res.json(data);
 };
 
@@ -239,15 +247,23 @@ export const acceptSupervision = async (req: Request, res: Response) => {
 
   await supabase.from('papers').update({
     final_content: supervised
-  }).eq('id', id);
+  }).eq('id', id).eq('user_id', userId);
 
   res.json({ message: 'Supervised version accepted' });
 };
 
 export const deletePaper = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { error } = await supabase.from('papers').delete().eq('id', id);
-  if (error) return res.status(500).json({ error: error.message });
+  const userId = (req as any).user?.id;
+  const { data, error } = await supabase
+    .from('papers')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle();
+  if (error) return res.status(500).json({ error: 'Failed to delete paper' });
+  if (!data) return res.status(404).json({ error: 'Paper not found' });
   res.json({ message: 'Paper deleted' });
 };
 

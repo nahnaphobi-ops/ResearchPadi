@@ -24,7 +24,13 @@ const PRODUCTION_REQUIRED_VARS = [
   'DATABASE_URL',
   'ADMIN_EMAIL',
   'ADMIN_PASSWORD',
+  'FRONTEND_URL',
 ];
+
+const WEAK_JWT_SECRETS = new Set([
+  'fallback-secret-for-dev-only',
+  'researchpadi-demo-secret-114107571161025654111112521061131195311899',
+]);
 
 interface EnvValidation {
   valid: boolean;
@@ -51,12 +57,12 @@ export function validateEnv(): EnvValidation {
     if (!process.env[v]) warnings.push(v);
   }
 
-  if (isProduction && process.env.JWT_SECRET === 'fallback-secret-for-dev-only') {
-    missing.push('JWT_SECRET (using fallback in production)');
+  if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || WEAK_JWT_SECRETS.has(process.env.JWT_SECRET))) {
+    missing.push('JWT_SECRET (must be a unique secret of at least 32 characters)');
   }
 
   if (isProduction && process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length < 12) {
-    warnings.push('ADMIN_PASSWORD should be at least 12 characters');
+    missing.push('ADMIN_PASSWORD (must be at least 12 characters)');
   }
 
   return {

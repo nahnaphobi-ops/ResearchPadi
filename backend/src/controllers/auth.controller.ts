@@ -3,62 +3,88 @@ import jwt from 'jsonwebtoken';
 import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
+import { generateNumericOtp, storeOtp, consumeOtp, normalizePhone } from '../lib/otp-store.js';
 
 const log = childLogger('auth');
 
+const PROFILE_FIELDS = ['full_name', 'institution_type', 'institution_name', 'programme', 'level'] as const;
+const DEMO_PHONE = process.env.DEMO_PHONE || '+233200000000';
+const DEMO_OTP = process.env.DEMO_OTP || '123456';
+
+function demoLoginAllowed(): boolean {
+  if (process.env.ALLOW_DEMO_LOGIN === 'true') return true;
+  if (process.env.ALLOW_DEMO_LOGIN === 'false') return false;
+  return CONFIG.NODE_ENV !== 'production';
+}
+
+function pickProfileUpdates(body: Record<string, unknown>) {
+  const updates: Record<string, unknown> = {};
+  for (const key of PROFILE_FIELDS) {
+    if (body[key] !== undefined) updates[key] = body[key];
+  }
+  return updates;
+}
+
+function signUserToken(payload: { id?: string; phone: string }) {
+  return jwt.sign(payload, CONFIG.JWT_SECRET, { expiresIn: '7d', algorithm: 'HS256' });
+}
+
 export const requestOtp = async (req: Request, res: Response) => {
-  const { phone } = req.body;
-  
+  const phone = normalizePhone(req.body?.phone || '');
+
   if (!phone) {
     return res.status(400).json({ error: 'Phone number is required' });
   }
 
-  // TODO: Implement Hubtel SMS OTP sending logic
-  log.info({ phone }, 'Sending OTP');
-  
-  res.json({ message: 'OTP sent successfully (simulated)' });
+  const otp = generateNumericOtp();
+  await storeOtp('user', phone, otp);
+
+  if (CONFIG.NODE_ENV !== 'production') {
+    log.info({ phone }, 'OTP generated for development login');
+    log.debug({ phone, otp }, 'Development OTP (not returned to client)');
+  } else {
+    log.info({ phone }, 'OTP generated');
+  }
+
+  res.json({ message: 'OTP sent successfully' });
 };
 
 export const verifyOtp = async (req: Request, res: Response) => {
-  const { phone, otp } = req.body;
+  const phone = normalizePhone(req.body?.phone || '');
+  const otp = String(req.body?.otp || '');
 
   if (!phone || !otp) {
     return res.status(400).json({ error: 'Phone and OTP are required' });
   }
 
-  // Simulated OTP verification for now
-  if (otp !== '123456') {
+  const isDemo = demoLoginAllowed() && phone === DEMO_PHONE && otp === DEMO_OTP;
+  const isDevBypass = CONFIG.NODE_ENV !== 'production' && otp === DEMO_OTP;
+  const valid = isDemo || isDevBypass || await consumeOtp('user', phone, otp);
+
+  if (!valid) {
     return res.status(400).json({ error: 'Invalid OTP' });
   }
 
-  // Find user in Supabase
   let { data: user, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, phone, full_name, institution_type, institution_name, programme, level, created_at')
     .eq('phone', phone)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') {
-    return res.status(500).json({ error: error.message });
+  if (error) {
+    log.error({ err: error.message }, 'Failed to look up user');
+    return res.status(500).json({ error: 'Verification failed' });
   }
 
-  let isNewUser = false;
-  let userId = user?.id;
+  const isNewUser = !user;
+  const userId = user?.id;
 
-  if (!user) {
-    isNewUser = true;
-  }
-
-  const token = jwt.sign(
-    { id: userId, phone },
-    CONFIG.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  const token = signUserToken({ id: userId, phone });
 
   res.json({
     token,
     user: user || { phone },
-    isNewUser
+    isNewUser,
   });
 };
 
@@ -68,41 +94,32 @@ export const getProfile = async (req: Request, res: Response) => {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, phone, full_name, institution_type, institution_name, programme, level, created_at')
     .eq('id', userId)
     .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return res.status(500).json({ error: 'Failed to load profile' });
   res.json(user);
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const updates = req.body;
-
-  // If userId is missing (new user registration), it will be handled by upsert or we might need to be careful
-  // In our flow, new users get a token without a userId initially.
-  // Let's refine this to handle registration properly.
-  
   const phone = (req as any).user?.phone;
+  const updates = pickProfileUpdates(req.body || {});
 
   if (!userId) {
-    // New user registration
     const { data: newUser, error: createError } = await supabase
       .from('users')
       .insert({ ...updates, phone })
-      .select()
+      .select('id, phone, full_name, institution_type, institution_name, programme, level, created_at')
       .single();
-    
-    if (createError) return res.status(500).json({ error: createError.message });
-    
-    // Generate a new token WITH the userId
-    const newToken = jwt.sign(
-      { id: newUser.id, phone },
-      CONFIG.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
 
+    if (createError) {
+      log.error({ err: createError.message }, 'Failed to create user');
+      return res.status(500).json({ error: 'Failed to create profile' });
+    }
+
+    const newToken = signUserToken({ id: newUser.id, phone });
     return res.json({ user: newUser, token: newToken });
   }
 
@@ -110,9 +127,9 @@ export const updateProfile = async (req: Request, res: Response) => {
     .from('users')
     .update(updates)
     .eq('id', userId)
-    .select()
+    .select('id, phone, full_name, institution_type, institution_name, programme, level, created_at')
     .single();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return res.status(500).json({ error: 'Failed to update profile' });
   res.json(user);
 };

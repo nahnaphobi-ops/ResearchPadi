@@ -7,7 +7,10 @@ import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
 import { auditLog, queryAuditLogs } from '../lib/audit.js';
 import { getUsageStats } from '../services/ai/gateway.service.js';
+import { sanitizeIlikeTerm, ilikeContains } from '../lib/postgrest-filter.js';
 import type { AdminRequest } from '../middleware/admin.middleware.js';
+
+const USER_LIST_COLUMNS = 'id, phone, full_name, institution_type, institution_name, programme, level, created_at';
 
 const log = childLogger('admin');
 
@@ -69,24 +72,27 @@ export async function login(req: AdminRequest, res: Response) {
 
       logAdminEvent('OTP_SENT', { email, ip: req.ip });
 
+      if (CONFIG.NODE_ENV !== 'production') {
+        log.debug({ email, otp }, 'Admin OTP generated for development (not returned to client)');
+      }
+
       return res.json({
         mfa_required: true,
         message: 'OTP sent to your email',
         admin_id: admin.id,
-        otp_hint: `OTP: ${otp}`,
       });
     }
 
     const accessToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const refreshToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const refreshHash = await bcrypt.hash(refreshToken, 10);
@@ -156,13 +162,13 @@ export async function verifyOtp(req: AdminRequest, res: Response) {
     const accessToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const refreshToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const refreshHash = await bcrypt.hash(refreshToken, 10);
@@ -192,7 +198,7 @@ export async function refreshToken(req: AdminRequest, res: Response) {
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, CONFIG.JWT_SECRET) as {
+    const decoded = jwt.verify(refreshToken, CONFIG.JWT_SECRET, { algorithms: ['HS256'] }) as {
       id: string;
       email: string;
       isAdmin?: boolean;
@@ -224,13 +230,13 @@ export async function refreshToken(req: AdminRequest, res: Response) {
     const newAccessToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const newRefreshToken = jwt.sign(
       { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
       CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN }
+      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
     );
 
     const refreshHash = await bcrypt.hash(newRefreshToken, 10);
@@ -311,18 +317,20 @@ export async function getOverview(req: AdminRequest, res: Response) {
 
 export async function getUsers(req: AdminRequest, res: Response) {
   const { search, institution_type, page = '1', limit = '20' } = req.query as Record<string, string | undefined>;
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
+  const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit || '20', 10) || 20));
   const from = (pageNum - 1) * limitNum;
   const to = from + limitNum - 1;
 
   try {
     let query = supabase
       .from('users')
-      .select('*', { count: 'exact' });
+      .select(USER_LIST_COLUMNS, { count: 'exact' });
 
-    if (search) {
-      query = query.or(`full_name.ilike.%${search}%,phone.ilike.%${search}%,institution_name.ilike.%${search}%`);
+    const safeSearch = sanitizeIlikeTerm(search);
+    if (safeSearch) {
+      const pattern = ilikeContains(safeSearch);
+      query = query.or(`full_name.ilike.${pattern},phone.ilike.${pattern},institution_name.ilike.${pattern}`);
     }
     if (institution_type) {
       query = query.eq('institution_type', institution_type);
@@ -350,7 +358,7 @@ export async function getUserDetail(req: AdminRequest, res: Response) {
 
   try {
     const [userResult, papersResult, subsResult, txnsResult, walletResult] = await Promise.all([
-      supabase.from('users').select('*').eq('id', id).single(),
+      supabase.from('users').select(USER_LIST_COLUMNS).eq('id', id).single(),
       supabase.from('papers').select('*').eq('user_id', id).order('created_at', { ascending: false }),
       supabase.from('subscriptions').select('*').eq('user_id', id).order('started_at', { ascending: false }),
       supabase.from('transactions').select('*').eq('user_id', id).order('created_at', { ascending: false }),
@@ -508,10 +516,7 @@ export async function getKnowledgeBase(req: AdminRequest, res: Response) {
       }
     } else {
       // Fallback: fetch distinct counts instead of all rows
-      const { data: fields } = await supabase.from('knowledge_chunks').select('field');
-      const { data: sources } = await supabase.from('knowledge_chunks').select('source_name');
-      fields?.forEach(r => { byField[r.field] = (byField[r.field] || 0) + 1; });
-      sources?.forEach(r => { bySource[r.source_name] = (bySource[r.source_name] || 0) + 1; });
+      log.warn('Knowledge-base count RPCs missing; returning totals only');
     }
 
     if (sourceData) {

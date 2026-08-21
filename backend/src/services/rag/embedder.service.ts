@@ -2,6 +2,8 @@ import axios from 'axios';
 import { CONFIG } from '../../config/index.js';
 
 let embeddingAvailable: boolean | null = null;
+let embeddingRetryAt = 0;
+const EMBEDDING_RETRY_MS = 60_000;
 
 function getEmbeddingConfig(): { url: string; headers: Record<string, string>; model: string } | null {
   const key = CONFIG.OPENAI_API_KEY;
@@ -44,7 +46,7 @@ export const generateEmbedding = async (text: string) => {
     return null;
   }
 
-  if (embeddingAvailable === false) return null;
+  if (embeddingAvailable === false && Date.now() < embeddingRetryAt) return null;
 
   try {
     const response = await axios.post(
@@ -53,12 +55,12 @@ export const generateEmbedding = async (text: string) => {
       { headers: config.headers, timeout: 15000 }
     );
 
+    embeddingAvailable = true;
     return response.data.data[0].embedding;
   } catch (error: any) {
-    if (embeddingAvailable !== null) {
-      console.warn(`Embedding failed (${error?.message || 'unknown'}) — continuing without vectors`);
-      embeddingAvailable = false;
-    }
+    console.warn(`Embedding failed (${error?.message || 'unknown'}) — continuing without vectors`);
+    embeddingAvailable = false;
+    embeddingRetryAt = Date.now() + EMBEDDING_RETRY_MS;
     return null;
   }
 };

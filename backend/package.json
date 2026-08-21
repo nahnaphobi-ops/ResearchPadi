@@ -11,7 +11,8 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc && node scripts/copy-assets.mjs",
-    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/lib/__tests__/*.test.ts"
   },
   "keywords": [],
   "author": "",

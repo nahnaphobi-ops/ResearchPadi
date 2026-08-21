@@ -4,6 +4,7 @@ import { supabase } from '../../../db/supabase.js';
 import { cacheGet } from '../../../lib/cache.js';
 import { acquireToken } from './rate-limiter.js';
 import { titleSimilarity, surnameMatches, yearMatches } from './similarity.js';
+import { sanitizeIlikeTerm, ilikeContains } from '../../../lib/postgrest-filter.js';
 import type {
   ReferenceEntry,
   MatchSource,
@@ -21,7 +22,7 @@ async function searchRag(title: string, limit: number): Promise<Candidate[]> {
     const { data, error } = await supabase
       .from('knowledge_chunks')
       .select('id, document_title, authors, year')
-      .ilike('document_title', `%${title}%`)
+      .ilike('document_title', ilikeContains(sanitizeIlikeTerm(title, 120)))
       .limit(limit);
 
     if (error || !data) return [];

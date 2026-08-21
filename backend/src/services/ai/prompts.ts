@@ -182,7 +182,7 @@ ${ghanaianSources.map((s, i) => `
       Institution: ${s.institution}
       Year: ${s.year || 'N/A'}
       Authors: ${s.authors || 'N/A'}
-      Excerpt: ${s.chunk_text}
+      Excerpt: ${String(s.chunk_text || '').slice(0, 400)}
       Source: ${s.source_name}
 `).join('\n')}
 

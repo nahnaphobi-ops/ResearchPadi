@@ -4,7 +4,7 @@ import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('keepalive');
 
-const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || 'bpmfpxkuknchflpctmbr';
+const PROJECT_REF = process.env.SUPABASE_PROJECT_REF;
 
 async function pingSupabaseRest() {
   const { count, error } = await supabase
@@ -22,8 +22,8 @@ async function pingSupabaseRest() {
 
 async function ensureProjectActiveViaPat() {
   const token = process.env.SUPABASE_ACCESS_TOKEN;
-  if (!token) {
-    log.debug('[KeepAlive] SUPABASE_ACCESS_TOKEN not set — skip Management API');
+  if (!token || !PROJECT_REF) {
+    log.debug('[KeepAlive] SUPABASE_ACCESS_TOKEN or SUPABASE_PROJECT_REF not set — skip Management API');
     return;
   }
 
