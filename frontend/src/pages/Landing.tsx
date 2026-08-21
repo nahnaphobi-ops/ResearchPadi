@@ -347,11 +347,11 @@ export default function Landing() {
             })}
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="flex flex-wrap justify-center gap-5">
             {visibleCourses.map((course, i) => (
-              <article key={course.title} className={`bg-white rounded-2xl border border-rule overflow-hidden shadow-soft hover:-translate-y-1 transition reveal reveal-delay-${(i % 4) + 1}`}>
+              <article key={course.title} className={`w-full sm:w-[calc(50%-0.625rem)] lg:w-[calc(25%-0.9375rem)] lg:max-w-[280px] bg-white rounded-2xl border border-rule overflow-hidden shadow-soft hover:-translate-y-1 transition reveal reveal-delay-${(i % 4) + 1}`}>
                 <div className={`relative h-36 bg-gradient-to-br ${course.tone}`}>
-                  <img src={course.image} alt={course.imageAlt} className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={course.image} alt={course.imageAlt} className="absolute inset-0 w-full h-full object-cover object-center" />
                   <span className="absolute left-3 top-3 rounded bg-alert px-2 py-1 text-[10px] font-extrabold text-white">{course.weeks}</span>
                 </div>
                 <div className="p-4">
