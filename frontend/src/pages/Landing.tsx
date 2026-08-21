@@ -33,11 +33,11 @@ const courseFilters = [
 ];
 
 const allCourses = [
-  { filter: 'research', weeks: '04 WEEKS', title: 'Complete research paper from brief to export', lessons: 12, students: 2400, level: 'Beginner', teacher: 'Ama Boateng', price: 'GHS 250', tone: 'from-brand to-navy', image: '/landing/course-research.jpg', imageAlt: 'Student writing a research paper in a university library' },
+  { filter: 'research', weeks: '04 WEEKS', title: 'Complete research paper from brief to export', lessons: 12, students: 2400, level: 'Beginner', teacher: 'Ama Boateng', price: 'GHS 250', tone: 'from-brand to-navy', image: '/landing/course-research.jpg', imageAlt: 'Student writing a research paper in a university library', compact: true },
   { filter: 'thesis', weeks: '08 WEEKS', title: 'Thesis chapters with supervisor-ready structure', lessons: 18, students: 980, level: 'Advanced', teacher: 'Kwame Mensah', price: 'GHS 200', tone: 'from-gold to-[#E0B000]', image: '/landing/course-thesis.jpg', imageAlt: 'Postgraduate student working through thesis chapters' },
   { filter: 'review', weeks: '03 WEEKS', title: 'Literature reviews grounded in African journals', lessons: 10, students: 1600, level: 'Beginner', teacher: 'Efua Asante', price: 'FREE', tone: 'from-[#7EB6E9] to-brand', image: '/landing/course-literature.jpg', imageAlt: 'Academic journals and notes for a literature review' },
   { filter: 'cite', weeks: '02 WEEKS', title: 'APA, MLA, Chicago and Harvard citation studio', lessons: 8, students: 2100, level: 'Beginner', teacher: 'Yaw Osei', price: 'FREE', tone: 'from-alert to-[#E03A3A]', image: '/landing/course-citations.jpg', imageAlt: 'Student preparing academic citations at a desk' },
-  { filter: 'research', weeks: '05 WEEKS', title: 'University templates for KNUST, UG, UCC and UPSA', lessons: 6, students: 3100, level: 'Beginner', teacher: 'Akosua Darko', price: 'FREE', tone: 'from-navy to-brand', image: '/landing/course-templates.jpg', imageAlt: 'University of Ghana, Legon campus in Accra' },
+  { filter: 'research', weeks: '05 WEEKS', title: 'University templates for KNUST, UG, UCC and UPSA', lessons: 6, students: 3100, level: 'Beginner', teacher: 'Akosua Darko', price: 'GHS 120', tone: 'from-navy to-brand', image: '/landing/course-templates.jpg', imageAlt: 'University of Ghana, Legon campus in Accra', compact: true },
   { filter: 'thesis', weeks: '06 WEEKS', title: 'Quality guards before every submission', lessons: 9, students: 1200, level: 'Intermediate', teacher: 'Kojo Ampofo', price: 'GHS 120', tone: 'from-brand to-[#7EB6E9]', image: '/landing/course-quality.jpg', imageAlt: 'Student reviewing a paper before submission' },
   { filter: 'review', weeks: '04 WEEKS', title: 'Assisted writing workspace with live AI help', lessons: 14, students: 870, level: 'Intermediate', teacher: 'Abena Sarpong', price: 'GHS 120', tone: 'from-[#24356F] to-gold', image: '/landing/course-workspace.jpg', imageAlt: 'Student writing in a campus study space' },
   { filter: 'cite', weeks: '10 WEEKS', title: 'Priority review and dissertation mode', lessons: 16, students: 540, level: 'Advanced', teacher: 'Nana Adjei', price: 'GHS 200', tone: 'from-navy to-alert', image: '/landing/course-dissertation.jpg', imageAlt: 'Postgraduate students reviewing a dissertation draft' },
@@ -342,19 +342,23 @@ export default function Landing() {
                     {Array.from({ length: 5 }).map((_, s) => <Star key={s} size={12} fill="currentColor" />)}
                     <span className="text-[11px] text-muted ml-1">(4.9)</span>
                   </div>
-                  <h3 className="font-extrabold text-navy text-sm leading-snug mb-3 min-h-[40px]">{course.title}</h3>
+                  <h3 className={`font-extrabold text-navy text-sm leading-snug ${course.compact ? 'mb-4' : 'mb-3 min-h-[40px]'}`}>{course.title}</h3>
+                  {!course.compact && (
                   <div className="flex flex-wrap gap-3 text-[11px] text-muted mb-4">
                     <span className="inline-flex items-center gap-1"><BookOpen size={12} /> {course.lessons} Lessons</span>
                     <span className="inline-flex items-center gap-1"><Users size={12} /> {course.students}</span>
                     <span className="inline-flex items-center gap-1"><Clock size={12} /> {course.level}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-rule">
+                  )}
+                  <div className={`flex items-center pt-3 border-t border-rule ${course.compact ? 'justify-end' : 'justify-between'}`}>
+                    {!course.compact && (
                     <div className="flex items-center gap-2">
                       <span className="h-7 w-7 rounded-full bg-brand-soft text-brand text-[10px] font-bold grid place-items-center">
                         {course.teacher.split(' ').map((n) => n[0]).join('')}
                       </span>
                       <p className="text-xs font-semibold text-navy">{course.teacher}</p>
                     </div>
+                    )}
                     <span className={`text-sm font-extrabold ${course.price === 'FREE' ? 'text-alert' : 'text-navy'}`}>{course.price}</span>
                   </div>
                 </div>
