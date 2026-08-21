@@ -6,7 +6,7 @@ import { testimonials } from '../data/testimonials';
 import {
   ChevronDown, CheckCircle, Shield, ArrowRight, Phone, Mail,
   Search, Star, Clock, Users, BookOpen,
-  Headphones, GraduationCap, FileText, Quote, DollarSign, Repeat, Share2,
+  GraduationCap, FileText, Quote, Share2,
 } from 'lucide-react';
 
 const navItems = [
@@ -17,19 +17,23 @@ const navItems = [
   { label: 'Contact', id: 'contact' },
 ];
 
-const features = [
-  { icon: GraduationCap, label: '10k+ student drafts', sub: 'Generated & reviewed' },
-  { icon: Repeat, label: 'Writing workspace', sub: 'AI + citations in one tab' },
-  { icon: DollarSign, label: 'GHS student pricing', sub: 'Affordable local plans' },
-  { icon: Headphones, label: 'Priority support', sub: 'Human + AI supervisors' },
-  { icon: Users, label: 'Ghana community', sub: 'KNUST · UG · UCC · UPSA' },
-];
-
 const courseFilters = [
-  { key: 'research', title: 'Research Papers', count: '12 courses', icon: FileText },
-  { key: 'thesis', title: 'Thesis Support', count: '8 courses', icon: GraduationCap },
-  { key: 'review', title: 'Literature Review', count: '6 courses', icon: BookOpen },
-  { key: 'cite', title: 'Citations & Edit', count: '9 courses', icon: Quote },
+  {
+    key: 'research', title: 'Research Papers', count: '12 courses', icon: FileText,
+    points: ['Brief-to-outline structuring', 'Chapter-by-chapter drafting', 'One-click export & formatting'],
+  },
+  {
+    key: 'thesis', title: 'Thesis Support', count: '8 courses', icon: GraduationCap,
+    points: ['Supervisor-ready chapters', 'Abstract & methodology help', 'Defense-prep summaries'],
+  },
+  {
+    key: 'review', title: 'Literature Review', count: '6 courses', icon: BookOpen,
+    points: ['African journal sourcing', 'Theme & gap analysis', 'Synthesis made simple'],
+  },
+  {
+    key: 'cite', title: 'Citations & Edit', count: '9 courses', icon: Quote,
+    points: ['APA · MLA · Chicago · Harvard', 'In-text citation checks', 'Reference list cleanup'],
+  },
 ];
 
 const allCourses = [
@@ -118,7 +122,7 @@ export default function Landing() {
   const visibleCourses = allCourses.filter((c) => c.filter === filter);
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-white text-ink overflow-x-hidden">
+    <div className="relative flex flex-col min-h-screen bg-white text-ink overflow-x-hidden pb-[76px] md:pb-0">
       <div className="bg-navy text-white text-xs">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4 text-white/80">
@@ -191,7 +195,9 @@ export default function Landing() {
         <div className="absolute right-[40%] bottom-10 h-20 w-20 rounded-full border-2 border-brand/20" />
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-10 grid lg:grid-cols-2 gap-10 items-center">
           <div>
-            <p className="text-[11px] font-extrabold tracking-[0.18em] uppercase text-alert mb-4 fade-up">AI-powered academic writing · Built for Ghana</p>
+            <p className="inline-flex items-center gap-2 rounded-full bg-navy px-4 py-1.5 text-[10px] sm:text-[11px] font-bold tracking-[0.08em] text-gold mb-5 fade-up">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold/80" aria-hidden="true" /> Built for Ghanaian academic work
+            </p>
             <h1 className="text-[2.35rem] sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.12] text-navy mb-6 fade-up fade-up-delay">
               From brief to&nbsp;
               <span className="text-brand">supervisor-ready</span>
@@ -208,33 +214,37 @@ export default function Landing() {
               ))}
             </ul>
             <div className="flex flex-wrap gap-3 fade-up fade-up-delay-3">
-              <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
+              <button onClick={() => navigate('/login')} className="btn-primary px-7 py-3.5 text-sm inline-flex items-center gap-2 shadow-card">
                 Start writing free <ArrowRight size={15} />
               </button>
-              <button onClick={() => scrollTo('pricing')} className="bg-navy text-white px-6 py-3 rounded-[10px] text-sm font-bold inline-flex items-center gap-2 hover:bg-navy-hover transition">
-                See plans <ArrowRight size={15} />
-              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5 fade-up fade-up-delay-3">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy">
+                <Shield size={14} className="text-brand shrink-0" /> Plagiarism guard on every export
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-navy">
+                <GraduationCap size={14} className="text-brand shrink-0" /> Ghanaian academic standards
+              </span>
             </div>
           </div>
           <HeroStudent className="max-w-[480px] mx-auto lg:ml-auto fade-up fade-up-delay" />
         </div>
 
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-10">
-          <div className="bg-white rounded-2xl shadow-card grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-rule">
-            {features.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className="flex items-center gap-3 px-4 sm:px-5 py-5 min-w-0 overflow-hidden">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-soft text-brand shrink-0">
-                    <Icon size={18} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-navy leading-tight break-words">{item.label}</p>
-                    <p className="text-[11px] text-muted mt-0.5 leading-tight break-words">{item.sub}</p>
-                  </div>
-                </div>
-              );
-            })}
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-10 sm:pb-14">
+          <div className="reveal bg-white rounded-2xl shadow-card border border-rule px-5 py-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-center">
+            <p className="text-sm font-bold text-navy inline-flex items-center gap-2">
+              <Users size={16} className="text-brand shrink-0" />
+              Trusted by <span className="text-brand">10,000+</span> Ghanaian students
+            </p>
+            <span className="hidden sm:block h-4 w-px bg-rule" aria-hidden="true" />
+            <p className="text-xs font-semibold text-muted tracking-wide">KNUST · UG · UCC &amp; UPSA</p>
+            <span className="hidden sm:block h-4 w-px bg-rule" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1.5">
+              <span className="flex gap-0.5 text-gold">
+                {Array.from({ length: 5 }).map((_, s) => <Star key={s} size={12} fill="currentColor" />)}
+              </span>
+              <span className="text-xs font-bold text-navy">4.9/5</span>
+            </span>
           </div>
         </div>
       </section>
@@ -247,7 +257,7 @@ export default function Landing() {
                 <img src="/landing/feature-ai.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_28%] pointer-events-none select-none" />
                 <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand via-brand/70 to-transparent pointer-events-none" />
                 <p className="relative text-[10px] font-bold text-white/70 uppercase tracking-wide mb-1">AI Generation</p>
-                <p className="relative text-white font-extrabold text-sm leading-snug">Full paper from a 3-line brief</p>
+                <p className="relative text-white font-extrabold text-sm leading-snug">Turn your brief into an academic-ready structure</p>
               </div>
               <div className="relative h-44 rounded-2xl bg-gold mt-8 overflow-hidden flex flex-col justify-end p-5">
                 <img src="/landing/feature-citations.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_28%] pointer-events-none select-none" />
@@ -314,17 +324,24 @@ export default function Landing() {
                 <button
                   key={item.key}
                   onClick={() => setFilter(item.key)}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-left transition ${
-                    active ? 'bg-brand text-white shadow-card' : 'bg-white text-navy border border-rule hover:border-brand/40'
+                  aria-pressed={active}
+                  className={`rounded-2xl p-5 text-left transition ${
+                    active ? 'bg-brand text-white shadow-card' : 'bg-white text-navy border border-rule hover:border-brand/40 hover:-translate-y-0.5'
                   }`}
                 >
-                  <span className={`grid h-11 w-11 place-items-center rounded-xl ${active ? 'bg-white/15' : 'bg-brand-soft text-brand'}`}>
-                    <Icon size={18} />
+                  <span className={`grid h-11 w-11 place-items-center rounded-xl mb-3 ${active ? 'bg-white/15 text-white' : 'bg-brand-soft text-brand'}`}>
+                    <Icon size={20} />
                   </span>
-                  <span>
-                    <span className="block text-sm font-extrabold">{item.title}</span>
-                    <span className={`text-xs ${active ? 'text-white/75' : 'text-muted'}`}>{item.count}</span>
-                  </span>
+                  <span className="block text-sm font-extrabold">{item.title}</span>
+                  <span className={`text-xs ${active ? 'text-white/75' : 'text-muted'}`}>{item.count}</span>
+                  <ul className="mt-3 space-y-1.5">
+                    {item.points.map((point) => (
+                      <li key={point} className={`flex items-start gap-1.5 text-[12px] leading-snug ${active ? 'text-white/90' : 'text-ink'}`}>
+                        <CheckCircle size={13} className={`mt-0.5 shrink-0 ${active ? 'text-gold' : 'text-brand'}`} />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
                 </button>
               );
             })}
@@ -366,11 +383,6 @@ export default function Landing() {
             ))}
           </div>
 
-          <div className="text-center mt-10">
-            <button onClick={() => navigate('/login')} className="btn-primary px-6 py-3 text-sm inline-flex items-center gap-2">
-              View all offers <ArrowRight size={15} />
-            </button>
-          </div>
         </div>
       </section>
 
@@ -512,6 +524,16 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-rule px-4 py-3 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-extrabold text-navy leading-tight">Start free today</p>
+          <p className="text-[11px] text-muted leading-tight">Plans from GHS 120/mo</p>
+        </div>
+        <button onClick={() => navigate('/login')} className="btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-1.5 shrink-0">
+          Get started <ArrowRight size={14} />
+        </button>
+      </div>
     </div>
   );
 }
