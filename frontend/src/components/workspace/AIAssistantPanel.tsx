@@ -1,11 +1,16 @@
 import { useState } from 'react';
+import { apiErrorMessage } from '../../utils/apiError';
 import { workspaceService } from '../../services/workspaceService';
+import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
+import type { Source } from './citations/types';
 
 interface Props {
   sessionId: string;
   selectedText: string;
   fullDocument: string;
   onInsert: (text: string) => void;
+  /** Insert an inline citation for a source at the cursor. */
+  onCite: (source: Source) => void;
 }
 
 type Tab = 'write' | 'grammar' | 'claims' | 'plagiarism' | 'ai-detect' | 'citations';
@@ -24,7 +29,7 @@ const STANDALONE_ACTIONS = [
   { key: 'suggest-citations', label: 'Suggest Citations', icon: '🔍', desc: 'Find citations for text' },
 ];
 
-function IssueItem({ issue }: { issue: any }) {
+function IssueItem({ issue }: { issue: GrammarIssue }) {
   const severityColors: Record<string, string> = {
     error: 'bg-red-50 border-red-200 text-red-700',
     warning: 'bg-yellow-50 border-yellow-200 text-yellow-700',
@@ -53,7 +58,7 @@ function IssueItem({ issue }: { issue: any }) {
   );
 }
 
-function ClaimItem({ analysis }: { analysis: any }) {
+function ClaimItem({ analysis }: { analysis: ClaimAnalysis }) {
   const confColors: Record<string, string> = {
     high: 'text-green-600 bg-green-50 border-green-200',
     medium: 'text-yellow-600 bg-yellow-50 border-yellow-200',
@@ -70,7 +75,7 @@ function ClaimItem({ analysis }: { analysis: any }) {
       {analysis.sources?.length > 0 && (
         <div className="mt-1">
           <p className="text-[10px] text-gray-400 mb-0.5">Sources:</p>
-          {analysis.sources.slice(0, 2).map((s: any, i: number) => (
+          {analysis.sources.slice(0, 2).map((s: ClaimSource, i: number) => (
             <p key={i} className="text-[10px] text-gray-500 truncate">- {s.title} ({s.year})</p>
           ))}
         </div>
@@ -86,7 +91,7 @@ function ClaimItem({ analysis }: { analysis: any }) {
   );
 }
 
-function PlagiarismItem({ match }: { match: any }) {
+function PlagiarismItem({ match }: { match: PlagiarismMatch }) {
   return (
     <div className="border border-orange-200 bg-orange-50 rounded-lg p-2.5 text-xs">
       <div className="flex items-center gap-2 mb-1">
@@ -101,7 +106,7 @@ function PlagiarismItem({ match }: { match: any }) {
   );
 }
 
-function AIDetectResult({ result }: { result: any }) {
+function AIDetectResult({ result }: { result: AIDetectionResult }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
@@ -121,7 +126,7 @@ function AIDetectResult({ result }: { result: any }) {
       {result.indicators?.length > 0 && (
         <div className="space-y-1">
           <p className="text-[10px] font-medium text-gray-500">Indicators:</p>
-          {result.indicators.map((ind: any, i: number) => (
+          {result.indicators.map((ind: AIIndicator, i: number) => (
             <div key={i} className="flex items-center gap-2 text-[10px]">
               <span className={`w-1.5 h-1.5 rounded-full ${ind.severity === 'high' ? 'bg-red-500' : ind.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'}`} />
               <span className="text-gray-600">{ind.type}: {ind.description}</span>
@@ -133,7 +138,7 @@ function AIDetectResult({ result }: { result: any }) {
   );
 }
 
-export default function AIAssistantPanel({ sessionId, selectedText, fullDocument, onInsert }: Props) {
+export default function AIAssistantPanel({ sessionId, selectedText, fullDocument, onInsert, onCite }: Props) {
   const [tab, setTab] = useState<Tab>('write');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
@@ -142,12 +147,12 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
   const [history, setHistory] = useState<Array<{ action: string; result: string }>>([]);
 
   // Advanced results
-  const [grammarIssues, setGrammarIssues] = useState<any[]>([]);
-  const [grammarSummary, setGrammarSummary] = useState<any>(null);
-  const [claimAnalyses, setClaimAnalyses] = useState<any[]>([]);
-  const [plagiarismReport, setPlagiarismReport] = useState<any>(null);
-  const [aiResult, setAiResult] = useState<any>(null);
-  const [suggestedCitations, setSuggestedCitations] = useState<any[]>([]);
+  const [grammarIssues, setGrammarIssues] = useState<GrammarIssue[]>([]);
+  const [grammarSummary, setGrammarSummary] = useState<GrammarSummary | null>(null);
+  const [claimAnalyses, setClaimAnalyses] = useState<ClaimAnalysis[]>([]);
+  const [plagiarismReport, setPlagiarismReport] = useState<PlagiarismReport | null>(null);
+  const [aiResult, setAiResult] = useState<AIDetectionResult | null>(null);
+  const [suggestedCitations, setSuggestedCitations] = useState<Source[]>([]);
 
   const contentToAnalyze = selectedText || fullDocument || '';
 
@@ -164,8 +169,8 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
       const text = res.data.response;
       setResponse(text);
       setHistory((prev) => [{ action: instruction, result: text }, ...prev].slice(0, 10));
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'AI request failed');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'AI request failed'));
     } finally {
       setLoading(false);
     }
@@ -201,11 +206,11 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
           setAiResult(res.data.result || null);
           break;
         case 'suggest-citations':
-          setSuggestedCitations(res.data.suggestions || []);
+          setSuggestedCitations(res.data.sources || []);
           break;
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || `${action} failed`);
+    } catch (err) {
+      setError(apiErrorMessage(err, `${action} failed`));
     } finally {
       setLoading(false);
     }
@@ -360,8 +365,8 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
                       text: selectedText,
                     });
                     setClaimAnalyses([res.data.analysis]);
-                  } catch (err: any) {
-                    setError(err.response?.data?.error || 'Validation failed');
+                  } catch (err) {
+                    setError(apiErrorMessage(err, 'Validation failed'));
                   } finally {
                     setLoading(false);
                   }
@@ -409,7 +414,7 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
                 {plagiarismReport.sources?.length > 0 && (
                   <div>
                     <p className="text-[10px] font-medium text-gray-500 mb-1">Top sources:</p>
-                    {plagiarismReport.sources.slice(0, 3).map((s: any, i: number) => (
+                    {plagiarismReport.sources.slice(0, 3).map((s, i: number) => (
                       <p key={i} className="text-[10px] text-gray-500 truncate">- {s.name} ({s.matchCount} matches)</p>
                     ))}
                   </div>
@@ -417,7 +422,7 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
               </div>
             )}
             <div className="space-y-2">
-              {plagiarismReport?.matches?.slice(0, 10).map((match: any, i: number) => (
+              {plagiarismReport?.matches?.slice(0, 10).map((match, i: number) => (
                 <PlagiarismItem key={i} match={match} />
               ))}
             </div>
@@ -450,26 +455,29 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
             </button>
             {suggestedCitations.length > 0 && (
               <div className="space-y-2">
-                {suggestedCitations.map((c, i) => (
-                  <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs">
-                    <p className="font-medium text-gray-800 mb-1 line-clamp-2">{c.title || 'Untitled'}</p>
-                    {c.authors && <p className="text-gray-500 mb-1">{c.authors}</p>}
-                    <div className="flex items-center gap-2 text-[10px] text-gray-400 mb-2">
-                      {c.year && <span>{c.year}</span>}
-                      {c.institution && <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded">{c.institution}</span>}
+                {suggestedCitations.map((c) => {
+                  const a = c.authors;
+                  const names = !a.length ? 'Unknown author' : a.length <= 2 ? a.map((n) => n.family).join(' & ') : `${a[0].family} et al.`;
+                  return (
+                    <div key={c.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs">
+                      <p className="font-medium text-gray-800 mb-1 line-clamp-2">{c.title}</p>
+                      <p className="text-gray-500 mb-1">{names} · {c.year ?? 'n.d.'}</p>
+                      {(c.repository || c.ghanaian) && (
+                        <span className="inline-block mb-2 bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px]">
+                          {c.repository ?? 'Ghana-affiliated'}
+                        </span>
+                      )}
+                      {c.snippet && <p className="text-gray-500 line-clamp-2 italic mb-2">&ldquo;{c.snippet}&rdquo;</p>}
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => onCite(c)}
+                        className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
+                      >
+                        Cite at cursor
+                      </button>
                     </div>
-                    {c.relevantText && <p className="text-gray-500 line-clamp-2 italic mb-2">&ldquo;{c.relevantText}...&rdquo;</p>}
-                    <button
-                      onClick={() => {
-                        const citationText = `${c.authors || 'Unknown'} (${c.year || 'n.d.'}). ${c.title}.`;
-                        onInsert(citationText);
-                      }}
-                      className="text-[10px] font-medium text-indigo-600 hover:text-indigo-800"
-                    >
-                      Insert Citation
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>

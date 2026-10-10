@@ -1,4 +1,4 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, PageBreak } from 'docx';
 import { saveAs } from 'file-saver';
 
 function htmlToDocxParagraphs(html: string): Paragraph[] {
@@ -63,6 +63,28 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
         const hasHeaderCells = cells.some(c => c.tagName.toLowerCase() === 'th');
         const text = cells.map(c => c.textContent?.trim() || '').join(' | ');
         return [new Paragraph({ children: [new TextRun({ text, size: 24, bold: hasHeaderCells })] })];
+      });
+    }
+
+    // Manual page break from the editor
+    if (tag === 'div' && el.hasAttribute('data-page-break')) {
+      return [new Paragraph({ children: [new PageBreak()] })];
+    }
+
+    // Reference list: title + one hanging-indent paragraph per entry
+    if (tag === 'div' && el.hasAttribute('data-bibliography')) {
+      return Array.from(el.children).flatMap((child) => {
+        const childTag = child.tagName.toLowerCase();
+        if (childTag === 'h1') {
+          return [new Paragraph({ children: [new TextRun({ text: child.textContent || '', bold: true, size: 28 })], heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER })];
+        }
+        if (child.classList.contains('bib-empty')) return [];
+        const runs = Array.from(child.childNodes).map((n) => {
+          const isEm = n.nodeType === Node.ELEMENT_NODE && ['em', 'i'].includes((n as Element).tagName.toLowerCase());
+          const isNumber = n.nodeType === Node.ELEMENT_NODE && (n as Element).classList.contains('bib-number');
+          return new TextRun({ text: `${n.textContent || ''}${isNumber ? '\t' : ''}`, italics: isEm, size: 24 });
+        });
+        return [new Paragraph({ children: runs, indent: { left: 720, hanging: 720 }, spacing: { after: 160 } })];
       });
     }
 
