@@ -5,7 +5,7 @@ import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-// OTP request: 3 per minute per IP (email costs money)
+// OTP request: 3 per minute per IP (each SMS costs money; see also the per-number cooldown)
 const otpLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 3,

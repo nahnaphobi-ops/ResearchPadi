@@ -9,6 +9,8 @@ import { auditLog, queryAuditLogs } from '../lib/audit.js';
 import { getUsageStats } from '../services/ai/gateway.service.js';
 import { sanitizeIlikeTerm, ilikeContains } from '../lib/postgrest-filter.js';
 import type { AdminRequest } from '../middleware/admin.middleware.js';
+import { toGhanaMsisdn } from '../lib/phone.js';
+import { isArkeselConfigured, sendSms } from '../services/sms/arkesel.service.js';
 
 const USER_LIST_COLUMNS = 'id, phone, full_name, institution_type, institution_name, programme, level, created_at';
 
@@ -43,7 +45,7 @@ export async function login(req: AdminRequest, res: Response) {
   try {
     const { data: admin, error } = await supabase
       .from('admin_users')
-      .select('id, email, password_hash, full_name, mfa_enabled')
+      .select('id, email, password_hash, full_name, mfa_enabled, phone')
       .eq('email', email)
       .single();
 
@@ -61,6 +63,14 @@ export async function login(req: AdminRequest, res: Response) {
     logAdminEvent('PASSWORD_VERIFIED', { email, ip: req.ip });
 
     if (admin.mfa_enabled) {
+      // MFA codes go out by SMS. Fail closed if we can't deliver one in production.
+      const msisdn = admin.phone ? toGhanaMsisdn(admin.phone) : null;
+      const canSend = Boolean(msisdn) && isArkeselConfigured();
+      if (!canSend && CONFIG.NODE_ENV === 'production') {
+        log.error({ email, hasPhone: Boolean(msisdn) }, 'Admin MFA code cannot be delivered (missing phone or Arkesel config)');
+        return res.status(503).json({ error: 'Two-factor code could not be sent. Set ADMIN_PHONE for this admin and configure Arkesel SMS.' });
+      }
+
       const otp = generateOtp();
       const otpHash = await bcrypt.hash(otp, 10);
       const otpExpires = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
@@ -70,15 +80,20 @@ export async function login(req: AdminRequest, res: Response) {
         .update({ otp_hash: otpHash, otp_expires: otpExpires })
         .eq('id', admin.id);
 
-      logAdminEvent('OTP_SENT', { email, ip: req.ip });
-
-      if (CONFIG.NODE_ENV !== 'production') {
+      if (canSend && msisdn) {
+        const sent = await sendSms(msisdn, `Your ResearchPadi admin code is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes. Do not share it.`);
+        if (!sent) {
+          return res.status(502).json({ error: "We couldn't send your two-factor code. Please try again." });
+        }
+      } else {
         log.debug({ email, otp }, 'Admin OTP generated for development (not returned to client)');
       }
 
+      logAdminEvent('OTP_SENT', { email, ip: req.ip });
+
       return res.json({
         mfa_required: true,
-        message: 'OTP sent to your email',
+        message: msisdn ? `Code sent by SMS to the number ending ${msisdn.slice(-3)}` : 'Code generated (check the server log in development)',
         admin_id: admin.id,
       });
     }
@@ -427,7 +442,7 @@ export async function getSubscriptions(req: AdminRequest, res: Response) {
   try {
     const { data, error, count } = await supabase
       .from('subscriptions')
-      .select('*, users(full_name, email, phone)', { count: 'exact' })
+      .select('*, users(full_name, phone)', { count: 'exact' })
       .order('started_at', { ascending: false })
       .range(from, to);
 

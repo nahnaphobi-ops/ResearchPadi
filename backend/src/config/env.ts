@@ -18,6 +18,8 @@ const RECOMMENDED_VARS = [
   'STORAGE_BUCKET',
   'SUPABASE_ACCESS_TOKEN',
   'SUPABASE_PROJECT_REF',
+  'ARKESEL_API_KEY',
+  'ARKESEL_SENDER_ID',
 ];
 
 const PRODUCTION_REQUIRED_VARS = [
@@ -59,6 +61,11 @@ export function validateEnv(): EnvValidation {
 
   if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || WEAK_JWT_SECRETS.has(process.env.JWT_SECRET))) {
     missing.push('JWT_SECRET (must be a unique secret of at least 32 characters)');
+  }
+
+  const senderId = process.env.ARKESEL_SENDER_ID;
+  if (senderId && senderId.length > 11) {
+    missing.push('ARKESEL_SENDER_ID (must be 11 characters or fewer)');
   }
 
   if (isProduction && process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length < 12) {

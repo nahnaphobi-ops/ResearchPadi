@@ -25,6 +25,7 @@ ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS otp_expires TIMESTAMPTZ;
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS refresh_token TEXT;
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'admin';
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ;
 `;
 
@@ -61,6 +62,8 @@ async function main() {
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
   const adminFullName = process.env.ADMIN_FULL_NAME || 'Super Admin';
+  // Receives the admin MFA code by SMS (e.g. 0244123456 or +233244123456).
+  const adminPhone = process.env.ADMIN_PHONE || null;
 
   const client = new Client({
     connectionString,
@@ -94,14 +97,15 @@ async function main() {
       const passwordHash = await bcrypt.hash(adminPassword, 12);
       const mfaEnabled = process.env.ADMIN_MFA !== 'false';
       await client.query(
-        `INSERT INTO admin_users (email, password_hash, full_name, mfa_enabled, is_active)
-         VALUES ($1, $2, $3, $4, true)
-         ON CONFLICT (email) DO UPDATE SET password_hash = $2, full_name = $3, mfa_enabled = $4, is_active = true`,
-        [adminEmail, passwordHash, adminFullName, mfaEnabled]
+        `INSERT INTO admin_users (email, password_hash, full_name, mfa_enabled, is_active, phone)
+         VALUES ($1, $2, $3, $4, true, $5)
+         ON CONFLICT (email) DO UPDATE SET password_hash = $2, full_name = $3, mfa_enabled = $4, is_active = true,
+           phone = COALESCE($5, admin_users.phone)`,
+        [adminEmail, passwordHash, adminFullName, mfaEnabled, adminPhone]
       );
       console.log(`Admin user '${adminEmail}' created/updated successfully`);
       console.log(`  Full name: ${adminFullName}`);
-      console.log(`  MFA: ${mfaEnabled ? 'enabled' : 'disabled'}`);
+      console.log(`  MFA: ${mfaEnabled ? 'enabled' : 'disabled'}${mfaEnabled && !adminPhone ? ' (WARNING: set ADMIN_PHONE so the code can be sent by SMS)' : ''}`);
       console.log(`  Role: admin`);
     } else {
       console.log('No ADMIN_EMAIL/ADMIN_PASSWORD env vars set. Skipping admin user creation.');

@@ -14,6 +14,20 @@ export const CONFIG = {
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
   JWT_SECRET: process.env.JWT_SECRET || 'fallback-secret-for-dev-only',
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+  PRICING: {
+    FULL_PAPER_GHS: 250,
+    PLANS: {
+      standard: 120,
+      premium: 200,
+    } as Record<string, number>,
+  },
+  ARKESEL: {
+    API_KEY: process.env.ARKESEL_API_KEY,
+    // Must be approved in the Arkesel dashboard; max 11 characters.
+    SENDER_ID: process.env.ARKESEL_SENDER_ID,
+    // Sandbox: Arkesel accepts the request but does not deliver or charge.
+    SANDBOX: process.env.ARKESEL_SANDBOX === 'true',
+  },
   AI: {
     ANTHROPIC_SONNET_MODEL: process.env.ANTHROPIC_SONNET_MODEL || 'claude-sonnet-4-6',
     ANTHROPIC_OPUS_MODEL: process.env.ANTHROPIC_OPUS_MODEL || 'claude-opus-4-8',

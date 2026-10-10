@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken';
 import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
-import { generateNumericOtp, storeOtp, consumeOtp, normalizePhone } from '../lib/otp-store.js';
+import { generateNumericOtp, storeOtp, consumeOtp, normalizePhone, claimOtpCooldown, releaseOtpCooldown, OTP_TTL_MINUTES } from '../lib/otp-store.js';
+import { toGhanaMsisdn } from '../lib/phone.js';
+import { isArkeselConfigured, sendSms } from '../services/sms/arkesel.service.js';
 
 const log = childLogger('auth');
 
@@ -36,14 +38,42 @@ export const requestOtp = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Phone number is required' });
   }
 
+  // The demo account signs in with DEMO_OTP; never spend SMS credit on it.
+  if (demoLoginAllowed() && phone === DEMO_PHONE) {
+    return res.json({ message: 'OTP sent successfully' });
+  }
+
+  const msisdn = toGhanaMsisdn(phone);
+  if (!msisdn) {
+    return res.status(400).json({ error: 'Enter a valid Ghanaian mobile number, e.g. 0244123456' });
+  }
+
+  const smsEnabled = isArkeselConfigured();
+  if (!smsEnabled && CONFIG.NODE_ENV === 'production') {
+    log.error('OTP requested but Arkesel SMS is not configured');
+    return res.status(503).json({ error: 'Phone sign-in is temporarily unavailable. Please try again later.' });
+  }
+
+  if (!(await claimOtpCooldown('user', msisdn))) {
+    return res.status(429).json({ error: 'A code was just sent to this number. Please wait a minute before requesting another.' });
+  }
+
   const otp = generateNumericOtp();
   await storeOtp('user', phone, otp);
 
-  if (CONFIG.NODE_ENV !== 'production') {
-    log.info({ phone }, 'OTP generated for development login');
-    log.debug({ phone, otp }, 'Development OTP (not returned to client)');
+  if (smsEnabled) {
+    const sent = await sendSms(
+      msisdn,
+      `Your ResearchPadi code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes. Do not share it with anyone.`
+    );
+    if (!sent) {
+      await releaseOtpCooldown('user', msisdn);
+      return res.status(502).json({ error: "We couldn't send your code. Please try again in a moment." });
+    }
+    log.info({ phone }, 'OTP sent by SMS');
   } else {
-    log.info({ phone }, 'OTP generated');
+    log.info({ phone }, 'OTP generated for development login (Arkesel not configured)');
+    log.debug({ phone, otp }, 'Development OTP (not returned to client)');
   }
 
   res.json({ message: 'OTP sent successfully' });
