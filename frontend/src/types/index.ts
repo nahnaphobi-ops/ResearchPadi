@@ -1,12 +1,15 @@
+export type InstitutionType = 'university' | 'nmtc' | 'technical_university' | 'college_of_education';
+
 export interface User {
-  id: string;
+  id?: string;
   phone: string;
-  full_name: string;
-  institution_type: 'university' | 'nmtc' | 'technical_university' | 'college_of_education';
-  institution_name: string;
+  // Absent until the user completes their profile (the /register step).
+  full_name?: string;
+  institution_type?: InstitutionType;
+  institution_name?: string;
   programme?: string;
   level?: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Paper {
@@ -21,12 +24,12 @@ export interface Paper {
   supervisor_name?: string;
   target_word_count: number;
   actual_word_count?: number;
-  status: 'processing' | 'researching' | 'drafting' | 'supervising' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'researching' | 'drafting' | 'supervising' | 'completed' | 'failed';
   progress_step?: string;
   chapters: Record<string, string>;
   final_content?: string;
   abstract?: string;
-  sources_used: any[];
+  sources_used: unknown[];
   file_url_docx?: string;
   file_url_pdf?: string;
   created_at: string;

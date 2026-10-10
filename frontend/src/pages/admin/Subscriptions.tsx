@@ -1,24 +1,35 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
+import type { AdminSubscription } from '../../types/admin';
+
+interface SubscriptionsResponse {
+  subscriptions: AdminSubscription[];
+}
 
 export default function AdminSubscriptions() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<SubscriptionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminService.getSubscriptions().then(setData).catch(() => {}).finally(() => setLoading(false));
+    let ignore = false;
+    adminService.getSubscriptions()
+      .then((d) => { if (!ignore) setData(d); })
+      .catch(() => {})
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, []);
 
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold mb-6">Subscriptions</h1>
+      <p className="eyebrow mb-2">Admin</p>
+      <h1 className="text-2xl font-bold mb-6 text-navy">Subscriptions</h1>
 
       {loading ? (
         <div className="p-10 text-center text-gray-500">Loading...</div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white rounded-[14px] border border-rule shadow-soft overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">User</th>
@@ -29,7 +40,7 @@ export default function AdminSubscriptions() {
               </tr>
             </thead>
             <tbody>
-              {(data?.subscriptions || []).map((sub: any) => (
+              {(data?.subscriptions || []).map((sub) => (
                 <tr key={sub.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{sub.users?.full_name || sub.user_id?.slice(0, 8) + '...'}</td>
                   <td className="px-4 py-3">

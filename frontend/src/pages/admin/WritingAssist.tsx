@@ -1,26 +1,51 @@
 import { useState, useEffect } from 'react';
+import { apiErrorMessage } from '../../utils/apiError';
 import AdminLayout from '../../components/admin/AdminLayout';
 import adminApi from '../../services/adminApi';
+import type { AIDetectionResult, ClaimAnalysis, GrammarIssue, GrammarSummary, PlagiarismReport } from '../../types/writingAssist';
 
-interface ClaimAnalysis {
-  claim: string;
-  confidence: 'high' | 'medium' | 'low' | 'unsupported';
-  sources: Array<{ title: string; authors: string; institution: string; year: number; relevantText: string }>;
-  explanation: string;
-  suggestions: string[];
+interface ClaimSummary {
+  total: number;
+  high: number;
+  medium: number;
+  low: number;
+  unsupported: number;
 }
 
-interface GrammarIssue {
-  type: string;
-  severity: string;
+interface FormattedCitation {
+  inText: string;
+  bibliography: string;
+}
+
+interface UploadedPdf {
+  id: string;
+  name: string;
+  chunks?: number;
+}
+
+interface PdfChatResult {
   message: string;
-  original: string;
-  suggestion: string;
-  position: { start: number; end: number };
-  rule: string;
+  sources?: { pdfName: string; pageNumber: number; relevantText: string }[];
 }
 
+interface ChapterPattern {
+  title: string;
+  avgWordCount: number;
+  writingPattern: string;
+  tense: string;
+  voice: string;
+  sections?: string[];
+}
 
+interface Blueprint {
+  institutionType: string;
+  description?: string;
+  sampleSize?: number;
+  chapterPatterns?: Record<string, ChapterPattern>;
+  structural?: { avgParagraphLength?: number; avgSentencesPerParagraph?: number };
+  citation?: { avgGhanaianSourcesPercent?: number; avgTotalReferences?: number };
+  examples?: Record<string, string>;
+}
 
 interface DisclosureTemplate {
   id: string;
@@ -41,34 +66,35 @@ export default function WritingAssist() {
   const [text, setText] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('grammar');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const [grammarIssues, setGrammarIssues] = useState<GrammarIssue[]>([]);
-  const [grammarSummary, setGrammarSummary] = useState<any>(null);
+  const [grammarSummary, setGrammarSummary] = useState<GrammarSummary | null>(null);
 
   const [claimAnalyses, setClaimAnalyses] = useState<ClaimAnalysis[]>([]);
-  const [claimSummary, setClaimSummary] = useState<any>(null);
+  const [claimSummary, setClaimSummary] = useState<ClaimSummary | null>(null);
 
-  const [plagiarismReport, setPlagiarismReport] = useState<any>(null);
+  const [plagiarismReport, setPlagiarismReport] = useState<PlagiarismReport | null>(null);
 
-  const [aiResult, setAiResult] = useState<any>(null);
+  const [aiResult, setAiResult] = useState<AIDetectionResult | null>(null);
 
   const [citationStyles, setCitationStyles] = useState<CitationStyle[]>([]);
   const [selectedStyle, setSelectedStyle] = useState('apa-ghana');
   const [citationInput, setCitationInput] = useState({ title: '', authors: '', year: '', journal: '', volume: '', issue: '', pages: '', doi: '' });
-  const [formattedCitation, setFormattedCitation] = useState<any>(null);
+  const [formattedCitation, setFormattedCitation] = useState<FormattedCitation | null>(null);
   // Removed unused bibliography state
   const [bibliographyEntries, setBibliographyEntries] = useState('');
 
   const [disclosureTemplates, setDisclosureTemplates] = useState<DisclosureTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
-  const [uploadedPdfs, setUploadedPdfs] = useState<any[]>([]);
+  const [uploadedPdfs, setUploadedPdfs] = useState<UploadedPdf[]>([]);
   const [selectedPdfs, setSelectedPdfs] = useState<string[]>([]);
   const [pdfQuestion, setPdfQuestion] = useState('');
-  const [pdfChatResults, setPdfChatResults] = useState<any>(null);
+  const [pdfChatResults, setPdfChatResults] = useState<PdfChatResult | null>(null);
 
-  const [blueprints, setBlueprints] = useState<any[]>([]);
-  const [selectedBlueprint, setSelectedBlueprint] = useState<any>(null);
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
+  const [selectedBlueprint, setSelectedBlueprint] = useState<Blueprint | null>(null);
   const [selectedBlueprintType, setSelectedBlueprintType] = useState('university');
 
   useEffect(() => {
@@ -87,52 +113,57 @@ export default function WritingAssist() {
   const handleGrammarCheck = async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setError('');
     try {
       const res = await adminApi.post('/writing-assist/check-grammar', { text });
       setGrammarIssues(res.data.issues);
       setGrammarSummary(res.data.summary);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
   const handleClaimValidation = async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setError('');
     try {
       const res = await adminApi.post('/writing-assist/validate-claims', { text });
       setClaimAnalyses(res.data.analyses);
       setClaimSummary(res.data.summary);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
   const handlePlagiarismCheck = async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setError('');
     try {
       const res = await adminApi.post('/writing-assist/check-plagiarism', { text });
       setPlagiarismReport(res.data);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
   const handleAIDetect = async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setError('');
     try {
       const res = await adminApi.post('/writing-assist/detect-ai', { text });
       setAiResult(res.data);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
   const handleFormatCitation = async () => {
     setLoading(true);
+    setError('');
     try {
       const citation = { ...citationInput, authors: citationInput.authors.split(',').map(a => a.trim()), year: parseInt(citationInput.year) || 2024 };
       const res = await adminApi.post('/writing-assist/format-citation', { citation, style: selectedStyle });
       setFormattedCitation(res.data);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
@@ -147,10 +178,11 @@ export default function WritingAssist() {
   const handlePdfChat = async () => {
     if (!pdfQuestion.trim() || selectedPdfs.length === 0) return;
     setLoading(true);
+    setError('');
     try {
       const res = await adminApi.post('/writing-assist/pdf/chat', { pdfIds: selectedPdfs, question: pdfQuestion });
       setPdfChatResults(res.data);
-    } catch (err: any) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Request failed')); }
     finally { setLoading(false); }
   };
 
@@ -158,11 +190,12 @@ export default function WritingAssist() {
     const file = e.target.files?.[0];
     if (!file) return;
     setLoading(true);
+    setError('');
     try {
       const textContent = await file.text();
       const res = await adminApi.post('/writing-assist/pdf/upload', { fileName: file.name, text: textContent });
       setUploadedPdfs(prev => [...prev, res.data]);
-    } catch (err: any) { alert(err.response?.data?.error || 'Upload failed'); }
+    } catch (err) { setError(apiErrorMessage(err, 'Upload failed')); }
     finally { setLoading(false); }
   };
 
@@ -201,6 +234,13 @@ export default function WritingAssist() {
         <h1 className="text-2xl font-bold text-gray-900">Writing Assistant</h1>
         <p className="text-gray-500 mt-1">AI-powered academic writing tools</p>
       </div>
+
+      {error && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+          <span>{error}</span>
+          <button onClick={() => setError('')} className="text-red-500 hover:text-red-700" aria-label="Dismiss error">&times;</button>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
         {tabs.map(tab => (
@@ -312,7 +352,7 @@ export default function WritingAssist() {
               {plagiarismReport.sources?.length > 0 && (
                 <div>
                   <h4 className="font-medium text-sm mb-2">Sources Matched</h4>
-                  {plagiarismReport.sources.map((s: any, i: number) => (
+                  {plagiarismReport.sources.map((s, i: number) => (
                     <div key={i} className="text-xs p-2 bg-gray-50 rounded mb-1">
                       {s.name} ({s.matchCount} matches)
                     </div>
@@ -341,7 +381,7 @@ export default function WritingAssist() {
               {aiResult.indicators?.length > 0 && (
                 <div>
                   <h4 className="font-medium text-sm mb-2">Indicators</h4>
-                  {aiResult.indicators.map((ind: any, i: number) => (
+                  {aiResult.indicators.map((ind, i: number) => (
                     <div key={i} className={`text-xs p-2 rounded mb-1 border-l-4 ${
                       ind.severity === 'high' ? 'border-red-500 bg-red-50' :
                       ind.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
@@ -433,7 +473,7 @@ export default function WritingAssist() {
               {pdfChatResults && (
                 <div className="mt-4">
                   <p className="text-sm text-gray-600 mb-2">{pdfChatResults.message}</p>
-                  {pdfChatResults.sources?.map((s: any, i: number) => (
+                  {pdfChatResults.sources?.map((s, i: number) => (
                     <div key={i} className="p-3 bg-gray-50 rounded mb-2 text-xs">
                       <p className="font-medium">{s.pdfName} - Page {s.pageNumber}</p>
                       <p className="text-gray-600 mt-1">{s.relevantText}</p>
@@ -473,7 +513,7 @@ export default function WritingAssist() {
                   <div>
                     <h4 className="text-sm font-medium mb-2">Chapter Structure</h4>
                     <div className="space-y-2">
-                      {Object.entries(selectedBlueprint.chapterPatterns || {}).map(([key, ch]: [string, any]) => (
+                      {Object.entries(selectedBlueprint.chapterPatterns || {}).map(([key, ch]) => (
                         <div key={key} className="border rounded-lg p-3">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs font-bold text-gray-800">{ch.title}</span>
@@ -520,7 +560,7 @@ export default function WritingAssist() {
                     <div>
                       <h4 className="text-sm font-medium mb-2">Real Writing Examples</h4>
                       <div className="space-y-2">
-                        {Object.entries(selectedBlueprint.examples).map(([key, example]: [string, any]) => (
+                        {Object.entries(selectedBlueprint.examples).map(([key, example]) => (
                           <div key={key} className="bg-gray-50 border-l-4 border-gray-400 p-3 rounded-r">
                             <p className="text-[10px] font-medium text-gray-500 mb-1">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                             <p className="text-xs text-gray-700 leading-relaxed italic">"{example}"</p>

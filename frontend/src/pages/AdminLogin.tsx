@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiErrorMessage } from '../utils/apiError';
 import { useNavigate } from 'react-router-dom';
 import { adminService } from '../services/adminService';
 import { useAdminStore } from '../store/useAdminStore';
@@ -12,6 +13,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
   const [adminId, setAdminId] = useState('');
+  const [otpMessage, setOtpMessage] = useState('');
   const navigate = useNavigate();
   const setAuth = useAdminStore(state => state.setAuth);
 
@@ -23,13 +25,14 @@ export default function AdminLogin() {
       const result = await adminService.login(email, password);
       if (result.mfa_required) {
         setAdminId(result.admin_id);
+        setOtpMessage(result.message || '');
         setStep('otp');
       } else {
         setAuth(result.token, result.refreshToken, result.admin);
         navigate('/admin');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Login failed'));
     } finally {
       setLoading(false);
     }
@@ -43,8 +46,8 @@ export default function AdminLogin() {
       const result = await adminService.verifyOtp(adminId, otp);
       setAuth(result.token, result.refreshToken, result.admin);
       navigate('/admin');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'OTP verification failed');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'OTP verification failed'));
     } finally {
       setLoading(false);
     }
@@ -58,30 +61,34 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-navy-mist">
-      <div className="w-full max-w-md p-8 bg-white rounded-[14px] border border-rule shadow-soft">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-navy-mist px-5">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-white rounded-[14px] border border-rule shadow-soft">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <BrandLogo markClassName="h-12 w-12" />
           </div>
           <h2 className="text-2xl font-bold text-navy">Admin portal</h2>
         </div>
-        {error && <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-[10px]">{error}</div>}
+        {error && <div role="alert" className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-[10px]">{error}</div>}
 
         {step === 'credentials' ? (
           <form onSubmit={handleCredentialsSubmit}>
-            <label className="block mb-2 font-medium text-ink">Email</label>
+            <label htmlFor="admin-email" className="block mb-2 font-medium text-ink">Email</label>
             <input
+              id="admin-email"
               type="email"
+              autoComplete="username"
               className="w-full p-3 mb-4 border rounded-[10px]"
               placeholder="admin@researchpadi.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <label className="block mb-2 font-medium text-ink">Password</label>
+            <label htmlFor="admin-password" className="block mb-2 font-medium text-ink">Password</label>
             <input
+              id="admin-password"
               type="password"
+              autoComplete="current-password"
               className="w-full p-3 mb-4 border rounded-[10px]"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -91,17 +98,20 @@ export default function AdminLogin() {
               disabled={loading}
               className="btn-primary w-full p-3 text-sm disabled:opacity-50"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleOtpSubmit}>
             <p className="mb-4 text-sm text-muted text-center">
-              Enter the 6-digit OTP sent to your email
+              {otpMessage || 'Enter the 6-digit code we sent you.'}
             </p>
-            <label className="block mb-2 font-medium text-ink">OTP Code</label>
+            <label htmlFor="admin-otp" className="block mb-2 font-medium text-ink">One-time code</label>
             <input
+              id="admin-otp"
               type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
               className="w-full p-3 mb-4 border rounded-[10px] text-center tracking-widest text-xl"
               placeholder="123456"
               value={otp}
@@ -114,14 +124,14 @@ export default function AdminLogin() {
               disabled={loading}
               className="btn-primary w-full p-3 text-sm disabled:opacity-50"
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading ? 'Verifying...' : 'Verify code'}
             </button>
             <button
               type="button"
               onClick={handleBackToLogin}
               className="w-full mt-4 text-navy hover:underline"
             >
-              Back to Login
+              Back to sign in
             </button>
           </form>
         )}

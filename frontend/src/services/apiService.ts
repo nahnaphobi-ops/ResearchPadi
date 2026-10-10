@@ -4,7 +4,7 @@ export const authService = {
   requestOtp: (phone: string) => api.post('/auth/request-otp', { phone }),
   verifyOtp: (phone: string, otp: string) => api.post('/auth/verify-otp', { phone, otp }),
   getProfile: () => api.get('/auth/profile'),
-  updateProfile: (data: any) => api.put('/auth/profile', data),
+  updateProfile: (data: Partial<{ full_name: string; institution_type: string; institution_name: string; programme: string; level: string }>) => api.put('/auth/profile', data),
 };
 
 export const paperService = {
@@ -12,7 +12,7 @@ export const paperService = {
     api.post('/papers/refine-topic', data),
   generateQuestions: (data: { topic: string; course?: string; institution_type?: string }) =>
     api.post('/papers/generate-questions', data),
-  submitFullPaper: (data: any) => api.post('/papers/full', data),
+  submitFullPaper: (data: Record<string, unknown>) => api.post('/papers/full', data),
   listPapers: () => api.get('/papers'),
   getPaperDetails: (id: string) => api.get(`/papers/${id}`),
   listDisclosureTemplates: (institution?: string) =>

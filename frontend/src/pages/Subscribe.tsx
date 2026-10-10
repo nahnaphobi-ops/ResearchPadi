@@ -1,42 +1,27 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { apiErrorMessage } from '../utils/apiError';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { subscriptionService } from '../services/subscriptionService';
 import { paymentService } from '../services/paymentService';
 import AppShell from '../components/layout/AppShell';
+import { CheckCircle, WalletCards } from 'lucide-react';
+import { WORKSPACE_PLANS } from '../data/plans';
 
 const PLANS = {
-  standard: {
-    name: 'Standard',
-    price: 120,
-    featured: false,
-    features: [
-      'Up to 5 workspace sessions',
-      'AI writing assistance (continue, expand, shorten, rewrite)',
-      'Citation search (OpenAlex + Semantic Scholar)',
-      'GPT-4o powered',
-    ],
-  },
-  premium: {
-    name: 'Premium',
-    price: 200,
-    featured: true,
-    features: [
-      'Unlimited workspace sessions',
-      'Advanced AI (tone, grammar, outline, abstract)',
-      'Claude Sonnet powered',
-      'Full RAG citations (Ghanaian repositories)',
-      'Export to DOCX',
-      'Priority support',
-    ],
-  },
+  standard: { ...WORKSPACE_PLANS.standard, featured: false },
+  premium: { ...WORKSPACE_PLANS.premium, featured: true },
 };
 
 export default function Subscribe() {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<keyof typeof PLANS | null>(null);
+  const [searchParams] = useSearchParams();
+  const requestedPlan = searchParams.get('plan');
+  const [selectedPlan, setSelectedPlan] = useState<keyof typeof PLANS | null>(
+    requestedPlan === 'standard' || requestedPlan === 'premium' ? requestedPlan : null
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeSub, setActiveSub] = useState<any>(null);
+  const [activeSub, setActiveSub] = useState<{ plan: string; expires_at: string } | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [fetching, setFetching] = useState(true);
   const PLANS_TYPED = PLANS as Record<string, typeof PLANS[keyof typeof PLANS]>;
@@ -64,8 +49,8 @@ export default function Subscribe() {
     try {
       await subscriptionService.subscribe(plan);
       navigate('/workspace');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to subscribe');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Failed to subscribe'));
     } finally {
       setLoading(false);
     }
@@ -114,9 +99,16 @@ export default function Subscribe() {
     <AppShell>
       <p className="eyebrow mb-2 text-center">Pricing</p>
       <h1 className="text-3xl font-bold text-center mb-2 text-navy">Choose your plan</h1>
-      <p className="text-center text-muted mb-8">
+      <p className="text-center text-muted mb-6">
         Get AI-powered writing assistance for your research papers
       </p>
+
+      <div className="mx-auto mb-8 max-w-md flex items-center justify-between gap-3 rounded-[14px] border border-rule bg-white px-5 py-3">
+        <span className="text-sm text-muted inline-flex items-center gap-2">
+          <WalletCards size={16} className="text-brand" /> Wallet balance
+        </span>
+        <span className="text-sm font-bold text-navy">GHS {walletBalance.toFixed(2)}</span>
+      </div>
 
       {error && (
         <div className="p-3 mb-6 text-red-700 bg-red-100 rounded-[10px] text-center">{error}</div>
@@ -131,35 +123,34 @@ export default function Subscribe() {
             <button
               type="button"
               key={key}
-              className={`text-left bg-white rounded-[14px] border-2 p-8 transition ${
-                isSelected ? 'border-navy ring-2 ring-navy-soft' : 'border-rule hover:border-navy/40'
+              aria-pressed={isSelected}
+              className={`text-left bg-white rounded-[14px] border-2 p-6 sm:p-8 transition ${
+                isSelected ? 'border-brand ring-4 ring-brand-soft' : 'border-rule hover:border-brand/40'
               } ${plan.featured ? 'shadow-card' : 'shadow-soft'}`}
               onClick={() => setSelectedPlan(key as keyof typeof PLANS)}
             >
               {plan.featured && (
-                <span className="inline-block mb-3 px-3 py-1 bg-navy text-white rounded-full text-xs font-bold">
+                <span className="inline-block mb-3 px-3 py-1 bg-navy text-white rounded-full text-xs font-bold tracking-wide">
                   BEST VALUE
                 </span>
               )}
               <h2 className="text-2xl font-bold mb-1 text-navy">{plan.name}</h2>
+              <p className="text-sm text-muted mb-3">{plan.desc}</p>
               <div className="text-3xl font-bold mb-4 text-ink">
                 GHS {plan.price}
-                <span className="text-sm font-normal text-muted">/month</span>
+                <span className="text-sm font-normal text-muted"> / 30 days</span>
               </div>
               <ul className="space-y-3 mb-6">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-ink">
-                    <span className="text-accent-green mt-0.5">✓</span>
+                    <CheckCircle size={15} className="text-brand mt-0.5 shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <div className="text-xs text-muted mb-4">
-                Wallet balance: GHS {walletBalance.toFixed(2)}
-              </div>
               {!canAfford && (
-                <p className="text-xs text-red-500 mb-2">
-                  Insufficient balance. You need GHS {plan.price}.
+                <p className="text-xs text-red-700">
+                  Your wallet needs GHS {(plan.price - walletBalance).toFixed(2)} more for this plan.
                 </p>
               )}
             </button>
@@ -167,16 +158,28 @@ export default function Subscribe() {
         })}
       </div>
 
-      {selectedPlan && (
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => handleSubscribe(selectedPlan)}
-            disabled={loading || walletBalance < PLANS[selectedPlan!].price}
-            className="btn-primary px-8 py-4 text-lg disabled:opacity-50"
-          >
-            {loading ? 'Processing...' : `Subscribe to ${PLANS[selectedPlan!].name} - GHS ${PLANS[selectedPlan!].price}/mo`}
-          </button>
+      {selectedPlan ? (
+        <div className="mt-8 flex flex-col items-center gap-3 text-center">
+          {walletBalance >= PLANS[selectedPlan].price ? (
+            <button
+              onClick={() => handleSubscribe(selectedPlan)}
+              disabled={loading}
+              className="btn-primary w-full sm:w-auto px-8 py-4 text-base disabled:opacity-50"
+            >
+              {loading ? 'Processing...' : `Get ${PLANS[selectedPlan].name} · GHS ${PLANS[selectedPlan].price} for 30 days`}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/wallet')}
+              className="btn-primary w-full sm:w-auto px-8 py-4 text-base inline-flex items-center justify-center gap-2"
+            >
+              <WalletCards size={18} /> Top up wallet to subscribe
+            </button>
+          )}
+          <p className="text-xs text-muted">Paid once from your wallet for 30 days of access. No automatic renewal.</p>
         </div>
+      ) : (
+        <p className="mt-8 text-center text-sm text-muted">Select a plan to continue.</p>
       )}
     </AppShell>
   );

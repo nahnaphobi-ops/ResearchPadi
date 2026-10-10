@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
+import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
 import { useNavigate } from 'react-router-dom';
 import { workspaceService } from '../services/workspaceService';
 import { subscriptionService } from '../services/subscriptionService';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
 import { FilePenLine, Plus, Trash2 } from 'lucide-react';
+
+/** Workspace content is editor HTML; show a short plain-text preview. */
+function previewText(html: string): string {
+  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+  return text.replace(/\s+/g, ' ').trim();
+}
 
 export default function WorkspaceList() {
   const navigate = useNavigate();
@@ -28,11 +36,11 @@ export default function WorkspaceList() {
           return;
         }
         setSessions(sessionsRes.data);
-      } catch (err: any) {
-        if (err.response?.status === 403) {
+      } catch (err) {
+        if (apiErrorStatus(err) === 403) {
           navigate('/subscribe');
         } else {
-          setError(err.response?.data?.error || 'Failed to load sessions');
+          setError(apiErrorMessage(err, 'Failed to load sessions'));
         }
       } finally {
         setLoading(false);
@@ -52,8 +60,8 @@ export default function WorkspaceList() {
       });
       setSessions([res.data, ...sessions]);
       navigate(`/workspace/${res.data.id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create session');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Failed to create session'));
     } finally {
       setCreating(false);
     }
@@ -61,12 +69,12 @@ export default function WorkspaceList() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Delete this session?')) return;
+    if (!confirm('Delete this session? This cannot be undone.')) return;
     try {
       await workspaceService.deleteSession(id);
       setSessions(sessions.filter((s) => s.id !== id));
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Failed to delete'));
     }
   };
 
@@ -75,7 +83,10 @@ export default function WorkspaceList() {
       <div className="min-h-screen flex flex-col app-shell">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-500">Loading workspace...</p>
+          <div className="text-center text-muted">
+            <div className="mx-auto mb-3 w-8 h-8 border-2 border-rule border-t-brand rounded-full animate-spin" />
+            Loading workspace...
+          </div>
         </div>
       </div>
     );
@@ -101,30 +112,33 @@ export default function WorkspaceList() {
           </div>
 
           {error && (
-            <div className="p-3 mb-4 text-red-700 bg-red-100 rounded-lg">{error}</div>
+            <div role="alert" className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-[10px]">{error}</div>
           )}
 
           {showForm && (
             <form onSubmit={handleCreate} className="bg-white rounded-[14px] shadow-soft p-6 mb-8 border border-rule">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1 font-medium text-sm">Session Title</label>
+                  <label htmlFor="session-title" className="block mb-1 font-medium text-sm text-ink">Session title</label>
                   <input
+                    id="session-title"
                     type="text"
+                    autoFocus
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="e.g. Effects of Social Media on Student Performance"
-                    className="w-full p-3 border-2 rounded-lg focus:border-gray-500 outline-none"
+                    className="w-full p-3 border rounded-[10px]"
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium text-sm">Course (optional)</label>
+                  <label htmlFor="session-course" className="block mb-1 font-medium text-sm text-ink">Course <span className="font-normal text-muted">(optional)</span></label>
                   <input
+                    id="session-course"
                     type="text"
                     value={newCourse}
                     onChange={(e) => setNewCourse(e.target.value)}
                     placeholder="e.g. BSc. Computer Science"
-                    className="w-full p-3 border-2 rounded-lg focus:border-gray-500 outline-none"
+                    className="w-full p-3 border rounded-[10px]"
                   />
                 </div>
               </div>
@@ -133,21 +147,23 @@ export default function WorkspaceList() {
                 disabled={creating}
                 className="btn-primary mt-4 px-6 py-3 text-sm disabled:opacity-50"
               >
-                {creating ? 'Creating...' : 'Create Session'}
+                {creating ? 'Creating...' : 'Create session'}
               </button>
             </form>
           )}
 
           {sessions.length === 0 ? (
-            <div className="text-center py-16">
-              <FilePenLine className="mx-auto mb-4 text-navy" size={38} />
+            <div className="text-center py-16 bg-white rounded-[14px] border border-rule">
+              <div className="w-16 h-16 bg-brand-soft rounded-2xl grid place-items-center mx-auto mb-5">
+                <FilePenLine className="text-brand" size={28} />
+              </div>
               <h3 className="text-xl font-bold text-navy mb-2">No sessions yet</h3>
               <p className="text-muted mb-6">Create your first workspace session to start writing with AI.</p>
               <button
                 onClick={() => setShowForm(true)}
                 className="btn-primary px-6 py-3 text-sm"
               >
-                Create First Session
+                Create your first session
               </button>
             </div>
           ) : (
@@ -155,29 +171,31 @@ export default function WorkspaceList() {
               {sessions.map((session) => (
                 <div
                   key={session.id}
+                  role="link"
+                  tabIndex={0}
                   onClick={() => navigate(`/workspace/${session.id}`)}
-                  className="group bg-white rounded-[14px] shadow-soft p-6 border border-rule hover:border-navy hover:-translate-y-0.5 transition cursor-pointer"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) navigate(`/workspace/${session.id}`); }}
+                  className="group flex flex-col bg-white rounded-[14px] shadow-soft p-6 border border-rule hover:border-brand/50 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand transition cursor-pointer"
                 >
-                    <h3 className="font-bold text-lg mb-1 truncate text-ink group-hover:text-navy">
-                    {session.title || 'Untitled Session'}
+                  <h3 className="font-bold text-lg mb-1 truncate text-ink group-hover:text-brand transition">
+                    {session.title || 'Untitled session'}
                   </h3>
                   {session.course && (
-                    <p className="text-sm text-gray-800 mb-2">{session.course}</p>
+                    <p className="text-sm text-navy font-medium mb-2">{session.course}</p>
                   )}
-                  <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                    {session.content
-                      ? `${session.content.substring(0, 100)}...`
-                      : 'Empty session'}
+                  <p className="text-sm text-muted mb-4 line-clamp-2">
+                    {(session.content && previewText(session.content)) || 'Empty session'}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      {new Date(session.updated_at).toLocaleDateString()}
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-xs text-muted">
+                      Edited {new Date(session.updated_at).toLocaleDateString()}
                     </span>
-                      <button
+                    <button
                       onClick={(e) => handleDelete(session.id, e)}
-                       className="text-xs text-gray-400 hover:text-red-600 font-medium inline-flex items-center gap-1"
-                     >
-                       <Trash2 size={13} /> Delete
+                      className="text-xs text-muted hover:text-red-600 font-medium inline-flex items-center gap-1 p-1 -m-1"
+                      aria-label={`Delete ${session.title || 'untitled session'}`}
+                    >
+                      <Trash2 size={13} /> Delete
                     </button>
                   </div>
                 </div>
@@ -186,6 +204,7 @@ export default function WorkspaceList() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

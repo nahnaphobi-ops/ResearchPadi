@@ -30,6 +30,11 @@
   --danger: #ff4b4b;
   --danger-soft: #ffe8e8;
 
+  /* Text-safe variants of the status colors (4.5:1+ on white and their soft backgrounds) */
+  --success-ink: #15803d;
+  --warning-ink: #8a6100;
+  --danger-ink: #c62828;
+
   --navy: var(--primary-deep);
   --saffron: var(--wave);
   --sage: var(--accent-soft);

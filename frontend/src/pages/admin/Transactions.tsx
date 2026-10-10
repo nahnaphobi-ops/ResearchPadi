@@ -1,28 +1,35 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
+import type { AdminTransaction, Paged } from '../../types/admin';
+
+interface TransactionsResponse extends Paged {
+  transactions: AdminTransaction[];
+}
 
 export default function AdminTransactions() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<TransactionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchData = () => {
-    setLoading(true);
+  useEffect(() => {
+    let ignore = false;
     adminService.getTransactions({ status: status || undefined, type: type || undefined, page, limit: 20 })
-      .then(setData).catch(() => {}).finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchData(); }, [page, status, type]);
+      .then((d) => { if (!ignore) setData(d); })
+      .catch(() => {})
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, [page, status, type]);
 
   return (
     <AdminLayout>
-      <h1 className="text-2xl font-bold mb-6">Transactions</h1>
+      <p className="eyebrow mb-2">Admin</p>
+      <h1 className="text-2xl font-bold mb-6 text-navy">Transactions</h1>
       <div className="flex gap-3 mb-6">
         <select
-          className="p-2 border rounded"
+          className="p-2.5 border rounded-[10px]"
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
         >
@@ -32,7 +39,7 @@ export default function AdminTransactions() {
           <option value="failed">Failed</option>
         </select>
         <select
-          className="p-2 border rounded"
+          className="p-2.5 border rounded-[10px]"
           value={type}
           onChange={(e) => { setType(e.target.value); setPage(1); }}
         >
@@ -46,8 +53,8 @@ export default function AdminTransactions() {
         <div className="p-10 text-center text-gray-500">Loading...</div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
+          <div className="bg-white rounded-[14px] border border-rule shadow-soft overflow-x-auto">
+            <table className="w-full min-w-[640px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">User ID</th>
@@ -60,7 +67,7 @@ export default function AdminTransactions() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.transactions || []).map((tx: any) => (
+                {(data?.transactions || []).map((tx) => (
                   <tr key={tx.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-600">{tx.user_id?.slice(0, 8)}...</td>
                     <td className="px-4 py-3">
@@ -89,8 +96,8 @@ export default function AdminTransactions() {
           <div className="flex justify-between items-center mt-4">
             <div className="text-sm text-gray-500">Page {data?.page || 1} of {data?.totalPages || 1}</div>
             <div className="flex gap-2">
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-50">Previous</button>
-              <button disabled={page >= (data?.totalPages || 1)} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="btn-ghost px-3 py-1.5 text-sm disabled:opacity-50">Previous</button>
+              <button disabled={page >= (data?.totalPages || 1)} onClick={() => setPage(p => p + 1)} className="btn-ghost px-3 py-1.5 text-sm disabled:opacity-50">Next</button>
             </div>
           </div>
         </>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { apiErrorMessage } from '../utils/apiError';
 import { useParams, useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
+import type { Paper } from '../types';
 import {
   AlertTriangle, CheckCircle, ChevronDown, ChevronUp,
   Download, Sparkles, Wand2, ArrowLeft, RefreshCw,
@@ -100,7 +102,7 @@ export default function PaperReview() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [paper, setPaper] = useState<any>(null);
+  const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -114,6 +116,8 @@ export default function PaperReview() {
 
   // AI score panel
   const [aiScore, setAiScore] = useState<AIScore | null>(null);
+  // The server scores the saved draft; naturalising returns a score for the new text.
+  const [scoreSource, setScoreSource] = useState<'saved' | 'naturalised'>('saved');
   const [scoreLoading, setScoreLoading] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
 
@@ -136,8 +140,8 @@ export default function PaperReview() {
       const { data } = await paperService.supervisePaper(id);
       setSupervised(data.supervised);
       setTab('supervised');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Supervision failed');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Supervision failed'));
     } finally {
       setSupervising(false);
     }
@@ -161,11 +165,13 @@ export default function PaperReview() {
   const handleGetScore = async () => {
     if (!id) return;
     setScoreLoading(true);
+    setError('');
     try {
       const { data } = await paperService.getAiScore(id);
       setAiScore(data);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Could not compute score');
+      setScoreSource('saved');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Could not compute score'));
     } finally {
       setScoreLoading(false);
     }
@@ -180,8 +186,9 @@ export default function PaperReview() {
       setHumanizeResult(data);
       setTab('humanized');
       setAiScore(data.afterScore);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Humanize pass failed');
+      setScoreSource('naturalised');
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Humanize pass failed'));
     } finally {
       setHumanizing(false);
     }
@@ -199,7 +206,15 @@ export default function PaperReview() {
   }
 
   if (!paper) {
-    return <div className="p-8 text-center text-red-500">{error || 'Paper not found'}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy-mist px-5">
+        <div className="bg-white rounded-[14px] border border-rule p-10 text-center max-w-md w-full">
+          <p className="font-bold text-navy mb-1">{error ? 'Something went wrong' : 'Paper not found'}</p>
+          <p className="text-sm text-muted mb-6">{error || 'This paper may have been removed, or the link is wrong.'}</p>
+          <button onClick={() => navigate('/dashboard')} className="btn-primary px-5 py-2.5 text-sm">Back to dashboard</button>
+        </div>
+      </div>
+    );
   }
 
   const content =
@@ -247,12 +262,14 @@ export default function PaperReview() {
                 <CheckCircle size={13} /> Accept & Save
               </button>
             )}
-            <button
-              onClick={() => setShowDownload(true)}
-              className="px-4 py-2 bg-white text-navy rounded-[10px] font-bold text-xs hover:bg-brand-soft transition inline-flex items-center gap-1.5"
-            >
-              <Download size={13} /> Download .docx
-            </button>
+            {paper.status === 'completed' && (
+              <button
+                onClick={() => setShowDownload(true)}
+                className="px-4 py-2 bg-white text-navy rounded-[10px] font-bold text-xs hover:bg-brand-soft transition inline-flex items-center gap-1.5"
+              >
+                <Download size={13} /> Download .docx
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -261,7 +278,7 @@ export default function PaperReview() {
         {/* Main content area */}
         <div>
           {error && (
-            <div className="p-4 mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-start gap-2">
+            <div role="alert" className="p-4 mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-start gap-2">
               <AlertTriangle size={15} className="shrink-0 mt-0.5" /> {error}
             </div>
           )}
@@ -287,7 +304,7 @@ export default function PaperReview() {
           </div>
 
           {/* Paper content */}
-          <div className="bg-white rounded-[14px] shadow-soft border border-rule p-8">
+          <div className="bg-white rounded-[14px] shadow-soft border border-rule p-5 sm:p-8">
             <div className="prose max-w-none whitespace-pre-wrap font-serif text-ink leading-relaxed text-sm">
               {content || <span className="text-muted italic">No content available</span>}
             </div>
@@ -321,7 +338,7 @@ export default function PaperReview() {
               disabled={humanizing || paper.status !== 'completed'}
               className="btn-primary w-full py-2.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50 mb-3"
             >
-              <Wand2 size={15} className={humanizing ? 'animate-spin' : ''} />
+              <Wand2 size={15} className={humanizing ? 'animate-pulse' : ''} />
               {humanizing ? 'Naturalising prose...' : humanizeResult ? 'Run again' : 'Naturalise writing'}
             </button>
 
@@ -352,7 +369,7 @@ export default function PaperReview() {
               disabled={scoreLoading || paper.status !== 'completed'}
               className="btn-ghost w-full py-2.5 text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50 mb-3"
             >
-              <Sparkles size={15} className={scoreLoading ? 'animate-spin' : ''} />
+              <Sparkles size={15} className={scoreLoading ? 'animate-pulse' : ''} />
               {scoreLoading ? 'Analysing...' : aiScore ? 'Re-analyse' : 'Analyse current draft'}
             </button>
 
@@ -360,7 +377,7 @@ export default function PaperReview() {
               <div>
                 <ScoreGauge
                   score={aiScore.aiScore}
-                  label={tab === 'original' ? 'Original draft' : tab === 'supervised' ? 'Supervised draft' : 'Naturalised draft'}
+                  label={scoreSource === 'naturalised' ? 'Naturalised draft' : 'Saved draft'}
                 />
                 <p className="text-xs text-muted leading-relaxed mt-3">{aiScore.recommendation}</p>
                 <IndicatorList indicators={aiScore.indicators} />

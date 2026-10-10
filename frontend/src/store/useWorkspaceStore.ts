@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 
+interface WorkspaceSubscription {
+  plan: 'standard' | 'premium';
+  status: string;
+  expires_at?: string;
+}
+
 interface WorkspaceSession {
   id: string;
   title?: string;
   content: string;
   course?: string;
   institution_type?: string;
-  sources_used: any[];
-  uploaded_materials: any[];
+  sources_used: unknown[];
+  uploaded_materials: unknown[];
   created_at: string;
   updated_at: string;
 }
@@ -16,11 +22,11 @@ interface WorkspaceState {
   sessions: WorkspaceSession[];
   activeSession: WorkspaceSession | null;
   loading: boolean;
-  subscription: any;
+  subscription: WorkspaceSubscription | null;
   setSessions: (sessions: WorkspaceSession[]) => void;
   setActiveSession: (session: WorkspaceSession | null) => void;
   setLoading: (loading: boolean) => void;
-  setSubscription: (sub: any) => void;
+  setSubscription: (sub: WorkspaceSubscription | null) => void;
   updateSessionContent: (content: string) => void;
 }
 

@@ -41,6 +41,12 @@ export default function DownloadDisclosureModal({
       .finally(() => setLoading(false));
   }, [institutionName]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const selected = templates.find((t) => t.id === selectedId);
 
   const handleDownload = async () => {
@@ -64,12 +70,20 @@ export default function DownloadDisclosureModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] bg-navy/40 backdrop-blur-sm grid place-items-center p-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl border border-rule shadow-card overflow-hidden">
+    <div
+      className="fixed inset-0 z-[80] bg-navy/40 backdrop-blur-sm grid place-items-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="disclosure-title"
+        className="w-full max-w-lg max-h-[calc(100vh-2rem)] overflow-y-auto bg-white rounded-2xl border border-rule shadow-card"
+      >
         <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-rule">
           <div>
             <p className="eyebrow mb-1">EU AI Act · Article 50</p>
-            <h2 className="text-lg font-extrabold text-navy leading-tight">Choose an AI disclosure</h2>
+            <h2 id="disclosure-title" className="text-lg font-extrabold text-navy leading-tight">Choose an AI disclosure</h2>
             <p className="text-xs text-muted mt-1">Required before exporting. This marks the file as AI-assisted and adds provenance metadata.</p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-muted hover:bg-navy-mist" aria-label="Close">
@@ -78,15 +92,16 @@ export default function DownloadDisclosureModal({
         </div>
 
         <div className="px-5 py-4 space-y-4">
-          {error && <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">{error}</div>}
+          {error && <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">{error}</div>}
 
           {loading ? (
             <p className="text-sm text-muted">Loading templates…</p>
           ) : (
             <>
               <div>
-                <label className="block mb-2 text-sm font-medium text-ink">Institution / style template</label>
+                <label htmlFor="disclosure-template" className="block mb-2 text-sm font-medium text-ink">Institution / style template</label>
                 <select
+                  id="disclosure-template"
                   value={selectedId}
                   onChange={(e) => setSelectedId(e.target.value)}
                   className="w-full p-3 border rounded-[10px]"
@@ -122,11 +137,11 @@ export default function DownloadDisclosureModal({
           )}
         </div>
 
-        <div className="px-5 py-4 border-t border-rule flex items-center justify-between gap-3">
+        <div className="px-5 py-4 border-t border-rule flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-[11px] text-muted inline-flex items-center gap-1.5">
             <Shield size={12} className="text-gold" /> Machine-readable AI origin mark
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-end">
             <button onClick={onClose} className="btn-ghost px-4 py-2 text-sm">Cancel</button>
             <button
               onClick={handleDownload}

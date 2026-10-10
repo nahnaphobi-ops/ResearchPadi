@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
+import type { AdminOverview as AdminOverviewData } from '../../types/admin';
 
 export default function AdminOverview() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AdminOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    adminService.getOverview().then(setData).catch(() => setError('Failed to load overview')).finally(() => setLoading(false));
+    let ignore = false;
+    adminService.getOverview()
+      .then((d) => { if (!ignore) setData(d); })
+      .catch(() => { if (!ignore) setError('Failed to load overview'); })
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
   }, []);
 
   if (loading) return <AdminLayout><div className="p-10 text-center text-gray-500">Loading...</div></AdminLayout>;

@@ -38,7 +38,7 @@ export default function Navbar() {
 
         <div className="hidden md:flex gap-1 absolute left-1/2 -translate-x-1/2">
           {navLinks.map(({ path, icon: Icon, label }) => (
-            <button key={path} onClick={() => navigate(path)} className={linkClass(path)}>
+            <button key={path} onClick={() => navigate(path)} className={linkClass(path)} aria-current={isActive(path) ? 'page' : undefined}>
               <Icon size={15} /> {label}
             </button>
           ))}
@@ -58,7 +58,8 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden p-2 text-navy rounded-lg hover:bg-navy-mist transition"
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>

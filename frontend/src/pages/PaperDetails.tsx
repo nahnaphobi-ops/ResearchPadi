@@ -3,11 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import AppShell from '../components/layout/AppShell';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
+import PaperStatusBadge from '../components/papers/PaperStatusBadge';
+import { ArrowLeft, Download, FileSearch } from 'lucide-react';
+import type { Paper } from '../types';
 
 export default function PaperDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [paper, setPaper] = useState<any>(null);
+  const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDownload, setShowDownload] = useState(false);
@@ -20,61 +23,83 @@ export default function PaperDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDownload = () => {
-    if (!id || !paper) return;
-    setShowDownload(true);
-  };
+  // Keep the status fresh while the paper is still generating.
+  const inProgress = !!paper && paper.status !== 'completed' && paper.status !== 'failed';
+  useEffect(() => {
+    if (!id || !inProgress) return;
+    const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      paperService.getPaperDetails(id).then(res => setPaper(res.data)).catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [id, inProgress]);
+
+  const backLink = (
+    <button onClick={() => navigate('/dashboard')} className="text-sm text-muted hover:text-navy font-medium inline-flex items-center gap-1.5 mb-6">
+      <ArrowLeft size={15} /> Back to dashboard
+    </button>
+  );
 
   if (loading) {
     return (
       <AppShell>
-        <p className="text-center text-muted">Loading paper details...</p>
+        <div className="py-16 text-center text-muted">
+          <div className="mx-auto mb-3 w-8 h-8 border-2 border-rule border-t-brand rounded-full animate-spin" />
+          Loading paper details...
+        </div>
       </AppShell>
     );
   }
-  if (error) {
+  if (error || !paper) {
     return (
       <AppShell>
-        <p className="text-center text-red-500">{error}</p>
+        {backLink}
+        <div className="bg-white rounded-[14px] border border-rule p-10 text-center">
+          <p className="font-bold text-navy mb-1">{error ? 'Something went wrong' : 'Paper not found'}</p>
+          <p className="text-sm text-muted">{error || 'This paper may have been removed, or the link is wrong.'}</p>
+        </div>
       </AppShell>
     );
   }
-  if (!paper) {
-    return (
-      <AppShell>
-        <p className="text-center text-muted">Paper not found</p>
-      </AppShell>
-    );
-  }
+
+  const details = [
+    { label: 'Institution', value: paper.institution_name },
+    { label: 'Programme', value: paper.programme },
+    { label: 'Supervisor', value: paper.supervisor_name },
+    { label: 'Target words', value: (paper.target_word_count || 12000).toLocaleString() },
+  ];
 
   return (
     <AppShell>
-      <button onClick={() => navigate('/dashboard')} className="text-navy font-bold hover:underline mb-6 inline-block">
-        &larr; Back to Dashboard
-      </button>
+      {backLink}
 
-      <div className="bg-white rounded-[14px] border border-rule p-8 shadow-soft">
-        <h1 className="text-2xl font-bold mb-2 text-navy">{paper.topic}</h1>
-        <p className="text-muted mb-6">{paper.course} &bull; {new Date(paper.created_at).toLocaleDateString()}</p>
-
-        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-          <div><span className="font-bold text-ink">Institution:</span> {paper.institution_name || 'N/A'}</div>
-          <div><span className="font-bold text-ink">Programme:</span> {paper.programme || 'N/A'}</div>
-          <div><span className="font-bold text-ink">Supervisor:</span> {paper.supervisor_name || 'N/A'}</div>
-          <div><span className="font-bold text-ink">Target Words:</span> {paper.target_word_count || 12000}</div>
+      <div className="bg-white rounded-[14px] border border-rule p-6 sm:p-8 shadow-soft">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+          <h1 className="text-2xl font-bold text-navy">{paper.topic}</h1>
+          <PaperStatusBadge status={paper.status} className="shrink-0 self-start" />
         </div>
+        <p className="text-muted mb-6">{[paper.course, new Date(paper.created_at).toLocaleDateString()].filter(Boolean).join(' · ')}</p>
 
-        <div className="mb-6">
-          <span className="font-bold text-ink text-sm">Status: </span>
-          {paper.status === 'completed' ? (
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Completed</span>
-          ) : paper.status === 'failed' ? (
-            <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Failed</span>
-          ) : (
-            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-bold animate-pulse">Processing</span>
-          )}
-          {paper.progress_step && <span className="text-xs text-muted italic ml-2">{paper.progress_step}</span>}
-        </div>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-6 text-sm">
+          {details.map((d) => (
+            <div key={d.label}>
+              <dt className="text-muted">{d.label}</dt>
+              <dd className="font-semibold text-ink">{d.value || '—'}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {inProgress && (
+          <div className="mb-6 p-4 rounded-xl bg-orange-50 border border-orange-200 text-sm">
+            <p className="font-bold text-orange-700">Your paper is being written</p>
+            <p className="text-orange-700">{paper.progress_step || 'Working on it'} · this page updates automatically.</p>
+          </div>
+        )}
+        {paper.status === 'failed' && (
+          <div className="mb-6 p-4 rounded-xl bg-red-100 text-sm text-red-700">
+            Generation failed{paper.progress_step ? `: ${paper.progress_step}` : ''}. Contact hello@researchpadi.com and we'll sort it out.
+          </div>
+        )}
 
         {paper.abstract && (
           <div className="mb-6">
@@ -84,9 +109,14 @@ export default function PaperDetails() {
         )}
 
         {paper.status === 'completed' && (
-          <button onClick={handleDownload} className="bg-green-600 text-white px-6 py-3 rounded-[10px] font-bold hover:bg-green-700 transition">
-            Download .docx
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => navigate(`/papers/${paper.id}/review`)} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
+              <FileSearch size={16} /> Review paper
+            </button>
+            <button onClick={() => setShowDownload(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
+              <Download size={16} /> Download .docx
+            </button>
+          </div>
         )}
       </div>
       {showDownload && id && (

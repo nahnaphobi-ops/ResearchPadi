@@ -6,10 +6,12 @@ import { useAuthStore } from '../store/useAuthStore';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
-import { ArrowUpRight, FileText, Plus, RefreshCw, WalletCards } from 'lucide-react';
+import PaperStatusBadge from '../components/papers/PaperStatusBadge';
+import { ArrowUpRight, Download, FileText, Plus, RefreshCw, WalletCards } from 'lucide-react';
+import type { Paper } from '../types';
 
 export default function Dashboard() {
-  const [papers, setPapers] = useState<any[]>([]);
+  const [papers, setPapers] = useState<Paper[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [downloadTarget, setDownloadTarget] = useState<{ id: string; topic: string; institution?: string } | null>(null);
@@ -30,20 +32,37 @@ export default function Dashboard() {
   const fetchWallet = async () => {
     try {
       const response = await paymentService.getWallet();
-      setWalletBalance(response.data.balance_ghs ?? 0);
+      setWalletBalance(response.data.balance ?? 0);
     } catch {
       // Wallet may not exist yet for new users
     }
   };
 
   useEffect(() => {
-    fetchPapers();
-    fetchWallet();
-    const interval = setInterval(() => {
-      fetchPapers();
-    }, 10000);
-    return () => clearInterval(interval);
+    let ignore = false;
+    (async () => {
+      await Promise.allSettled([fetchPapers(), fetchWallet()]);
+      if (ignore) return;
+    })();
+    return () => { ignore = true; };
   }, []);
+
+  // Only poll while a paper is still generating, and pause while the tab is hidden.
+  const hasPaperInProgress = papers.some(p => p.status !== 'completed' && p.status !== 'failed');
+  useEffect(() => {
+    if (!hasPaperInProgress) return;
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchPapers();
+    }, 10000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchPapers();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [hasPaperInProgress]);
 
   const handleDownload = (id: string, topic: string, institution?: string) => {
     setDownloadTarget({ id, topic, institution });
@@ -111,7 +130,7 @@ export default function Dashboard() {
               <span className="status-dot" />
             </div>
             <p className="display text-3xl text-navy">
-              {papers.filter(p => p.status === 'processing').length}
+              {papers.filter(p => p.status !== 'completed' && p.status !== 'failed').length}
               <span className="text-sm text-muted font-normal ml-2 tracking-normal">generating</span>
             </p>
           </div>
@@ -135,14 +154,11 @@ export default function Dashboard() {
             <p className="eyebrow mb-1">Paper library</p>
             <h2 className="display text-3xl text-navy">Your research papers</h2>
           </div>
-          <div className="flex items-center gap-3">
+          {hasPaperInProgress && (
             <span className="text-xs text-muted inline-flex items-center gap-1.5">
-              <RefreshCw size={12} /> auto-refreshes every 10s
+              <RefreshCw size={12} className="animate-spin [animation-duration:3s]" /> Updating automatically
             </span>
-            <button onClick={() => navigate('/new-paper')} className="btn-primary px-4 py-2 text-xs inline-flex items-center gap-1.5">
-              <Plus size={14} /> New paper
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="bg-white rounded-[14px] border border-rule overflow-hidden">
@@ -163,62 +179,56 @@ export default function Dashboard() {
               </button>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-navy-mist text-muted uppercase text-[11px] font-bold tracking-wider">
-                <tr>
-                  <th className="p-4 border-b border-rule">Topic</th>
-                  <th className="p-4 border-b border-rule">Status</th>
-                  <th className="p-4 border-b border-rule text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-rule">
-                {papers.map((paper) => (
-                  <tr key={paper.id} className="hover:bg-navy-mist transition">
-                    <td className="p-4">
-                      <div className="font-bold text-ink">{paper.topic}</div>
-                      <div className="text-xs text-muted mt-0.5">{paper.course} · {new Date(paper.created_at).toLocaleDateString()}</div>
-                    </td>
-                    <td className="p-4">
-                      {paper.status === 'completed' ? (
-                        <span className="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold">Completed</span>
-                      ) : paper.status === 'failed' ? (
-                        <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold">Failed</span>
-                      ) : (
-                        <div className="flex flex-col">
-                          <span className="px-2.5 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold inline-block w-fit mb-1 animate-pulse">Processing</span>
-                          <span className="text-[10px] text-muted italic">{paper.progress_step}</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      {paper.status === 'completed' ? (
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => navigate(`/papers/${paper.id}/review`)}
-                            className="btn-primary px-3.5 py-2 text-sm"
-                          >
-                            Review
-                          </button>
-                          <button
-                            onClick={() => handleDownload(paper.id, paper.topic, paper.institution_name)}
-                            className="bg-green-600 text-white px-3.5 py-2 rounded-[10px] text-sm font-bold hover:bg-green-700 transition"
-                          >
-                            Download
-                          </button>
-                        </div>
-                      ) : (
+            <ul className="divide-y divide-rule">
+              <li className="hidden md:grid grid-cols-[1fr_160px_220px] gap-4 px-5 py-3 bg-navy-mist text-muted uppercase text-[11px] font-bold tracking-wider">
+                <span>Topic</span>
+                <span>Status</span>
+                <span className="text-right">Action</span>
+              </li>
+              {papers.map((paper) => (
+                <li key={paper.id} className="grid grid-cols-1 md:grid-cols-[1fr_160px_220px] gap-3 md:gap-4 md:items-center px-5 py-4 hover:bg-navy-mist transition">
+                  <div className="min-w-0">
+                    <button onClick={() => navigate(`/papers/${paper.id}`)} className="font-bold text-ink text-left hover:text-brand transition">
+                      {paper.topic}
+                    </button>
+                    <div className="text-xs text-muted mt-0.5">
+                      {[paper.course, new Date(paper.created_at).toLocaleDateString()].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <PaperStatusBadge status={paper.status} />
+                    {paper.status !== 'completed' && paper.status !== 'failed' && paper.progress_step && (
+                      <span className="text-[11px] text-muted">{paper.progress_step}</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 md:justify-end">
+                    {paper.status === 'completed' ? (
+                      <>
                         <button
-                          onClick={() => navigate(`/papers/${paper.id}`)}
-                          className="text-navy text-sm font-bold hover:underline"
+                          onClick={() => navigate(`/papers/${paper.id}/review`)}
+                          className="btn-primary px-3.5 py-2 text-sm"
                         >
-                          View details
+                          Review
                         </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <button
+                          onClick={() => handleDownload(paper.id, paper.topic, paper.institution_name)}
+                          className="btn-ghost px-3.5 py-2 text-sm inline-flex items-center gap-1.5"
+                        >
+                          <Download size={14} /> Download
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/papers/${paper.id}`)}
+                        className="text-brand text-sm font-bold hover:underline"
+                      >
+                        View details
+                      </button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </main>

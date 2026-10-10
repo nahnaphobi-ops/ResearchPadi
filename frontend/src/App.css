@@ -25,12 +25,12 @@ h1, h2, h3, h4, .font-black, .font-bold, .display {
 .hover\:bg-purple-700:hover, .hover\:bg-teal-700:hover, .hover\:bg-indigo-700:hover { background-color: var(--primary-hover) !important; }
 .hover\:bg-purple-200:hover { background-color: var(--highlight) !important; }
 .bg-green-100 { background-color: var(--success-soft) !important; }
-.text-green-700, .text-green-600, .text-green-500 { color: var(--success) !important; }
+.text-green-700, .text-green-600, .text-green-500 { color: var(--success-ink) !important; }
 .bg-orange-100, .bg-orange-50 { background-color: var(--warning-soft) !important; }
-.text-orange-700, .text-orange-600, .text-orange-800 { color: var(--warning) !important; }
+.text-orange-700, .text-orange-600, .text-orange-800 { color: var(--warning-ink) !important; }
 .border-orange-200 { border-color: #fde68a !important; }
 .bg-red-100 { background-color: var(--danger-soft) !important; }
-.text-red-700 { color: var(--danger) !important; }
+.text-red-700, .text-red-600, .text-red-500 { color: var(--danger-ink) !important; }
 
 input, select, textarea {
   background: var(--surface);
@@ -63,7 +63,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .eyebrow-gold {
-  color: var(--warning);
+  color: var(--warning-ink);
   font-size: .7rem;
   font-weight: 700;
   letter-spacing: .16em;
@@ -166,3 +166,127 @@ input:focus, select:focus, textarea:focus {
   }
   .btn-primary:hover, .btn-ghost:hover { transform: none; }
 }
+
+/* ── Word-style document editor ───────────────────────────────────────── */
+.word-doc .ProseMirror {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000;
+  outline: none;
+  min-height: 100%;
+  overflow-wrap: break-word;
+}
+.word-doc .ProseMirror p { margin: 0 0 8pt; }
+.word-doc .ProseMirror h1, .word-doc .ProseMirror h2, .word-doc .ProseMirror h3, .word-doc .ProseMirror h4 {
+  font-family: 'Calibri Light', Calibri, 'Segoe UI', sans-serif;
+  letter-spacing: normal;
+  margin: 12pt 0 6pt;
+  line-height: 1.25;
+}
+.word-doc .ProseMirror h1 { font-size: 16pt; font-weight: 400; color: #2f5496; }
+.word-doc .ProseMirror h2 { font-size: 13pt; font-weight: 400; color: #2f5496; }
+.word-doc .ProseMirror h3 { font-size: 12pt; font-weight: 400; color: #1f3763; }
+.word-doc .ProseMirror h4 { font-size: 12pt; font-weight: 400; font-style: italic; color: #2f5496; }
+.word-doc .ProseMirror ul { list-style: disc; padding-left: 1.5em; margin: 0 0 8pt; }
+.word-doc .ProseMirror ol { list-style: decimal; padding-left: 1.5em; margin: 0 0 8pt; }
+.word-doc .ProseMirror li > p { margin: 0; }
+.word-doc .ProseMirror ul[data-type='taskList'] { list-style: none; padding-left: 0.25em; }
+.word-doc .ProseMirror ul[data-type='taskList'] li { display: flex; gap: 0.5em; align-items: flex-start; }
+.word-doc .ProseMirror ul[data-type='taskList'] li > label { margin-top: 0.3em; }
+.word-doc .ProseMirror blockquote { margin: 8pt 2.5em; padding-left: 0.75em; border-left: 3px solid #c8c6c4; font-style: italic; color: #404040; }
+.word-doc .ProseMirror pre { background: #f3f2f1; border: 1px solid #e1dfdd; padding: 8pt; font-family: Consolas, 'Courier New', monospace; font-size: 10pt; white-space: pre-wrap; margin: 0 0 8pt; }
+.word-doc .ProseMirror code { font-family: Consolas, 'Courier New', monospace; font-size: 0.92em; background: #f3f2f1; padding: 0 2px; }
+.word-doc .ProseMirror a { color: #0563c1; text-decoration: underline; cursor: text; }
+.word-doc .ProseMirror hr { border: 0; border-top: 1px solid #8a8886; margin: 12pt 0; }
+.word-doc .ProseMirror img { max-width: 100%; height: auto; }
+.word-doc .ProseMirror img.ProseMirror-selectednode { outline: 2px solid #2b579a; }
+.word-doc .ProseMirror table { border-collapse: collapse; width: 100%; margin: 0 0 8pt; table-layout: fixed; }
+.word-doc .ProseMirror td, .word-doc .ProseMirror th { border: 1px solid #000; padding: 2pt 5pt; vertical-align: top; position: relative; }
+.word-doc .ProseMirror th { font-weight: 700; background: #f2f2f2; }
+.word-doc .ProseMirror td p, .word-doc .ProseMirror th p { margin: 0; }
+.word-doc .ProseMirror .selectedCell::after { content: ''; position: absolute; inset: 0; background: rgba(43, 87, 154, 0.15); pointer-events: none; }
+.word-doc .ProseMirror .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #2b579a; pointer-events: none; }
+.word-doc .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #a19f9d; float: left; height: 0; pointer-events: none; }
+
+/* Manual page break: drawn as a gap between sheets */
+.word-doc .ProseMirror .page-break {
+  /* bottom margin of this page + grey gap + top margin of the next page */
+  --gap: 28px;
+  position: relative;
+  height: calc(var(--page-margin-bottom, 96px) + var(--gap) + var(--page-margin-top, 96px));
+  margin: 0 calc(-1 * var(--page-margin-right, 96px)) 0 calc(-1 * var(--page-margin-left, 96px));
+  background: linear-gradient(to bottom,
+    #fff 0, #fff var(--page-margin-bottom, 96px),
+    #e7e6e6 var(--page-margin-bottom, 96px), #e7e6e6 calc(var(--page-margin-bottom, 96px) + var(--gap)),
+    #fff calc(var(--page-margin-bottom, 96px) + var(--gap)));
+}
+.word-doc .ProseMirror .page-break::after {
+  content: 'Page Break';
+  position: absolute; left: 50%; top: calc(var(--page-margin-bottom, 96px) + var(--gap) / 2); transform: translate(-50%, -50%);
+  font: 10px 'Segoe UI', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #8a8886;
+}
+.word-doc .ProseMirror .page-break.ProseMirror-selectednode { outline: 2px solid #2b579a; }
+
+/* Find & Replace highlights */
+.word-doc .search-match { background: #fff100; border-radius: 1px; }
+.word-doc .search-match-current { background: #ff8c00; color: #000; }
+
+/* Show/Hide ¶ */
+.word-doc.show-marks .ProseMirror p::after,
+.word-doc.show-marks .ProseMirror h1::after,
+.word-doc.show-marks .ProseMirror h2::after,
+.word-doc.show-marks .ProseMirror h3::after,
+.word-doc.show-marks .ProseMirror h4::after { content: '¶'; color: #2b579a; opacity: .55; font-family: 'Segoe UI', sans-serif; font-weight: 400; font-style: normal; margin-left: 2px; }
+
+/* Format Painter cursor */
+.ProseMirror.format-painter { cursor: copy; }
+
+/* Print just the document */
+@media print {
+  body, #root, .workspace-shell { background: #fff !important; height: auto !important; overflow: visible !important; }
+  .no-print { display: none !important; }
+  .workspace-shell, .workspace-shell > div, .print-scroll { display: block !important; overflow: visible !important; height: auto !important; background: #fff !important; padding: 0 !important; }
+  .print-scroll > div { padding: 0 !important; display: block !important; }
+  .print-zoom-reset { zoom: 1 !important; }
+  .print-page { width: auto !important; min-height: 0 !important; box-shadow: none !important; border: 0 !important; }
+  .print-page .word-doc { padding: 0 !important; }
+  .word-doc .ProseMirror .page-break { height: 0; margin: 0; background: none; box-shadow: none; break-after: page; }
+  .word-doc .ProseMirror .page-break::after { content: none; }
+  .search-match, .search-match-current { background: none !important; }
+}
+
+/* ── Inline citations & reference list ───────────────────────────────── */
+.word-doc .citation-chip {
+  border-radius: 2px;
+  padding: 0 1px;
+  cursor: pointer;
+  transition: background-color .12s;
+}
+.word-doc .citation-chip:hover { background: #e1dfdd; }
+.word-doc .citation-chip.is-active { background: #c7e0f4; }
+.word-doc .citation-popover {
+  position: absolute;
+  z-index: 45;
+  left: 0;
+  top: calc(100% + 4px);
+  display: block;
+  width: 272px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  font: 400 12px/1.4 'Segoe UI', Poppins, sans-serif;
+  color: #252423;
+  text-align: left;
+  white-space: normal;
+}
+.word-doc .bibliography { margin: 12pt 0; }
+.word-doc .bibliography.ProseMirror-selectednode { outline: 2px solid #2b579a; outline-offset: 4px; }
+.word-doc .bibliography .bib-title { text-align: center; margin-top: 0; }
+.word-doc .bibliography .bib-entry { padding-left: 0.5in; text-indent: -0.5in; margin: 0 0 8pt; }
+.word-doc .bibliography .bib-entry.bib-numbered { padding-left: 0.45in; text-indent: -0.45in; }
+.word-doc .bibliography .bib-number { display: inline-block; width: 0.45in; text-indent: 0; }
+.word-doc .bibliography .bib-empty { color: #8a8886; font-style: italic; text-align: center; }
+@media print { .word-doc .bibliography .bib-empty { display: none; } }
