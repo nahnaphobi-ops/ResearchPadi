@@ -21,5 +21,6 @@ router.post('/assist-advanced', workspaceController.assistAdvanced);
 router.post('/citations', workspaceController.searchCitations);
 router.get('/citation-styles', workspaceController.listCitationStyles);
 router.post('/local-citations', workspaceController.searchLocalCitations);
+router.post('/sources', workspaceController.findSources);
 
 export default router;

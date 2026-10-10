@@ -42,8 +42,8 @@ const CITATION_STYLES: CitationStyle[] = [
     description: 'American Psychological Association - commonly used in social sciences',
     inText: (c, page) => {
       const author = formatAuthors(c.authors);
-      if (page) return `(${c.year}, p. ${page})`;
-      return `(${c.year})`;
+      if (page) return `(${author}, ${c.year}, p. ${page})`;
+      return `(${author}, ${c.year})`;
     },
     bibliography: (c) => {
       const authors = formatAuthorsFull(c.authors);

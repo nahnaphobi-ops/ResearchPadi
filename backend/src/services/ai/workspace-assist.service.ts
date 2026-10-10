@@ -1,8 +1,7 @@
 import { routeDrafting } from './router.service.js';
-import { searchOpenAlex } from '../citations/openalex.service.js';
-import { searchSemanticScholar } from '../citations/semantic.service.js';
-import { retrieveContext } from '../rag/retriever.service.js';
-import { formatCitation, type CitationStyle, type CitationData } from '../citations/formatter.service.js';
+import { findSources } from '../citations/sources.service.js';
+import { serializeAuthors } from '../../lib/authors.js';
+import { formatCitation, STYLES, type CitationStyle, type CitationData } from '../citations/formatter.service.js';
 
 export interface AssistResult {
   response: string;
@@ -66,44 +65,26 @@ export const assistWithText = async (
 
 export const searchCitations = async (topic: string, query?: string, format?: CitationStyle) => {
   const searchTerm = query || topic;
-  const citationStyle: CitationStyle = format || 'apa';
+  const citationStyle: CitationStyle = format && STYLES.includes(format) ? format : 'apa';
+  const sources = await findSources(searchTerm, { limit: 20 });
 
-  const [openAlexResults, semanticResults, ragResults] = await Promise.all([
-    searchOpenAlex(searchTerm).catch(() => []),
-    searchSemanticScholar(searchTerm).catch(() => []),
-    retrieveContext(searchTerm).catch(() => []),
-  ]);
-
-  const mapWithFormat = (r: any, overrides: Partial<CitationData>): CitationData & { formatted: string } => {
+  const citations = sources.map((s) => {
     const citation: CitationData = {
-      title: r.title || r.document_title,
-      authors: r.authors || r.author_name,
-      year: r.year || r.publication_year,
-      source: r.source || r.venue,
-      url: r.url || r.doi,
-      type: 'academic',
-      ...overrides,
+      title: s.title,
+      authors: serializeAuthors(s.authors),
+      year: s.year ?? undefined,
+      source: s.containerTitle || s.repository || s.institution || '',
+      institution: s.institution,
+      url: s.url,
+      doi: s.doi,
+      volume: s.volume,
+      issue: s.issue,
+      pages: s.pages,
+      type: s.origin === 'ghana-repository' ? 'rag' : 'academic',
+      chunk_text: s.snippet?.slice(0, 200),
     };
-    return { ...citation, formatted: formatCitation(citation, citationStyle) };
-  };
+    return { ...citation, origin: s.origin, ghanaian: s.ghanaian, formatted: formatCitation(citation, citationStyle) };
+  });
 
-  const citations = [
-    ...(openAlexResults || []).map((r: any) =>
-      mapWithFormat(r, { source: r.venue || 'OpenAlex' })
-    ),
-    ...(semanticResults || []).map((r: any) =>
-      mapWithFormat(r, { source: 'Semantic Scholar' })
-    ),
-    ...(ragResults || []).map((r: any) =>
-      mapWithFormat(r, {
-        title: r.document_title,
-        institution: r.institution,
-        chunk_text: r.chunk_text?.substring(0, 200),
-        source: 'Ghanaian Repository',
-        type: 'rag',
-      })
-    ),
-  ];
-
-  return { citations: citations.slice(0, 20), format: citationStyle };
+  return { citations, sources, format: citationStyle };
 };

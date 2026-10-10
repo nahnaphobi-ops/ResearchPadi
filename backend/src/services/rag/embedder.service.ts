@@ -64,3 +64,38 @@ export const generateEmbedding = async (text: string) => {
     return null;
   }
 };
+
+const EMBED_BATCH = 96;
+
+/**
+ * Embed many texts in batched requests. Returns one entry per input, null where
+ * embedding isn't available (no provider configured, or the request failed).
+ */
+export const generateEmbeddings = async (texts: string[]): Promise<(number[] | null)[]> => {
+  const config = getEmbeddingConfig();
+  if (!config || !texts.length) return texts.map(() => null);
+  if (embeddingAvailable === false && Date.now() < embeddingRetryAt) return texts.map(() => null);
+
+  const out: (number[] | null)[] = [];
+  for (let i = 0; i < texts.length; i += EMBED_BATCH) {
+    const batch = texts.slice(i, i + EMBED_BATCH).map((t) => t.slice(0, 8000));
+    try {
+      const response = await axios.post(
+        config.url,
+        { input: batch, model: config.model },
+        { headers: config.headers, timeout: 60_000 }
+      );
+      const rows = (response.data?.data ?? []) as { index: number; embedding: number[] }[];
+      const byIndex = new Map(rows.map((r) => [r.index, r.embedding]));
+      batch.forEach((_, j) => out.push(byIndex.get(j) ?? null));
+      embeddingAvailable = true;
+    } catch (error: any) {
+      console.warn(`Batch embedding failed (${error?.message || 'unknown'}) — continuing without vectors`);
+      embeddingAvailable = false;
+      embeddingRetryAt = Date.now() + EMBEDDING_RETRY_MS;
+      while (out.length < texts.length) out.push(null);
+      return out;
+    }
+  }
+  return out;
+};

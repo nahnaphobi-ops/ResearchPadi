@@ -7,6 +7,7 @@ import { checkPlagiarism } from '../services/ai/plagiarism-checker.service.js';
 import { detectAIContent } from '../services/ai/ai-detector.service.js';
 import { getCitationStyles, getCitationStyle } from '../services/ai/citation-styles.service.js';
 import { retrieveContext } from '../services/rag/retriever.service.js';
+import { findSources as findSourcesService } from '../services/citations/sources.service.js';
 import { childLogger } from '../lib/logger.js';
 
 const log = childLogger('workspace');
@@ -61,9 +62,10 @@ export const getSession = async (req: Request, res: Response) => {
     .select('*')
     .eq('id', id)
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error) return res.status(404).json({ error: 'Session not found' });
+  if (error) return res.status(500).json({ error: 'Failed to load session' });
+  if (!data) return res.status(404).json({ error: 'Session not found' });
   res.json(data);
 };
 
@@ -86,9 +88,9 @@ export const updateSession = async (req: Request, res: Response) => {
     .eq('id', id)
     .eq('user_id', userId)
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) return res.status(500).json({ error: 'Failed to save session' });
   if (!data) return res.status(404).json({ error: 'Session not found' });
   res.json(data);
 };
@@ -224,18 +226,10 @@ export const assistAdvanced = async (req: Request, res: Response) => {
       }
 
       case 'suggest-citations': {
-        const sources = await retrieveContext(content);
-        return res.json({
-          action: 'suggest-citations',
-          suggestions: (sources || []).slice(0, 8).map((s: any) => ({
-            title: s.document_title,
-            authors: s.authors,
-            year: s.year,
-            institution: s.institution,
-            sourceUrl: s.source_url,
-            relevantText: s.chunk_text?.substring(0, 300),
-          })),
-        });
+        // Same unified search as the Citations panel, so results can be cited inline.
+        const query = content.replace(/\s+/g, ' ').trim().slice(0, 400);
+        const sources = await findSourcesService(query, { limit: 8 });
+        return res.json({ action: 'suggest-citations', sources });
       }
 
       default:
@@ -248,6 +242,33 @@ export const assistAdvanced = async (req: Request, res: Response) => {
 };
 
 // Get available citation styles
+const SOURCE_ORIGINS = ['ghana-repository', 'openalex', 'semantic-scholar'] as const;
+
+// Unified source search for inline citations: Ghanaian repositories, Ghana-affiliated
+// OpenAlex works, global OpenAlex and Semantic Scholar — de-duplicated and ranked.
+export const findSources = async (req: Request, res: Response) => {
+  const { query, ghanaFirst, yearFrom, origins, limit } = req.body ?? {};
+  if (typeof query !== 'string' || !query.trim()) return res.status(400).json({ error: 'Query is required' });
+
+  const year = Number(yearFrom);
+  const validOrigins = Array.isArray(origins)
+    ? origins.filter((o: unknown): o is typeof SOURCE_ORIGINS[number] => SOURCE_ORIGINS.includes(o as typeof SOURCE_ORIGINS[number]))
+    : undefined;
+
+  try {
+    const sources = await findSourcesService(query.slice(0, 500), {
+      ghanaFirst: ghanaFirst !== false,
+      yearFrom: Number.isInteger(year) && year > 1900 && year <= new Date().getFullYear() ? year : undefined,
+      origins: validOrigins,
+      limit: Number(limit) || 20,
+    });
+    res.json({ sources });
+  } catch (err) {
+    log.error({ err: (err as Error).message }, 'Source search failed');
+    res.status(500).json({ error: 'Source search failed' });
+  }
+};
+
 export const listCitationStyles = async (_req: Request, res: Response) => {
   const styles = getCitationStyles();
   res.json({ styles });

@@ -1,3 +1,5 @@
+import { parseAuthors } from '../../lib/authors.js';
+
 export const STYLES = ['apa', 'mla', 'chicago', 'harvard', 'ieee'] as const;
 export type CitationStyle = (typeof STYLES)[number];
 
@@ -17,8 +19,12 @@ export type CitationStyle = (typeof STYLES)[number];
     chunk_text?: string;
   }
 
+const initials = (given: string) =>
+  given.split(/[\s.]+/).filter(Boolean).map((part) => part.split('-').map((p) => `${p[0].toUpperCase()}.`).join('-')).join(' ');
+
+/** "Family, I. I." for each author, however the source string was written. */
 const splitAuthors = (authors?: string): string[] =>
-  authors ? authors.split(',').map(a => a.trim()).filter(Boolean) : [];
+  parseAuthors(authors).map((n) => (n.given ? `${n.family}, ${initials(n.given)}` : n.family));
 
 const formatAuthorsApa = (authors?: string): string => {
   const list = splitAuthors(authors);

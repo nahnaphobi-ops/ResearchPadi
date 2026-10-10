@@ -1,6 +1,4 @@
-import { supabase } from '../../db/supabase.js';
-import { generateEmbedding } from '../rag/embedder.service.js';
-import { sanitizeIlikeTerm, ilikeContains } from '../../lib/postgrest-filter.js';
+import { searchKnowledge } from '../rag/retriever.service.js';
 
 export interface PlagiarismMatch {
   originalText: string;
@@ -70,58 +68,29 @@ async function findSimilarInKnowledgeBase(
   sentence: string,
   threshold: number = 0.3
 ): Promise<PlagiarismMatch[]> {
+  // Hybrid retrieval finds candidates even when wording is paraphrased; n-gram and
+  // word-overlap scores then decide whether a candidate is actually a match.
+  const candidates = await searchKnowledge(sentence, { limit: 6 });
   const matches: PlagiarismMatch[] = [];
+  const seen = new Set<string>();
 
-  const embedding = await generateEmbedding(sentence);
-
-  if (embedding) {
-    const { data: vectorResults } = await supabase.rpc('match_knowledge_chunks', {
-      query_embedding: embedding,
-      match_threshold: 0.7,
-      match_count: 5,
-    });
-
-    if (vectorResults) {
-      for (const result of vectorResults) {
-        const similarity = calculateNGramSimilarity(sentence, result.chunk_text);
-        if (similarity >= threshold) {
-          matches.push({
-            originalText: sentence,
-            matchedText: result.chunk_text,
-            source: result.source_name || 'Knowledge Base',
-            sourceUrl: result.source_url || '',
-            similarity,
-            position: { start: 0, end: sentence.length },
-          });
-        }
-      }
-    }
-  }
-
-  const { data: textResults } = await supabase
-    .from('knowledge_chunks')
-    .select('chunk_text, source_name, source_url')
-    .ilike('chunk_text', ilikeContains(sanitizeIlikeTerm(sentence.substring(0, 50), 50)))
-    .limit(5);
-
-  if (textResults) {
-    for (const result of textResults) {
-      const existingMatch = matches.some(
-        m => m.sourceUrl === result.source_url && m.similarity > 0
-      );
-      if (!existingMatch) {
-        const similarity = calculateWordOverlap(sentence, result.chunk_text);
-        if (similarity >= threshold) {
-          matches.push({
-            originalText: sentence,
-            matchedText: result.chunk_text,
-            source: result.source_name || 'Knowledge Base',
-            sourceUrl: result.source_url || '',
-            similarity,
-            position: { start: 0, end: sentence.length },
-          });
-        }
-      }
+  for (const c of candidates) {
+    const key = c.source_url || c.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const similarity = Math.max(
+      calculateNGramSimilarity(sentence, c.chunk_text),
+      calculateWordOverlap(sentence, c.chunk_text) * 0.85,
+    );
+    if (similarity >= threshold) {
+      matches.push({
+        originalText: sentence,
+        matchedText: c.chunk_text,
+        source: c.document_title ? `${c.document_title} (${c.source_name ?? 'Knowledge Base'})` : c.source_name || 'Knowledge Base',
+        sourceUrl: c.source_url || '',
+        similarity,
+        position: { start: 0, end: sentence.length },
+      });
     }
   }
 

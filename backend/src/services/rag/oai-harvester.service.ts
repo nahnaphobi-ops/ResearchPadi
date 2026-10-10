@@ -14,6 +14,8 @@ export interface OaiRecord {
   language: string;
   rights: string;
   source: string;
+  /** dc:identifier values — usually the handle URL, sometimes a DOI or ISBN. */
+  links: string[];
 }
 
 export interface OaiHarvestResult {
@@ -83,7 +85,8 @@ export async function harvestMetadata(
   from?: string,
   until?: string,
   cursor?: string,
-  limit: number = 100
+  limit: number = 100,
+  set?: string
 ): Promise<OaiHarvestResult> {
   const oaiBaseUrl = getOaiBaseUrl(repo);
   const params: Record<string, string> = {
@@ -91,8 +94,8 @@ export async function harvestMetadata(
     metadataPrefix: 'oai_dc',
   };
 
-  // Don't use set filter — DSpace repos use community-style setSpec values, not simple names
-  // if (repo.oaiSet && repo.dspaceVersion === 6) params.set = repo.oaiSet;
+  // Some repositories (e.g. UEW) only answer ListRecords per set; callers pass a setSpec from listSets().
+  if (set) params.set = set;
   if (from) params.from = from;
   if (until) params.until = until;
   if (cursor) params.resumptionToken = cursor;
@@ -137,6 +140,7 @@ export async function harvestMetadata(
           language: extractText(dcMeta['dc:language']),
           rights: extractText(dcMeta['dc:rights']),
           source: extractText(dcMeta['dc:source']),
+          links: extractArray(dcMeta['dc:identifier']),
         };
       });
 
@@ -255,4 +259,31 @@ function extractArray(field: any): string[] {
     return field.map((f: any) => f?._ || f || '').filter(Boolean);
   }
   return [String(field)];
+}
+
+/** All setSpecs a repository exposes (following resumption tokens). */
+export async function listSets(repo: RepositoryConfig): Promise<string[]> {
+  const url = getOaiBaseUrl(repo);
+  const specs: string[] = [];
+  let token: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const { data } = await axios.get(url, {
+      params: token ? { verb: 'ListSets', resumptionToken: token } : { verb: 'ListSets' },
+      timeout: 30000,
+      headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
+    });
+    const parsed = await parseStringPromise(data);
+    const pmh = parsed['oai:OAI-PMH'] || parsed['OAI-PMH'];
+    const list = pmh?.['oai:ListSets']?.[0] || pmh?.['ListSets']?.[0];
+    if (!list) break;
+    for (const set of list['oai:set'] || list['set'] || []) {
+      const spec = extractText(set['oai:setSpec'] || set['setSpec']);
+      if (spec) specs.push(spec);
+    }
+    const tokenEl = list['oai:resumptionToken']?.[0] || list['resumptionToken']?.[0];
+    token = typeof tokenEl === 'string' ? tokenEl : tokenEl?._;
+    if (!token) break;
+    await sleep(RATE_LIMIT_MS);
+  }
+  return specs;
 }
