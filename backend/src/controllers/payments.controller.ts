@@ -5,6 +5,7 @@ import * as paystackService from '../services/payments/paystack.service.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
 import { verifyPaystackSignature, paystackAmountToGhs } from '../lib/paystack-signature.js';
+import { incrementWalletBalance } from '../lib/wallet.js';
 
 const log = childLogger('payments');
 
@@ -49,24 +50,15 @@ async function creditPendingTransaction(reference: string, paidGhs: number, pays
     return { error: 'Transaction not found', transaction: null, alreadyPaid: false };
   }
 
-  const { data: wallet } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', transaction.user_id)
-    .maybeSingle();
-
-  const newBalance = (wallet?.balance_ghs || 0) + transaction.amount_ghs;
-
-  if (!wallet) {
-    await supabase.from('wallets').insert({ user_id: transaction.user_id, balance_ghs: newBalance });
-  } else {
-    await supabase
-      .from('wallets')
-      .update({ balance_ghs: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', wallet.id);
+  // The pending→success update above only succeeds once per reference, so this
+  // runs exactly once per payment; the increment itself is atomic.
+  const credited = await incrementWalletBalance(transaction.user_id, Number(transaction.amount_ghs));
+  if (!credited.ok) {
+    log.error({ reference }, 'Payment marked successful but wallet credit failed — needs manual credit');
+    return { error: 'Payment received but your wallet could not be updated. Contact support.', transaction, alreadyPaid: false };
   }
 
-  return { error: null, transaction, alreadyPaid: false, balance: newBalance };
+  return { error: null, transaction, alreadyPaid: false, balance: credited.balance };
 }
 
 export const initiatePayment = async (req: Request, res: Response) => {

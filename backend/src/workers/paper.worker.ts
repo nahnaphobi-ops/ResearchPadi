@@ -3,6 +3,7 @@ import { getRedis, redisSupportsBullmq } from '../lib/redis.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
 import { supabase } from '../db/supabase.js';
+import { refundPaperFee } from '../lib/wallet.js';
 import { performResearch } from '../services/pipeline/research.service.js';
 import { draftChapter } from '../services/pipeline/draft.service.js';
 import { supervisePaper } from '../services/pipeline/supervise.service.js';
@@ -158,8 +159,18 @@ export async function startPaperWorker(): Promise<Worker | null> {
     limiter: { max: CONFIG.QUEUE.PAPER_CONCURRENCY * 2, duration: 60000 },
   });
 
-  paperWorker.on('failed', (job, err) => {
+  paperWorker.on('failed', async (job, err) => {
     log.error({ jobId: job?.id, err: err.message }, 'Paper worker job failed');
+
+    // Refund once the job has used up all of its retries.
+    if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return;
+    const paperId = job.data.paperId;
+    const refund = await refundPaperFee(paperId);
+    if (refund === 'refunded') {
+      await supabase.from('papers').update({
+        progress_step: `Generation failed. GHS ${CONFIG.PRICING.FULL_PAPER_GHS} has been refunded to your wallet.`,
+      }).eq('id', paperId);
+    }
   });
 
   paperWorker.on('ready', () => {

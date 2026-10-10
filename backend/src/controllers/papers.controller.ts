@@ -8,6 +8,8 @@ import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../ser
 import { generateDocx } from '../services/documents/docx.service.js';
 import { paperQueue } from '../lib/queue.js';
 import { childLogger } from '../lib/logger.js';
+import { CONFIG } from '../config/index.js';
+import { debitWallet, paperChargeReference, refundPaperFee } from '../lib/wallet.js';
 
 const log = childLogger('papers-controller');
 
@@ -45,6 +47,14 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Topic and Course are required' });
   }
 
+  // Never charge for a paper we can't generate.
+  if (!paperQueue) {
+    log.warn('Full paper requested but the generation queue is unavailable');
+    return res.status(503).json({ error: 'Paper generation is temporarily unavailable. You have not been charged — please try again shortly.' });
+  }
+
+  const fee = CONFIG.PRICING.FULL_PAPER_GHS;
+
   const insertData: Record<string, any> = {
     user_id: userId,
     topic,
@@ -69,10 +79,18 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     return res.status(500).json({ error: error.message });
   }
 
+  // Charge the wallet, tied to this paper so a later refund can find it.
+  const charge = await debitWallet(userId, fee, 'full_paper', paperChargeReference(paper.id));
+  if (!charge.ok) {
+    await supabase.from('papers').delete().eq('id', paper.id);
+    if (charge.reason === 'insufficient_funds') {
+      return res.status(402).json({ error: `Insufficient balance. A full paper costs GHS ${fee}. Please top up your wallet.` });
+    }
+    return res.status(500).json({ error: 'Could not process payment. You have not been charged.' });
+  }
+
   let jobId: string | undefined;
-  if (!paperQueue) {
-    log.warn({ paperId: paper.id }, 'Redis not configured — paper generation queue disabled');
-  } else {
+  try {
     const job = await paperQueue.add('generate-paper', {
       paperId: paper.id,
       topic,
@@ -86,11 +104,17 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     });
     jobId = job.id;
     log.info({ paperId: paper.id, jobId: job.id }, 'Paper job enqueued');
+  } catch (err: any) {
+    log.error({ paperId: paper.id, err: err.message }, 'Failed to enqueue paper; refunding');
+    const refund = await refundPaperFee(paper.id);
+    await supabase.from('papers').update({
+      status: 'failed',
+      progress_step: refund === 'refunded' ? `Could not start generation. GHS ${fee} refunded to your wallet.` : 'Could not start generation.',
+    }).eq('id', paper.id);
+    return res.status(500).json({ error: `Could not start generation. GHS ${fee} has been refunded to your wallet.` });
   }
 
-  await supabase.from('papers').update({ progress_step: 'Queued' }).eq('id', paper.id);
-
-  res.json({ message: 'Paper submission successful', paperId: paper.id, jobId });
+  res.json({ message: 'Paper submission successful', paperId: paper.id, jobId, balance: charge.balance });
 };
 
 export const getJobStatus = async (req: Request, res: Response) => {

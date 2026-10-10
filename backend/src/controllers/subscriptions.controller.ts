@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import { supabase } from '../db/supabase.js';
+import { CONFIG } from '../config/index.js';
+import { debitWallet, creditWallet } from '../lib/wallet.js';
 
 const PLANS: Record<string, { price: number; features: string[] }> = {
-  standard: { price: 120, features: ['5 workspace sessions', 'GPT-4o AI assistance', 'Citation search'] },
-  premium: { price: 200, features: ['Unlimited sessions', 'Claude Sonnet AI', 'Full RAG citations', 'Export to DOCX', 'Priority support'] },
+  standard: { price: CONFIG.PRICING.PLANS.standard, features: ['5 workspace sessions', 'AI writing assistance', 'Citation search'] },
+  premium: { price: CONFIG.PRICING.PLANS.premium, features: ['Unlimited sessions', 'Advanced AI tools', 'Full RAG citations', 'Export to DOCX', 'Priority support'] },
 };
 
 export const subscribe = async (req: Request, res: Response) => {
@@ -17,35 +20,16 @@ export const subscribe = async (req: Request, res: Response) => {
   const expiresAt = new Date();
   expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-  // Check wallet balance
-  const { data: wallet, error: wErr } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-
-  if (wErr && wErr.code !== 'PGRST116') return res.status(500).json({ error: wErr.message });
-  if (!wallet || (wallet.balance_ghs || 0) < price) {
-    return res.status(400).json({ error: `Insufficient balance. You need GHS ${price}. Please top up your wallet.` });
+  // Charge the wallet atomically; refunded below if the subscription can't be saved.
+  const chargeRef = `subscription:${crypto.randomUUID()}`;
+  const charge = await debitWallet(userId, price, `workspace_${plan}`, chargeRef);
+  if (!charge.ok) {
+    if (charge.reason === 'insufficient_funds') {
+      return res.status(402).json({ error: `Insufficient balance. You need GHS ${price}. Please top up your wallet.` });
+    }
+    return res.status(500).json({ error: 'Could not process payment. You have not been charged.' });
   }
-
-  // Deduct from wallet
-  const newBalance = wallet.balance_ghs - price;
-  const { error: deductError } = await supabase
-    .from('wallets')
-    .update({ balance_ghs: newBalance, updated_at: new Date().toISOString() })
-    .eq('id', wallet.id);
-
-  if (deductError) return res.status(500).json({ error: deductError.message });
-
-  // Record transaction
-  await supabase.from('transactions').insert({
-    user_id: userId,
-    type: 'debit',
-    amount_ghs: price,
-    product: `workspace_${plan}`,
-    status: 'success',
-  });
+  const refund = () => creditWallet(userId, price, `workspace_${plan}_refund`, `refund:${chargeRef}`);
 
   // Check for existing active subscription
   const { data: existing } = await supabase
@@ -69,7 +53,10 @@ export const subscribe = async (req: Request, res: Response) => {
       .select()
       .single();
 
-    if (upErr) return res.status(500).json({ error: upErr.message });
+    if (upErr) {
+      await refund();
+      return res.status(500).json({ error: 'Could not update your subscription. You have been refunded.' });
+    }
     return res.json({ subscription: updated, message: `Upgraded to ${plan}` });
   }
 
@@ -86,7 +73,10 @@ export const subscribe = async (req: Request, res: Response) => {
     .select()
     .single();
 
-  if (subError) return res.status(500).json({ error: subError.message });
+  if (subError) {
+    await refund();
+    return res.status(500).json({ error: 'Could not start your subscription. You have been refunded.' });
+  }
 
   res.json({ subscription: sub, message: `Subscribed to ${plan} plan` });
 };
