@@ -14,6 +14,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [notice, setNotice] = useState('');
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -45,9 +46,12 @@ export default function Login() {
     if (resendTimer > 0) return;
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       await authService.requestOtp(phone);
+      setOtp('');
       setResendTimer(60);
+      setNotice(`New code sent to ${phone}. Codes expire after 5 minutes.`);
     } catch (err) {
       setError(apiErrorMessage(err, 'Failed to resend OTP'));
     } finally {
@@ -154,6 +158,7 @@ export default function Login() {
           </p>
 
           {error && <div role="alert" className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-xl">{error}</div>}
+          {notice && !error && <div role="status" className="p-3 mb-4 text-sm text-[var(--success-ink)] bg-green-50 rounded-xl">{notice}</div>}
 
           {step === 1 ? (
             <form onSubmit={handleRequestOtp} className="space-y-4">
@@ -197,16 +202,27 @@ export default function Login() {
               <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
                 {loading ? 'Verifying...' : 'Verify & continue'}
               </button>
-              <button type="button" onClick={() => setStep(1)} className="w-full text-sm text-navy font-medium hover:underline">
-                Change phone number
-              </button>
+              <div className="text-center text-sm" aria-live="polite">
+                <span className="text-muted">Didn't get a code? </span>
+                {resendTimer > 0 ? (
+                  <span className="text-muted">Request a new one in {resendTimer}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="font-semibold text-brand hover:underline disabled:opacity-50"
+                  >
+                    Request new code
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
-                onClick={handleResendOtp}
-                disabled={resendTimer > 0 || loading}
-                className="w-full text-sm text-muted hover:text-ink disabled:text-rule"
+                onClick={() => { setStep(1); setOtp(''); setError(''); setNotice(''); }}
+                className="w-full text-sm text-navy font-medium hover:underline"
               >
-                {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : 'Resend OTP'}
+                Change phone number
               </button>
             </form>
           )}
