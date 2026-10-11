@@ -41,8 +41,9 @@ export default function Navbar() {
 
         <div className="hidden lg:flex flex-1 min-w-0 justify-center gap-1">
           {navLinks.map(({ path, icon: Icon, label }) => (
-            <button key={path} onClick={() => navigate(path)} className={linkClass(path)} aria-current={isActive(path) ? 'page' : undefined}>
-              <Icon size={15} /> <span className="whitespace-nowrap">{label}</span>
+            <button key={path} onClick={() => navigate(path)} className={linkClass(path)} aria-current={isActive(path) ? 'page' : undefined} title={label} aria-label={label}>
+              {/* Icons only from lg to xl so up to seven links fit beside the logo. */}
+              <Icon size={15} /> <span className="whitespace-nowrap hidden xl:inline">{label}</span>
             </button>
           ))}
         </div>
