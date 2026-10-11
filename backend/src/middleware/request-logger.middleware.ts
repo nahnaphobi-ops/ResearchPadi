@@ -16,6 +16,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
       status: res.statusCode,
       duration: `${duration}ms`,
       ip: req.ip,
+      ipVia: (req as any).ipSource,
       userId: (req as any).user?.id,
     }, `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
   });

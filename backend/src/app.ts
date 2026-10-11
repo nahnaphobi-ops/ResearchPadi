@@ -18,12 +18,15 @@ import { metricsEndpoint } from './controllers/metrics.controller.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { requestLogger } from './middleware/request-logger.middleware.js';
 import { createGlobalRateLimit } from './middleware/rate-limit.middleware.js';
+import { clientIp } from './lib/client-ip.js';
 
 dotenv.config();
 
 const app = express();
 
 app.set('trust proxy', 1);
+// Real visitor IP (Render's LB address otherwise); must run before rate limits.
+app.use(clientIp);
 
 function allowedOrigins(): string[] {
   const configured = (process.env.FRONTEND_URL || 'http://localhost:5173')

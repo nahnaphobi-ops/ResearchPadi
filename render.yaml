@@ -47,6 +47,10 @@
         sync: false
       - key: REDIS_URL
         sync: false
+      # Shared with Vercel: proves /api requests came through the Vercel proxy,
+      # so the backend can trust the visitor IP it forwards (lib/client-ip.ts).
+      - key: API_PROXY_SECRET
+        sync: false
       - key: METRICS_TOKEN
         sync: false
       - key: ALLOW_DEMO_LOGIN

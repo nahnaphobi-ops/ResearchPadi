@@ -32,31 +32,35 @@ so the first import picks them up correctly.
 
 | Key | Value | Notes |
 |-----|-------|-------|
-| `VITE_API_URL` | `/api` | Relative path; the rewrite below sends it to the backend. |
+| `API_PROXY_SECRET` | random, 32+ characters | **Same value as on Render.** Sent to the backend as `x-researchpadi-proxy` so it trusts the visitor IP Vercel forwards. Not a `VITE_` variable, so it never reaches the browser. |
 | `VITE_SUPABASE_URL` | `https://<your-project>.supabase.co` | Same as local `.env`. |
 | `VITE_SUPABASE_ANON_KEY` | `<anon key>` | Public anon key (safe in frontend). |
 
-`VITE_*` vars are inlined into the build.
-
-The backend address is written directly in `vercel.json`'s rewrite
-(`https://researchpadi.onrender.com`). Vercel does **not** substitute
-environment variables in `vercel.json`, so a `${BACKEND_URL}` placeholder
-there is sent literally and every `/api` call returns 404. Change the URL in
-`vercel.json` if the backend moves.
+Leave `VITE_API_URL` unset: the app defaults to `/api`. `VITE_*` vars are inlined into the build.
 
 ## How the API proxy works
 
-Frontend calls (e.g. `api.post('/auth/request-otp')`) resolve against
-`VITE_API_URL` = `/api`, producing requests to `/api/auth/request-otp`.
-Vercel's rewrite forwards those to `https://researchpadi.onrender.com/api/auth/request-otp`.
+`vercel.json` uses `routes` (rewrites can't carry header transforms):
 
-Benefits:
-- No CORS configuration needed on the backend.
-- One domain for users; backend stays on its own origin.
+1. Security headers on every response, and a 1-year cache header on `/assets/*`.
+2. `/api/*` is proxied to `https://researchpadi.onrender.com/api/*`. A transform first
+   deletes any `x-researchpadi-proxy` header the visitor sent, then sets it from
+   `API_PROXY_SECRET`.
+3. Real files (`handle: filesystem`), then every other path falls back to
+   `/index.html`, so refreshing `/login` or `/workspace/abc` loads the app.
+
+Why the secret: behind Render's load balancer the backend only saw an internal
+`10.x` address, so every per-IP limit (OTP sends, logins, the API cap) was shared by
+all visitors. The backend (`backend/src/lib/client-ip.ts`) now uses the IP Vercel
+forwards when the secret matches, otherwise Cloudflare's `CF-Connecting-IP`.
+If `API_PROXY_SECRET` is missing on either side, the site still works; limits just
+fall back to Cloudflare's view (Vercel's egress IP for proxied requests).
+
+Change the backend URL in `vercel.json` if the backend moves.
 
 ## Local preview of the proxy
 
-To test the rewrite locally, run the Vercel CLI from the `frontend` dir:
+To test the proxy locally, run the Vercel CLI from the `frontend` dir:
 
 ```bash
 cd frontend
@@ -65,10 +69,5 @@ vercel dev   # respects vercel.json
 
 ## Notes
 
-- SPA client-side routes (e.g. `/workspace/abc`) fall back to
-  `dist/index.html` via the catch-all rewrite to `/` in `vercel.json` (not `/index.html`:
-  `cleanUrls` redirects that path, so the rewrite would 404). Real files such as
-  `/assets/*` are served first). Without it, opening or refreshing any page but `/` is a 404.
-- Static assets under `/assets/` get a 1-year immutable cache header.
 - The `Dockerfile` / `nginx.k8s.conf` in `frontend/` are for the k8s
   path and are ignored by Vercel.
