@@ -221,8 +221,8 @@ ${rawEntries.map((e, i) => `${i + 1}. ${e}`).join('\n')}`;
 
     const res = await aiCall({
       prompt,
-      tier: 'drafting',
-      cachePrompt: false,
+      // Mechanical parsing into JSON: the light tier is plenty.
+      tier: 'light',
       meta: { action: 'citation_extract' },
     });
 

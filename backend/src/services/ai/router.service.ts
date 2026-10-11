@@ -1,26 +1,38 @@
-import { childLogger } from '../../lib/logger.js';
 import { aiCall, gatewayDraft, gatewaySupervise, type GatewayResponse } from './gateway.service.js';
 
-const log = childLogger('ai-router');
+export interface DraftOptions {
+  /**
+   * 'light' for short edits and suggestions (Haiku-class, ~20x cheaper);
+   * 'drafting' (default) for long-form writing.
+   */
+  tier?: 'light' | 'drafting';
+  /** Stable instructions sent as the system prompt; cached across calls. */
+  systemPrompt?: string;
+  maxTokens?: number;
+}
 
 /**
- * Route drafting to primary (Sonnet) with GPT fallback via gateway.
- * Preserves existing API for backward compatibility.
+ * Writing calls through the gateway (failover, budgets, usage logging).
+ * Pick the smallest tier that does the job well.
  */
-export const routeDrafting = async (prompt: string, context: any): Promise<string> => {
+export const routeDrafting = async (prompt: string, context: any, options: DraftOptions = {}): Promise<string> => {
+  // `action` / `type` only label the call in usage logs; the rest is real
+  // context for the model. Sending labels (or `{}`) as text just costs tokens.
+  const { action: _action, type: _type, ...modelContext } = context ?? {};
   const result = await aiCall({
     prompt,
-    context,
-    tier: 'drafting',
-    cachePrompt: true,
-    meta: { action: context?.action || 'draft' },
+    context: Object.keys(modelContext).length ? modelContext : undefined,
+    tier: options.tier ?? 'drafting',
+    systemPrompt: options.systemPrompt,
+    cachePrompt: Boolean(options.systemPrompt),
+    maxTokens: options.maxTokens,
+    meta: { action: context?.action || context?.type || 'draft' },
   });
   return result.text;
 };
 
 /**
- * Route supervision to primary (Opus) with GPT fallback via gateway.
- * Preserves existing API for backward compatibility.
+ * One supervision pass on the most capable model (Opus-class, GPT fallback).
  */
 export const routeSupervision = async (content: string, instructions: string): Promise<string> => {
   const result = await aiCall({

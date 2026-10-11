@@ -131,7 +131,7 @@ export interface GatewayRequest {
   userId?: string;
   maxTokens?: number;
   systemPrompt?: string;
-  /** Enable Anthropic prompt caching for long prompts */
+  /** Cache systemPrompt with Anthropic (only worth it when the same system prompt repeats). */
   cachePrompt?: boolean;
   /** Metadata for logging */
   meta?: Record<string, any>;
@@ -282,20 +282,20 @@ async function callAnthropic(
     ? `${prompt}\n\nContext: ${JSON.stringify(context)}`
     : prompt;
 
-  const userMessage: Anthropic.MessageParam = {
-    role: 'user',
-    content: cachePrompt
-      ? [{ type: 'text', text: userContent, cache_control: { type: 'ephemeral' } }]
-      : userContent,
-  };
-
-  const messages = [userMessage];
+  // Cache only the system prompt: it repeats across calls, so later calls read
+  // it at a tenth of the input price. The user message changes every time, and
+  // caching it would add the cache-write surcharge with nothing ever read back.
+  const system = systemPrompt
+    ? cachePrompt && model.supportsCaching
+      ? [{ type: 'text' as const, text: systemPrompt, cache_control: { type: 'ephemeral' as const } }]
+      : systemPrompt
+    : undefined;
 
   const response = await client.messages.create({
     model: model.model,
     max_tokens: maxTokens || model.maxTokens,
-    ...(systemPrompt ? { system: systemPrompt } : {}),
-    messages,
+    ...(system ? { system } : {}),
+    messages: [{ role: 'user', content: userContent }],
   });
 
   const text = (response.content[0] as any).text || '';

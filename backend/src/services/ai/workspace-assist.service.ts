@@ -30,27 +30,28 @@ const INSTRUCTIONS: Record<string, string> = {
   abstract: 'Generate a structured abstract (250-350 words) based on the provided content. Include: Background, Methods, Findings, Conclusion.',
 };
 
+// Edits of a selection the student already wrote: the light tier handles these
+// well at a fraction of the cost. Anything that writes new material uses drafting.
+const LIGHT_ACTIONS = new Set(['shorten', 'rewrite', 'grammar', 'tone']);
+
 export const assistWithText = async (
   selectedText: string,
   instruction: string,
   context?: string,
   plan?: string
 ): Promise<AssistResult> => {
-  const systemContext = WORKSPACE_SYSTEM_PROMPT;
   const instructionText = INSTRUCTIONS[instruction] || instruction;
 
-  let prompt = '';
-  if (selectedText) {
-    prompt = `${systemContext}\n\n${instructionText}\n\nSelected text:\n${selectedText}`;
-  } else {
-    prompt = `${systemContext}\n\n${instructionText}`;
-  }
+  let prompt = selectedText ? `${instructionText}\n\nSelected text:\n${selectedText}` : instructionText;
   if (context) {
     prompt += `\n\nAdditional context from the paper:\n${context}`;
   }
 
   try {
-    const response = await routeDrafting(prompt, {});
+    const response = await routeDrafting(prompt, { action: instruction }, {
+      tier: LIGHT_ACTIONS.has(instruction) ? 'light' : 'drafting',
+      systemPrompt: WORKSPACE_SYSTEM_PROMPT,
+    });
     return { response, type: instruction };
   } catch (err: any) {
     if (err.message?.includes('API key') || err.message?.includes('ANTHROPIC_API_KEY') || err.message?.includes('OPENAI_API_KEY')) {

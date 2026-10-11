@@ -28,12 +28,6 @@ export const CONFIG = {
     // Sandbox: Arkesel accepts the request but does not deliver or charge.
     SANDBOX: process.env.ARKESEL_SANDBOX === 'true',
   },
-  AI: {
-    ANTHROPIC_SONNET_MODEL: process.env.ANTHROPIC_SONNET_MODEL || 'claude-sonnet-4-6',
-    ANTHROPIC_OPUS_MODEL: process.env.ANTHROPIC_OPUS_MODEL || 'claude-opus-4-8',
-    OPENAI_DRAFTING_MODEL: process.env.OPENAI_DRAFTING_MODEL || 'gpt-5.4',
-    OPENAI_SUPERVISION_MODEL: process.env.OPENAI_SUPERVISION_MODEL || 'gpt-5.5',
-  },
   RAG: {
     EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'text-embedding-3-small',
     CHUNK_SIZE: parseInt(process.env.RAG_CHUNK_SIZE || '500'),
@@ -70,25 +64,3 @@ export const CONFIG = {
   },
 };
 
-export const AI_CONFIG = {
-  drafting: {
-    primary: {
-      provider: 'anthropic',
-      model: CONFIG.AI.ANTHROPIC_SONNET_MODEL
-    },
-    fallback: {
-      provider: 'openai',
-      model: CONFIG.AI.OPENAI_DRAFTING_MODEL
-    }
-  },
-  supervision: {
-    primary: {
-      provider: 'anthropic',
-      model: CONFIG.AI.ANTHROPIC_OPUS_MODEL
-    },
-    fallback: {
-      provider: 'openai',
-      model: CONFIG.AI.OPENAI_SUPERVISION_MODEL
-    }
-  }
-};

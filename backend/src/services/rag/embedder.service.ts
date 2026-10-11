@@ -20,7 +20,7 @@ function getEmbeddingConfig(): { url: string; headers: Record<string, string>; m
         'HTTP-Referer': 'https://researchpadi.com',
         'X-Title': 'ResearchPadi',
       },
-      model: 'openai/text-embedding-3-small',
+      model: `openai/${CONFIG.RAG.EMBEDDING_MODEL}`,
     };
   }
 

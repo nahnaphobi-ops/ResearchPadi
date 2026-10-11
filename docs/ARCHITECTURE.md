@@ -672,33 +672,21 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 
 ---
 
-## 12. AI Config File
-# src/config/index.ts â€” controls model routing
+## 12. AI Model Routing
+Models are chosen in one place: `backend/src/services/ai/models.ts`. Every call goes
+through the gateway (`services/ai/gateway.service.ts`), which walks a tier's failover
+chain and logs tokens and cost. A test fails if a model ID appears anywhere else.
 
-```typescript
-export const AI_CONFIG = {
-  drafting: {
-    primary: {
-      provider: 'anthropic',
-      model: 'claude-sonnet-4-6'
-    },
-    fallback: {
-      provider: 'openai',
-      model: 'gpt-5.4'
-    }
-  },
-  supervision: {
-    primary: {
-      provider: 'anthropic',
-      model: 'claude-opus-4-8'
-    },
-    fallback: {
-      provider: 'openai',
-      model: 'gpt-5.5'
-    }
-  }
-};
-```
+| Tier | Used for | Chain (primary -> fallback) |
+|---|---|---|
+| light | Short edits of a selection (shorten, rewrite, grammar, tone), topic and research-question suggestions, parsing references | claude-haiku-5-5 -> gpt-5.4-mini |
+| drafting | Chapters, abstracts, humanizing, reference lists, workspace continue/expand/outline | claude-sonnet-5-5 -> gpt-5.4 |
+| supervision | One review pass per paper | claude-opus-5-5 -> gpt-5.5 |
+| research | Live web research | sonar |
+
+Callers pick the smallest tier that does the job: `routeDrafting(prompt, context, { tier: 'light' })`.
+Stable instructions go in `systemPrompt`, which is cached with Anthropic so repeat calls
+read it at a tenth of the input price.
 
 ---
 

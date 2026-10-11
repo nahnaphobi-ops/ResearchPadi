@@ -19,7 +19,7 @@ export const refineTopic = async (req: Request, res: Response) => {
 
   try {
     const prompt = buildTopicRefinementPrompt(topic, course, institution_type);
-    const refined = await routeDrafting(prompt, { action: 'refine-topic' });
+    const refined = await routeDrafting(prompt, { action: 'refine-topic' }, { tier: 'light' });
     res.json({ refined });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -32,7 +32,7 @@ export const generateResearchQuestions = async (req: Request, res: Response) => 
 
   try {
     const prompt = buildResearchQuestionsPrompt(topic, course, institution_type);
-    const questions = await routeDrafting(prompt, { action: 'generate-questions' });
+    const questions = await routeDrafting(prompt, { action: 'generate-questions' }, { tier: 'light' });
     res.json({ questions });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
