@@ -2,8 +2,10 @@ name: Render Keep Alive
 
 on:
   schedule:
-    # Render free tier spins down after ~15 min idle. Ping every 10 min.
-    # Note: GitHub cron can drift a few minutes under load.
+    # Backup only: the API pings itself every 10 min (jobs/keepalive.job.ts).
+    # GitHub runs scheduled jobs late or skips them under load, so this mainly
+    # wakes the service if it ever does sleep. /health/ready also queries
+    # Supabase, so each run counts as database activity.
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
@@ -15,7 +17,7 @@ jobs:
         env:
           RENDER_URL: ${{ secrets.RENDER_URL }}
         run: |
-          URL="${RENDER_URL:-https://researchpadi.onrender.com/health/live}"
+          URL="${RENDER_URL:-https://researchpadi.onrender.com/health/ready}"
           echo "Pinging $URL"
           for i in 1 2 3; do
             CODE=$(curl -sS -o /tmp/render-keepalive-body.txt -w "%{http_code}" \
