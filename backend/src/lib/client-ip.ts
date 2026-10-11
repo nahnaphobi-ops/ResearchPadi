@@ -49,8 +49,31 @@ function secretMatches(given: string | undefined): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+let lastMismatchLog = 0;
+
+/** Once a minute at most: why a proxy header was not accepted (lengths only, never values). */
+function noteMismatch(req: Request, given: string | undefined) {
+  const now = Date.now();
+  if (now - lastMismatchLog < 60_000) return;
+  lastMismatchLog = now;
+  const expected = process.env.API_PROXY_SECRET ?? '';
+  console.warn(JSON.stringify({
+    level: 40,
+    module: 'client-ip',
+    msg: 'Proxy secret header not accepted; using Cloudflare IP',
+    headerPresent: given !== undefined,
+    givenLength: given?.length ?? 0,
+    expectedLength: expected.length,
+    literalPlaceholder: given?.startsWith('$') ?? false,
+    forwardingHeaders: ['x-vercel-forwarded-for', 'x-real-ip', 'x-forwarded-for', 'x-vercel-id'].filter((h) => req.headers[h] !== undefined),
+  }));
+}
+
 export function resolveClientIp(req: Request): { ip: string; source: IpSource } {
-  if (secretMatches(header(req, PROXY_SECRET_HEADER))) {
+  const given = header(req, PROXY_SECRET_HEADER);
+  const fromVercel = req.headers['x-vercel-id'] !== undefined || given !== undefined;
+  if (!secretMatches(given) && fromVercel) noteMismatch(req, given);
+  if (secretMatches(given)) {
     const viaVercel =
       first(header(req, 'x-vercel-forwarded-for')) ??
       first(header(req, 'x-real-ip')) ??
