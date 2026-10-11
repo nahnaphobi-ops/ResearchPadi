@@ -65,8 +65,9 @@ vercel dev   # respects vercel.json
 
 ## Notes
 
-- SPA client-side routes (e.g. `/workspace/abc`) are handled by Vite's
-  `dist/index.html` fallback automatically on Vercel.
+- SPA client-side routes (e.g. `/workspace/abc`) fall back to
+  `dist/index.html` via the catch-all rewrite in `vercel.json` (real files such as
+  `/assets/*` are served first). Without it, opening or refreshing any page but `/` is a 404.
 - Static assets under `/assets/` get a 1-year immutable cache header.
 - The `Dockerfile` / `nginx.k8s.conf` in `frontend/` are for the k8s
   path and are ignored by Vercel.
