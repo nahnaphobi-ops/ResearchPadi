@@ -48,3 +48,15 @@ export const enforceSessionLimit = async (req: Request, res: Response, next: Nex
 
   next();
 };
+
+/**
+ * Premium-only features (inline AI, notebook sources, human review). Runs after
+ * requireSubscription, which puts the active subscription on the request.
+ */
+export const requirePremium = (req: Request, res: Response, next: NextFunction) => {
+  if ((req as any).subscription?.plan === 'premium') return next();
+  return res.status(403).json({
+    error: 'This is a Premium feature. Upgrade to Premium to use it.',
+    code: 'PREMIUM_REQUIRED',
+  });
+};

@@ -33,6 +33,9 @@ import { FontSize, Indent, LineHeight, PageBreak, ParagraphSpacing } from '../co
 import { SearchHighlight } from '../components/workspace/search';
 import { Bibliography, Citation, CitationManager } from '../components/workspace/citations/CitationExtension';
 import { MARGINS, PAGE_SIZES, loadPageSettings, pageDimensions, savePageSettings, type PageSettings } from '../components/workspace/pageLayout';
+import InlineAI from '../components/workspace/inlineAI/InlineAI';
+import { AITargetHighlight } from '../components/workspace/inlineAI/aiTarget';
+import { subscriptionService } from '../services/subscriptionService';
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
@@ -56,6 +59,7 @@ export default function WorkspaceEditor() {
   });
   const [pageMetrics, setPageMetrics] = useState({ pageCount: 1, currentPage: 1 });
   const [find, setFind] = useState<'find' | 'replace' | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const savedHtmlRef = useRef<string | null>(null);
 
@@ -91,6 +95,7 @@ export default function WorkspaceEditor() {
       Indent,
       PageBreak,
       SearchHighlight,
+      AITargetHighlight,
       Citation,
       Bibliography,
       CitationManager,
@@ -139,6 +144,15 @@ export default function WorkspaceEditor() {
       },
     });
   }, [editor, settings.spellcheck]);
+
+  // Premium unlocks AI inside the document (the API checks again on every call).
+  useEffect(() => {
+    let cancelled = false;
+    subscriptionService.getActive()
+      .then((res) => { if (!cancelled) setIsPremium(res.data?.subscription?.plan === 'premium'); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // Load session — only run once on mount (not when editor changes)
   const editorRef = useRef(editor);
@@ -331,6 +345,7 @@ export default function WorkspaceEditor() {
             />
           )}
         </EditorArea>
+        {editor && <InlineAI editor={editor} isPremium={isPremium} docTitle={activeSession?.title} />}
         <SidePanel
           editor={editor}
           sidePanel={sidePanel}

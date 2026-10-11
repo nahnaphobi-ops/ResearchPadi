@@ -85,6 +85,16 @@ async function checkRateLimit(provider: Provider, userId?: string): Promise<bool
 }
 
 // --- Core call function ---
+/**
+ * Every model in the chain failed. Report a 502 rather than passing a provider's
+ * own status through: an upstream 401 (bad API key) would look like the user's
+ * session expired, and some clients log out on 401.
+ */
+function providersUnavailable(cause: Error | null): Error {
+  if (cause) log.error({ err: cause.message }, 'All AI providers failed');
+  return Object.assign(new Error('The AI service is unavailable right now. Please try again shortly.'), { status: 502, cause });
+}
+
 export interface GatewayRequest {
   prompt: string;
   context?: Record<string, any>;
@@ -203,7 +213,150 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
     }
   }
 
-  throw lastError || new Error('All AI providers failed');
+  throw providersUnavailable(lastError);
+}
+
+/**
+ * Streaming version of aiCall for live, in-editor AI. `onDelta` receives text as
+ * it arrives. Fails over to the next model only if nothing has been streamed yet
+ * (switching mid-answer would garble it). Same budget, logging and cost rules.
+ */
+export async function aiStream(
+  req: GatewayRequest & { signal?: AbortSignal },
+  onDelta: (text: string) => void,
+): Promise<GatewayResponse> {
+  const { tier, userId, prompt, systemPrompt, maxTokens, cachePrompt, meta, signal } = req;
+  await assertBudget(userId);
+
+  const chain = FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
+  let lastError: Error | null = null;
+  let attempts = 0;
+
+  for (const model of chain) {
+    attempts++;
+    const circuitKey = `ai:${model.provider}`;
+    if (model.provider === 'perplexity' || !hasProvider(model.provider)) continue;
+    if (!aiCircuitBreaker.canExecute(circuitKey)) continue;
+    if (!(await checkRateLimit(model.provider, userId))) continue;
+
+    let streamed = false;
+    const emit = (text: string) => {
+      if (!text) return;
+      streamed = true;
+      onDelta(text);
+    };
+
+    try {
+      const start = Date.now();
+      const result = model.provider === 'anthropic'
+        ? await streamAnthropic(model, prompt, systemPrompt, maxTokens, cachePrompt, emit, signal)
+        : await streamOpenAI(model, prompt, systemPrompt, maxTokens, emit, signal);
+      const latencyMs = Date.now() - start;
+      aiCircuitBreaker.recordSuccess(circuitKey);
+
+      const cost = estimateCost(result.inputTokens, result.outputTokens, model);
+      await recordSpend(userId, cost);
+      logUsage({
+        userId, provider: model.provider, model: model.model, tier,
+        inputTokens: result.inputTokens, outputTokens: result.outputTokens,
+        costUsd: cost, latencyMs, cached: result.cached, meta: { ...meta, stream: true },
+      }).catch(err => log.debug({ err: err.message }, 'Usage log failed'));
+
+      return {
+        text: result.text, model: model.model, provider: model.provider,
+        inputTokens: result.inputTokens, outputTokens: result.outputTokens,
+        totalTokens: result.inputTokens + result.outputTokens, costUsd: cost,
+        cached: result.cached, latencyMs, attempts, truncated: result.truncated,
+      };
+    } catch (err: any) {
+      if (signal?.aborted) throw err;
+      lastError = err;
+      aiCircuitBreaker.recordFailure(circuitKey);
+      log.warn({ provider: model.provider, model: model.model, err: err.message, streamed }, 'AI stream failed');
+      if (streamed) throw err;
+    }
+  }
+
+  throw providersUnavailable(lastError);
+}
+
+async function streamAnthropic(
+  model: ModelConfig,
+  prompt: string,
+  systemPrompt: string | undefined,
+  maxTokens: number | undefined,
+  cachePrompt: boolean | undefined,
+  emit: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<ProviderResult> {
+  const system = systemPrompt
+    ? cachePrompt && model.supportsCaching
+      ? [{ type: 'text' as const, text: systemPrompt, cache_control: { type: 'ephemeral' as const } }]
+      : systemPrompt
+    : undefined;
+
+  const stream = getAnthropic().messages.stream(
+    {
+      model: model.model,
+      max_tokens: maxTokens || model.maxTokens,
+      ...(system ? { system } : {}),
+      messages: [{ role: 'user', content: prompt }],
+    },
+    { signal },
+  );
+  stream.on('text', emit);
+  const final = await stream.finalMessage();
+
+  const text = final.content.map((block) => (block.type === 'text' ? block.text : '')).join('');
+  return {
+    text,
+    inputTokens: final.usage?.input_tokens || 0,
+    outputTokens: final.usage?.output_tokens || 0,
+    cached: (final.usage?.cache_read_input_tokens || 0) > 0,
+    truncated: final.stop_reason === 'max_tokens',
+  };
+}
+
+async function streamOpenAI(
+  model: ModelConfig,
+  prompt: string,
+  systemPrompt: string | undefined,
+  maxTokens: number | undefined,
+  emit: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<ProviderResult> {
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+  if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+  messages.push({ role: 'user', content: prompt });
+
+  const stream = await getOpenAI().chat.completions.create(
+    {
+      model: model.model,
+      max_completion_tokens: maxTokens || model.maxTokens,
+      messages,
+      stream: true,
+      stream_options: { include_usage: true },
+    },
+    { signal },
+  );
+
+  let text = '';
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let finish: string | null = null;
+  for await (const chunk of stream) {
+    const delta = chunk.choices[0]?.delta?.content || '';
+    if (delta) {
+      text += delta;
+      emit(delta);
+    }
+    finish = chunk.choices[0]?.finish_reason ?? finish;
+    if (chunk.usage) {
+      inputTokens = chunk.usage.prompt_tokens || 0;
+      outputTokens = chunk.usage.completion_tokens || 0;
+    }
+  }
+  return { text, inputTokens, outputTokens, cached: false, truncated: finish === 'length' };
 }
 
 // --- Provider-specific calls ---

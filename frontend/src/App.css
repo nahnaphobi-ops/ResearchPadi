@@ -231,6 +231,20 @@ input:focus, select:focus, textarea:focus {
 /* Find & Replace highlights */
 .word-doc .search-match { background: #fff100; border-radius: 1px; }
 .word-doc .search-match-current { background: #ff8c00; color: #000; }
+.word-doc .ai-target { background: rgba(124, 58, 237, 0.16); border-radius: 2px; }
+
+/* Inline AI answer preview (rendered Markdown) */
+.inline-ai-preview p { margin: 0 0 0.55em; }
+.inline-ai-preview p:last-child { margin-bottom: 0; }
+.inline-ai-preview h1, .inline-ai-preview h2, .inline-ai-preview h3, .inline-ai-preview h4 { font-weight: 700; margin: 0.4em 0 0.3em; }
+.inline-ai-preview h1 { font-size: 1.15em; }
+.inline-ai-preview h2 { font-size: 1.08em; }
+.inline-ai-preview ul { list-style: disc; padding-left: 1.3em; margin: 0 0 0.55em; }
+.inline-ai-preview ol { list-style: decimal; padding-left: 1.3em; margin: 0 0 0.55em; }
+.inline-ai-preview li p { margin: 0; }
+.inline-ai-preview table { border-collapse: collapse; margin: 0.3em 0 0.6em; font-size: 0.92em; }
+.inline-ai-preview th, .inline-ai-preview td { border: 1px solid #c8c6c4; padding: 3px 6px; vertical-align: top; }
+.inline-ai-preview th { background: #f3f2f1; font-weight: 600; }
 
 /* Show/Hide ¶ */
 .word-doc.show-marks .ProseMirror p::after,
@@ -253,7 +267,7 @@ input:focus, select:focus, textarea:focus {
   .print-page .word-doc { padding: 0 !important; }
   .word-doc .ProseMirror .page-break { height: 0; margin: 0; background: none; box-shadow: none; break-after: page; }
   .word-doc .ProseMirror .page-break::after { content: none; }
-  .search-match, .search-match-current { background: none !important; }
+  .search-match, .search-match-current, .ai-target { background: none !important; }
 }
 
 /* ── Inline citations & reference list ───────────────────────────────── */

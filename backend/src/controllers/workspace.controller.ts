@@ -9,6 +9,8 @@ import { getCitationStyles, getCitationStyle } from '../services/ai/citation-sty
 import { retrieveContext } from '../services/rag/retriever.service.js';
 import { findSources as findSourcesService } from '../services/citations/sources.service.js';
 import { childLogger } from '../lib/logger.js';
+import { aiStream } from '../services/ai/gateway.service.js';
+import { INLINE_SYSTEM_PROMPT, buildInlinePrompt, isInlineAction } from '../services/ai/inline-ai.service.js';
 
 const log = childLogger('workspace');
 
@@ -313,5 +315,65 @@ export const searchLocalCitations = async (req: Request, res: Response) => {
     res.json({ citations: citations.slice(0, 20) });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Search failed' });
+  }
+};
+
+/**
+ * Premium inline AI (selection toolbar, "/" commands, Ask AI), streamed as
+ * Server-Sent Events: `delta` events carry text, then `done` or `error`.
+ * Nothing is written until the first text arrives, so validation, budget and
+ * provider failures before that come back as ordinary JSON errors.
+ */
+export const inlineAi = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const { action, text, before, after, prompt, previous, title } = req.body ?? {};
+  if (!isInlineAction(action)) return res.status(400).json({ error: 'Unknown AI action' });
+
+  const built = buildInlinePrompt({ action, text, before, after, prompt, previous, title });
+  if ('error' in built) return res.status(400).json({ error: built.error });
+
+  const controller = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) controller.abort(); });
+
+  let started = false;
+  const send = (event: string, data: unknown) => {
+    if (!started) {
+      started = true;
+      (req.headers as any)['x-no-compression'] = '1'; // compression would buffer the stream
+      res.status(200).set({
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      res.flushHeaders();
+    }
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const result = await aiStream(
+      {
+        prompt: built.prompt,
+        tier: built.tier,
+        systemPrompt: INLINE_SYSTEM_PROMPT,
+        cachePrompt: true,
+        maxTokens: built.maxTokens,
+        userId,
+        signal: controller.signal,
+        meta: { action: `inline:${action}` },
+      },
+      (delta) => send('delta', { text: delta }),
+    );
+    send('done', { truncated: result.truncated });
+    res.end();
+  } catch (err: any) {
+    if (controller.signal.aborted) return;
+    log.warn({ action, err: err.message }, 'Inline AI failed');
+    const status = err.status || 502;
+    const message = status === 429 || status === 502 ? err.message : 'The AI could not finish that. Please try again.';
+    if (!started) return res.status(status).json({ error: message });
+    send('error', { error: message, status });
+    res.end();
   }
 };

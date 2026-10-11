@@ -8,7 +8,7 @@ export interface AssistResult {
   type: string;
 }
 
-const WORKSPACE_SYSTEM_PROMPT = `You are an AI writing assistant for a Ghanaian student's research paper.
+export const WORKSPACE_SYSTEM_PROMPT = `You are an AI writing assistant for a Ghanaian student's research paper.
 Follow these rules:
 - Maintain the researcher's voice and academic tone
 - Reference Ghanaian context naturally where relevant

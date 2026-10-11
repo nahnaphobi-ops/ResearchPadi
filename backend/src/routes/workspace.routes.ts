@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { requireSubscription, enforceSessionLimit } from '../middleware/subscription.middleware.js';
+import { requireSubscription, enforceSessionLimit, requirePremium } from '../middleware/subscription.middleware.js';
 
 const router = Router();
 
@@ -22,5 +22,8 @@ router.post('/citations', workspaceController.searchCitations);
 router.get('/citation-styles', workspaceController.listCitationStyles);
 router.post('/local-citations', workspaceController.searchLocalCitations);
 router.post('/sources', workspaceController.findSources);
+
+// Premium: Notion-style AI in the editor (streamed)
+router.post('/inline-ai', requirePremium, workspaceController.inlineAi);
 
 export default router;
