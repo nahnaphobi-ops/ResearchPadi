@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import type { WorkspacePanel } from './panels';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
 
@@ -9,8 +10,8 @@ interface Props {
   lastSaved: Date | null;
   saving: boolean;
   onSave: () => void;
-  sidePanel: 'ai' | 'citations' | null;
-  onTogglePanel: (panel: 'ai' | 'citations') => void;
+  sidePanel: WorkspacePanel | null;
+  onTogglePanel: (panel: WorkspacePanel) => void;
 }
 
 /** Word-style title bar: quick access toolbar, document name and save state. */
@@ -84,6 +85,15 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'citations' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >
           <BookOpen size={15} /> <span className="hidden lg:inline">Citations</span>
+        </button>
+        <button
+          onClick={() => onTogglePanel('sources')}
+          aria-label="Sources"
+          title="Your sources (Premium)"
+          aria-pressed={sidePanel === 'sources'}
+          className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'sources' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+        >
+          <Library size={15} /> <span className="hidden lg:inline">Sources</span>
         </button>
       </div>
     </div>

@@ -12,7 +12,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/services/pipeline/__tests__/*.test.ts src/lib/__tests__/*.test.ts"
+    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/services/pipeline/__tests__/*.test.ts src/services/notebook/__tests__/*.test.ts src/lib/__tests__/*.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +33,7 @@
     "helmet": "^8.2.0",
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
+    "jszip": "^3.10.2",
     "multer": "^2.2.0",
     "node-cron": "^4.3.0",
     "openai": "^6.44.0",

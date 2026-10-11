@@ -1,22 +1,26 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
-import { BookOpen, Sparkles, X } from 'lucide-react';
+import { BookOpen, Library, Sparkles, X } from 'lucide-react';
 import AIAssistantPanel from '../workspace/AIAssistantPanel';
 import CitationPanel from '../workspace/CitationPanel';
+import NotebookPanel from './notebook/NotebookPanel';
+import type { WorkspacePanel } from './panels';
 
 interface Props {
   editor: Editor | null;
-  sidePanel: 'ai' | 'citations' | null;
-  setSidePanel: (val: 'ai' | 'citations' | null) => void;
+  sidePanel: WorkspacePanel | null;
+  setSidePanel: (val: WorkspacePanel | null) => void;
   sessionId: string;
   aiSelectedText: string;
   fullDocText: string;
   onInsertAIContent: (text: string) => void;
+  isPremium: boolean;
 }
 
 const tabs = [
   { key: 'ai' as const, label: 'AI Assistant', icon: Sparkles },
   { key: 'citations' as const, label: 'Citations', icon: BookOpen },
+  { key: 'sources' as const, label: 'Sources', icon: Library },
 ];
 
 /**
@@ -31,6 +35,7 @@ export const SidePanel: React.FC<Props> = ({
   aiSelectedText,
   fullDocText,
   onInsertAIContent,
+  isPremium,
 }) => (
   <>
     {sidePanel && (
@@ -78,6 +83,7 @@ export const SidePanel: React.FC<Props> = ({
           />
         )}
         {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} />}
+        {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} isPremium={isPremium} />}
       </div>
     </aside>
   </>

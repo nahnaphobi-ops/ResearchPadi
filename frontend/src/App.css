@@ -246,6 +246,15 @@ input:focus, select:focus, textarea:focus {
 .inline-ai-preview th, .inline-ai-preview td { border: 1px solid #c8c6c4; padding: 3px 6px; vertical-align: top; }
 .inline-ai-preview th { background: #f3f2f1; font-weight: 600; }
 
+/* Numbered source chips in notebook answers */
+.cite-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.15rem; height: 1.15rem; padding: 0 0.25rem; margin: 0 1px;
+  border-radius: 9999px; background: #ede9fe; color: #5b21b6;
+  font-size: 10.5px; font-weight: 700; line-height: 1; vertical-align: 0.15em; cursor: pointer;
+}
+.cite-chip:hover { background: #ddd6fe; }
+
 /* Show/Hide ¶ */
 .word-doc.show-marks .ProseMirror p::after,
 .word-doc.show-marks .ProseMirror h1::after,

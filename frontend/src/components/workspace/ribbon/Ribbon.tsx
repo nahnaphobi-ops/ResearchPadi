@@ -84,7 +84,7 @@ export interface RibbonProps {
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
-  onOpenPanel: (panel: 'ai' | 'citations') => void;
+  onOpenPanel: (panel: 'ai' | 'citations' | 'sources') => void;
   onTogglePanel: () => void;
   onFitWidth: () => void;
   onBack: () => void;

@@ -10,6 +10,7 @@ import { retrieveContext } from '../services/rag/retriever.service.js';
 import { findSources as findSourcesService } from '../services/citations/sources.service.js';
 import { childLogger } from '../lib/logger.js';
 import { aiStream } from '../services/ai/gateway.service.js';
+import { lazySse } from '../lib/sse.js';
 import { INLINE_SYSTEM_PROMPT, buildInlinePrompt, isInlineAction } from '../services/ai/inline-ai.service.js';
 
 const log = childLogger('workspace');
@@ -332,25 +333,7 @@ export const inlineAi = async (req: Request, res: Response) => {
   const built = buildInlinePrompt({ action, text, before, after, prompt, previous, title });
   if ('error' in built) return res.status(400).json({ error: built.error });
 
-  const controller = new AbortController();
-  res.on('close', () => { if (!res.writableEnded) controller.abort(); });
-
-  let started = false;
-  const send = (event: string, data: unknown) => {
-    if (!started) {
-      started = true;
-      (req.headers as any)['x-no-compression'] = '1'; // compression would buffer the stream
-      res.status(200).set({
-        'Content-Type': 'text/event-stream; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      });
-      res.flushHeaders();
-    }
-    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-  };
-
+  const sse = lazySse(req, res);
   try {
     const result = await aiStream(
       {
@@ -360,20 +343,16 @@ export const inlineAi = async (req: Request, res: Response) => {
         cachePrompt: true,
         maxTokens: built.maxTokens,
         userId,
-        signal: controller.signal,
+        signal: sse.signal,
         meta: { action: `inline:${action}` },
       },
-      (delta) => send('delta', { text: delta }),
+      (delta) => sse.send('delta', { text: delta }),
     );
-    send('done', { truncated: result.truncated });
+    sse.send('done', { truncated: result.truncated });
     res.end();
   } catch (err: any) {
-    if (controller.signal.aborted) return;
     log.warn({ action, err: err.message }, 'Inline AI failed');
     const status = err.status || 502;
-    const message = status === 429 || status === 502 ? err.message : 'The AI could not finish that. Please try again.';
-    if (!started) return res.status(status).json({ error: message });
-    send('error', { error: message, status });
-    res.end();
+    sse.fail(status, status === 429 || status === 502 ? err.message : 'The AI could not finish that. Please try again.');
   }
 };

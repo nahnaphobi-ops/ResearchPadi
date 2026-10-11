@@ -34,6 +34,7 @@ import { SearchHighlight } from '../components/workspace/search';
 import { Bibliography, Citation, CitationManager } from '../components/workspace/citations/CitationExtension';
 import { MARGINS, PAGE_SIZES, loadPageSettings, pageDimensions, savePageSettings, type PageSettings } from '../components/workspace/pageLayout';
 import InlineAI from '../components/workspace/inlineAI/InlineAI';
+import type { WorkspacePanel } from '../components/workspace/panels';
 import { AITargetHighlight } from '../components/workspace/inlineAI/aiTarget';
 import { subscriptionService } from '../services/subscriptionService';
 
@@ -47,7 +48,7 @@ export default function WorkspaceEditor() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
-  const [sidePanel, setSidePanel] = useState<'ai' | 'citations' | null>(null);
+  const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(null);
   const [aiSelectedText, setAiSelectedText] = useState('');
   const [fullDocText, setFullDocText] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -272,7 +273,7 @@ export default function WorkspaceEditor() {
     return () => window.removeEventListener('keydown', onKey);
   }, [handleSave]);
 
-  const togglePanel = useCallback((panel: 'ai' | 'citations') => {
+  const togglePanel = useCallback((panel: WorkspacePanel) => {
     setSidePanel((cur) => (cur === panel ? null : panel));
   }, []);
 
@@ -354,6 +355,7 @@ export default function WorkspaceEditor() {
           aiSelectedText={aiSelectedText}
           fullDocText={fullDocText}
           onInsertAIContent={handleInsertAIContent}
+          isPremium={isPremium}
         />
         {toast && (
           <div role="status" className="absolute left-1/2 -translate-x-1/2 bottom-4 z-50 max-w-[90%] bg-[#323130] text-white text-[12.5px] px-4 py-2 rounded shadow-lg no-print">

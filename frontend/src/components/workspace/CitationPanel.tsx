@@ -30,7 +30,7 @@ function OriginBadge({ s }: { s: Source }) {
     return <span className="px-1.5 py-0.5 rounded bg-[#dff6dd] text-[#0b6a0b] text-[10px] font-semibold">{s.repository ?? 'Ghanaian repository'}</span>;
   }
   if (s.ghanaian) return <span className="px-1.5 py-0.5 rounded bg-[#dff6dd] text-[#0b6a0b] text-[10px] font-semibold">Ghana-affiliated</span>;
-  return <span className="px-1.5 py-0.5 rounded bg-[#f3f2f1] text-[#605e5c] text-[10px] font-semibold">{s.origin === 'openalex' ? 'OpenAlex' : 'Semantic Scholar'}</span>;
+  return <span className="px-1.5 py-0.5 rounded bg-[#f3f2f1] text-[#605e5c] text-[10px] font-semibold">{s.origin === 'openalex' ? 'OpenAlex' : s.origin === 'notebook' ? 'Your source' : 'Semantic Scholar'}</span>;
 }
 
 const TYPE_LABEL: Record<Source['type'], string> = {

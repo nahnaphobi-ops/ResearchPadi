@@ -1,7 +1,7 @@
 import type { PersonName } from '../../lib/authors.js';
 
 export type SourceType = 'article' | 'thesis' | 'book' | 'chapter' | 'report' | 'conference' | 'webpage' | 'other';
-export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar';
+export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar' | 'notebook';
 
 /**
  * One citable work, in the shape the workspace editor stores inside citation

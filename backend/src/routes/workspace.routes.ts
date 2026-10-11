@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
+import * as notebook from '../controllers/notebook.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { requireSubscription, enforceSessionLimit, requirePremium } from '../middleware/subscription.middleware.js';
 
@@ -25,5 +26,13 @@ router.post('/sources', workspaceController.findSources);
 
 // Premium: Notion-style AI in the editor (streamed)
 router.post('/inline-ai', requirePremium, workspaceController.inlineAi);
+
+// Premium: NotebookLM-style sources and grounded chat for a document
+router.get('/sessions/:id/notebook', requirePremium, notebook.list);
+router.post('/sessions/:id/notebook/sources', requirePremium, notebook.notebookUpload, notebook.add);
+router.patch('/sessions/:id/notebook/sources/:sourceId', requirePremium, notebook.update);
+router.delete('/sessions/:id/notebook/sources/:sourceId', requirePremium, notebook.remove);
+router.post('/sessions/:id/notebook/chat', requirePremium, notebook.chat);
+router.post('/sessions/:id/notebook/generate', requirePremium, notebook.generate);
 
 export default router;
