@@ -16,7 +16,7 @@
       - key: PORT
         value: "5000"
       - key: FRONTEND_URL
-        value: https://researchpadi.onrender.com
+        value: https://researchpadi.vercel.app
       - key: SUPABASE_PROJECT_REF
         value: bpmfpxkuknchflpctmbr
       - key: SUPABASE_URL
