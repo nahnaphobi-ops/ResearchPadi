@@ -15,11 +15,21 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [notice, setNotice] = useState('');
+  // Only offer "Try demo" when the server has the demo account switched on.
+  const [demoAvailable, setDemoAvailable] = useState(false);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const plan = parsePlan(searchParams.get('plan'));
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  useEffect(() => {
+    let cancelled = false;
+    authService.options()
+      .then((res) => { if (!cancelled) setDemoAvailable(Boolean(res.data?.demoLogin)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -227,6 +237,7 @@ export default function Login() {
             </form>
           )}
 
+          {demoAvailable && (
           <div className="mt-8 pt-6 border-t border-rule">
             <p className="text-center text-xs text-muted mb-3">Want to explore first?</p>
             <button
@@ -238,6 +249,7 @@ export default function Login() {
               {loading ? 'Loading demo...' : '✦ Try demo — no phone needed'}
             </button>
           </div>
+          )}
         </div>
       </div>
     </div>

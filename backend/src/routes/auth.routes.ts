@@ -23,6 +23,7 @@ const verifyLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+router.get('/options', authController.options);
 router.post('/request-otp', otpLimiter, authController.requestOtp);
 router.post('/verify-otp', verifyLimiter, authController.verifyOtp);
 router.get('/profile', authMiddleware, authController.getProfile);

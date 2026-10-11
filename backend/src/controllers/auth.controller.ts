@@ -45,8 +45,10 @@ export const requestOtp = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Phone number is required' });
   }
 
-  // The demo account signs in with DEMO_OTP; never spend SMS credit on it.
-  if (demoLoginAllowed() && phone === DEMO_PHONE) {
+  // The demo account signs in with DEMO_OTP. Never text its number: it is a
+  // placeholder that may belong to a real person, and it would spend SMS credit.
+  if (phone === DEMO_PHONE) {
+    if (!demoLoginAllowed()) return res.status(403).json({ error: 'The demo account is not available right now.' });
     return res.json({ message: 'OTP sent successfully' });
   }
 
@@ -84,6 +86,11 @@ export const requestOtp = async (req: Request, res: Response) => {
   }
 
   res.json({ message: 'OTP sent successfully' });
+};
+
+/** Public sign-in options for the login page (whether to show "Try demo"). */
+export const options = (_req: Request, res: Response) => {
+  res.json({ demoLogin: demoLoginAllowed() });
 };
 
 export const verifyOtp = async (req: Request, res: Response) => {
