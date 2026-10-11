@@ -10,7 +10,7 @@ import {
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2,
 } from 'lucide-react';
 import {
-  ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, SelectMenu, SmallButton,
+  ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
   SymbolGrid, TableGridPicker,
 } from './controls';
 import { HIGHLIGHT_COLORS, TEXT_COLORS } from './constants';
@@ -224,7 +224,7 @@ export default function Ribbon(props: RibbonProps) {
 
     home: (
       <>
-        <RibbonGroup label="Clipboard">
+        <RibbonGroup label="Clipboard" className="hidden sm:flex">
           <LargeButton icon={<ClipboardPaste />} label="Paste" shortcut="Ctrl+V" onClick={paste} />
           <RibbonRows>
             <SmallButton icon={<Scissors />} label="Cut" shortcut="Ctrl+X" text="Cut" onClick={() => clipboardCommand('cut')} disabled={!state.hasSelection} />
@@ -634,7 +634,7 @@ export default function Ribbon(props: RibbonProps) {
   return (
     <div className="bg-[#f3f2f1] border-b border-[#d2d0ce] shrink-0 no-print">
       <div className="flex items-end justify-between bg-[#f3f2f1] px-1 sm:px-2" role="tablist" aria-label="Ribbon">
-        <div className="flex overflow-x-auto">
+        <ScrollRow className="flex min-w-0 overflow-x-auto">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -645,7 +645,7 @@ export default function Ribbon(props: RibbonProps) {
                 setTab(t.key);
                 if (collapsed) setCollapsed(false);
               }}
-              className={`relative px-3 py-1.5 text-[13px] whitespace-nowrap transition
+              className={`relative px-2.5 sm:px-3 py-1.5 text-[13px] whitespace-nowrap transition
                 ${t.key === 'file' ? 'text-[#2b579a] font-semibold' : 'text-[#252423]'}
                 ${tab === t.key && !collapsed ? 'font-semibold' : 'hover:bg-[#e1dfdd]'}`}
             >
@@ -653,11 +653,11 @@ export default function Ribbon(props: RibbonProps) {
               {tab === t.key && !collapsed && <span className="absolute left-2 right-2 bottom-0 h-[3px] rounded-t bg-[#2b579a]" />}
             </button>
           ))}
-        </div>
+        </ScrollRow>
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
-          className="mb-1 p-1 rounded text-[#605e5c] hover:bg-[#e1dfdd]"
+          className="mb-1 p-1 shrink-0 rounded text-[#605e5c] hover:bg-[#e1dfdd]"
           aria-label={collapsed ? 'Expand the ribbon' : 'Collapse the ribbon'}
           title={collapsed ? 'Expand the ribbon' : 'Collapse the ribbon'}
         >
@@ -666,7 +666,7 @@ export default function Ribbon(props: RibbonProps) {
       </div>
       {!collapsed && (
         <div role="tabpanel" className="bg-white border-t border-[#e1dfdd] mx-1 sm:mx-2 mb-1.5 rounded shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
-          <div className="flex items-stretch overflow-x-auto py-1 min-h-[92px]">{groupsByTab[tab]}</div>
+          <ScrollRow watch={tab} className="flex items-stretch overflow-x-auto py-1 min-h-[92px]">{groupsByTab[tab]}</ScrollRow>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import BrandLogo from '../common/BrandLogo';
-import { LayoutDashboard, PenLine, PanelsTopLeft, WalletCards, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, PenLine, PanelsTopLeft, WalletCards, ShieldCheck, LogOut, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -29,17 +29,18 @@ export default function Navbar() {
     { path: '/new-paper', icon: PenLine, label: 'New Paper' },
     { path: '/workspace', icon: PanelsTopLeft, label: 'Workspace' },
     { path: '/wallet', icon: WalletCards, label: 'Wallet' },
+    ...(user?.is_admin ? [{ path: '/admin', icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 
   return (
     <nav className="bg-white/95 backdrop-blur-xl border-b border-rule sticky top-0 z-50">
       <div className="relative w-full px-3 sm:px-5 py-3 flex items-center justify-between gap-3">
-        <BrandLogo markClassName="h-9 w-9" onClick={() => navigate('/dashboard')} />
+        <BrandLogo markClassName="h-9 w-9" className="shrink-0" onClick={() => navigate('/dashboard')} />
 
-        <div className="hidden md:flex gap-1 absolute left-1/2 -translate-x-1/2">
+        <div className="hidden lg:flex flex-1 min-w-0 justify-center gap-1">
           {navLinks.map(({ path, icon: Icon, label }) => (
             <button key={path} onClick={() => navigate(path)} className={linkClass(path)} aria-current={isActive(path) ? 'page' : undefined}>
-              <Icon size={15} /> {label}
+              <Icon size={15} /> <span className="whitespace-nowrap">{label}</span>
             </button>
           ))}
         </div>
@@ -50,14 +51,14 @@ export default function Navbar() {
           </span>
           <button
             onClick={() => { logout(); navigate('/login'); }}
-            className="hidden md:flex text-sm text-muted hover:text-navy font-medium items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-navy-mist transition"
+            className="hidden lg:flex text-sm text-muted hover:text-navy font-medium items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-navy-mist transition"
           >
             <LogOut size={15} />
             Logout
           </button>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-navy rounded-lg hover:bg-navy-mist transition"
+            className="lg:hidden p-2 text-navy rounded-lg hover:bg-navy-mist transition"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
           >
@@ -67,7 +68,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-rule bg-white px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t border-rule bg-white px-4 py-3 space-y-1">
           {navLinks.map(({ path, icon: Icon, label }) => (
             <button
               key={path}

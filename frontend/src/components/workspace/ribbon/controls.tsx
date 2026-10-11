@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { SYMBOLS } from './constants';
 
@@ -8,6 +9,54 @@ export function RibbonGroup({ label, children, className = '' }: { label: string
     <div role="group" aria-label={label} className={`flex flex-col shrink-0 px-2 border-r border-[#e1dfdd] last:border-r-0 ${className}`}>
       <div className="flex-1 flex items-start gap-0.5 pt-1">{children}</div>
       <div className="text-[10.5px] text-[#605e5c] text-center leading-none pt-1 pb-0.5 select-none whitespace-nowrap">{label}</div>
+    </div>
+  );
+}
+
+const FADE = '24px';
+
+/**
+ * A sideways-scrolling row that fades whichever edge has more content behind
+ * it, so on a phone it's clear the ribbon continues. `watch` re-measures when
+ * the content changes (e.g. switching ribbon tabs).
+ */
+export function ScrollRow({ className = '', children, watch, ...rest }: {
+  className?: string;
+  children: ReactNode;
+  watch?: unknown;
+} & HTMLAttributes<HTMLDivElement>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const left = el.scrollLeft > 2;
+      const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+      setEdges((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      observer.disconnect();
+    };
+  }, [watch]);
+
+  const mask = edges.left && edges.right
+    ? `linear-gradient(to right, transparent, #000 ${FADE}, #000 calc(100% - ${FADE}), transparent)`
+    : edges.right
+      ? `linear-gradient(to right, #000 calc(100% - ${FADE}), transparent)`
+      : edges.left
+        ? `linear-gradient(to right, transparent, #000 ${FADE})`
+        : undefined;
+
+  return (
+    <div ref={ref} className={className} style={{ maskImage: mask, WebkitMaskImage: mask }} {...rest}>
+      {children}
     </div>
   );
 }
@@ -73,7 +122,13 @@ export function SmallButton({ icon, label, onClick, active, disabled, shortcut, 
   );
 }
 
-/** A floating panel anchored to a trigger; closes on outside click or Escape. */
+const VIEWPORT_GUTTER = 8;
+
+/**
+ * A floating panel anchored to a trigger; closes on outside click or Escape.
+ * Rendered into <body> with fixed positioning: the ribbon scrolls sideways on
+ * small screens, and an absolutely positioned panel inside it would be clipped.
+ */
 export function Popover({
   trigger, children, align = 'left', panelClassName = '',
 }: {
@@ -83,11 +138,38 @@ export function Popover({
   panelClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Place the panel under the trigger, kept inside the viewport.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const anchor = ref.current?.getBoundingClientRect();
+      const panel = panelRef.current;
+      if (!anchor || !panel) return;
+      const width = panel.offsetWidth;
+      const preferred = align === 'right' ? anchor.right - width : anchor.left;
+      const maxLeft = window.innerWidth - width - VIEWPORT_GUTTER;
+      setPos({ top: anchor.bottom + 4, left: Math.max(VIEWPORT_GUTTER, Math.min(preferred, maxLeft)) });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -97,16 +179,31 @@ export function Popover({
     };
   }, [open]);
 
+  const toggle = () => {
+    setPos(null);
+    setOpen((o) => !o);
+  };
+
   return (
     <div ref={ref} className="relative">
-      {trigger({ open, toggle: () => setOpen((o) => !o) })}
-      {open && (
+      {trigger({ open, toggle })}
+      {open && createPortal(
         <div
+          ref={panelRef}
           role="menu"
-          className={`absolute z-[60] top-full mt-1 ${align === 'right' ? 'right-0' : 'left-0'} bg-white border border-[#c8c6c4] rounded shadow-[0_6px_16px_rgba(0,0,0,0.18)] ${panelClassName}`}
+          style={{
+            position: 'fixed',
+            top: pos?.top ?? 0,
+            left: pos?.left ?? 0,
+            visibility: pos ? 'visible' : 'hidden',
+            maxWidth: `calc(100vw - ${VIEWPORT_GUTTER * 2}px)`,
+            maxHeight: pos ? `calc(100vh - ${pos.top + VIEWPORT_GUTTER}px)` : undefined,
+          }}
+          className={`z-[60] overflow-auto bg-white border border-[#c8c6c4] rounded shadow-[0_6px_16px_rgba(0,0,0,0.18)] ${panelClassName}`}
         >
           {children(() => setOpen(false))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
@@ -128,7 +225,7 @@ export function SelectMenu<T extends string>({
   const current = options.find((o) => o.value === value);
   return (
     <Popover
-      panelClassName="py-1 max-h-[320px] overflow-y-auto min-w-full"
+      panelClassName="py-1 max-h-[320px] overflow-y-auto"
       trigger={({ open, toggle }) => (
         <button
           type="button"

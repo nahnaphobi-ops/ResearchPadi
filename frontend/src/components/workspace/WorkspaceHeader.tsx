@@ -69,6 +69,8 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
       <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={() => onTogglePanel('ai')}
+          aria-label="AI Assistant"
+          title="AI Assistant"
           aria-pressed={sidePanel === 'ai'}
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'ai' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >
@@ -76,6 +78,8 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
         </button>
         <button
           onClick={() => onTogglePanel('citations')}
+          aria-label="Citations"
+          title="Citations"
           aria-pressed={sidePanel === 'citations'}
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'citations' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >

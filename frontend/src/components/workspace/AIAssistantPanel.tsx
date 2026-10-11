@@ -3,6 +3,7 @@ import { apiErrorMessage } from '../../utils/apiError';
 import { workspaceService } from '../../services/workspaceService';
 import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
 import type { Source } from './citations/types';
+import { ScrollRow } from './ribbon/controls';
 
 interface Props {
   sessionId: string;
@@ -259,7 +260,7 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 overflow-x-auto">
+      <ScrollRow className="flex border-b border-gray-200 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -269,7 +270,7 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
             {t.icon} {t.label}
           </button>
         ))}
-      </div>
+      </ScrollRow>
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

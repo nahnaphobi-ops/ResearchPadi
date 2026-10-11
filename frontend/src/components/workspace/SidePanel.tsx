@@ -21,7 +21,7 @@ const tabs = [
 
 /**
  * Desktop: a column beside the page while a tool is open (opened from the title bar).
- * Below lg: floating buttons open it as a slide-over drawer.
+ * Below lg: the same title-bar buttons open it as a slide-over drawer.
  */
 export const SidePanel: React.FC<Props> = ({
   editor,
@@ -33,20 +33,6 @@ export const SidePanel: React.FC<Props> = ({
   onInsertAIContent,
 }) => (
   <>
-    {!sidePanel && (
-      <div className="lg:hidden fixed bottom-4 right-4 z-30 flex flex-col gap-2">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setSidePanel(key)}
-            className="btn-primary px-4 py-2.5 text-sm inline-flex items-center gap-2 shadow-card"
-          >
-            <Icon size={15} /> {label}
-          </button>
-        ))}
-      </div>
-    )}
-
     {sidePanel && (
       <div className="lg:hidden fixed inset-0 z-30 bg-navy/30" onClick={() => setSidePanel(null)} aria-hidden="true" />
     )}
