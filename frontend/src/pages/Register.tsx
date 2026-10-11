@@ -44,7 +44,7 @@ export default function Register() {
       if (token) {
         setAuth(token, user);
       }
-      navigate(planDestination(plan));
+      navigate(user?.is_admin && !plan ? '/admin' : planDestination(plan));
     } catch (err) {
       setError(apiErrorMessage(err, 'Registration failed'));
     } finally {

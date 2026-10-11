@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { useAuthStore } from './store/useAuthStore';
+import { authService } from './services/apiService';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
 
@@ -36,7 +38,18 @@ function LoadingSpinner() {
   );
 }
 
+/** Refresh the signed-in user once per load so admin/reviewer roles granted later show up without signing out. */
+function useRoleSync() {
+  const userId = useAuthStore((state) => state.user?.id);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  useEffect(() => {
+    if (!userId) return;
+    authService.getProfile().then((res) => updateUser(res.data)).catch(() => {});
+  }, [userId, updateUser]);
+}
+
 function App() {
+  useRoleSync();
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
