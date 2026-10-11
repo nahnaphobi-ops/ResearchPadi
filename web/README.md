@@ -35,16 +35,20 @@ so the first import picks them up correctly.
 | `VITE_API_URL` | `/api` | Relative path; the rewrite below sends it to the backend. |
 | `VITE_SUPABASE_URL` | `https://<your-project>.supabase.co` | Same as local `.env`. |
 | `VITE_SUPABASE_ANON_KEY` | `<anon key>` | Public anon key (safe in frontend). |
-| `BACKEND_URL` | `https://api.researchpadi.com` | **Server-side only** — the real backend origin the `/api` rewrite proxies to. Do NOT prefix with `/api`; the rewrite adds it. |
 
-`BACKEND_URL` is referenced only inside `vercel.json`'s rewrite, so it is
-never shipped to the browser. `VITE_*` vars are inlined into the build.
+`VITE_*` vars are inlined into the build.
+
+The backend address is written directly in `vercel.json`'s rewrite
+(`https://researchpadi.onrender.com`). Vercel does **not** substitute
+environment variables in `vercel.json`, so a `${BACKEND_URL}` placeholder
+there is sent literally and every `/api` call returns 404. Change the URL in
+`vercel.json` if the backend moves.
 
 ## How the API proxy works
 
 Frontend calls (e.g. `api.post('/auth/request-otp')`) resolve against
 `VITE_API_URL` = `/api`, producing requests to `/api/auth/request-otp`.
-Vercel's rewrite forwards those to `${BACKEND_URL}/api/auth/request-otp`.
+Vercel's rewrite forwards those to `https://researchpadi.onrender.com/api/auth/request-otp`.
 
 Benefits:
 - No CORS configuration needed on the backend.
@@ -56,7 +60,7 @@ To test the rewrite locally, run the Vercel CLI from the `frontend` dir:
 
 ```bash
 cd frontend
-vercel dev   # respects vercel.json; needs BACKEND_URL in .env.local
+vercel dev   # respects vercel.json
 ```
 
 ## Notes
