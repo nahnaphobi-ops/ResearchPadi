@@ -9,7 +9,12 @@ export interface DraftOptions {
   /** Stable instructions sent as the system prompt; cached across calls. */
   systemPrompt?: string;
   maxTokens?: number;
+  /** Who the call is for, so it counts against their daily AI allowance. */
+  userId?: string;
 }
+
+/** Output tokens to allow for roughly `words` words of prose, with headroom. */
+export const tokensForWords = (words: number) => Math.ceil(words * 1.6) + 1024;
 
 /**
  * Writing calls through the gateway (failover, budgets, usage logging).
@@ -26,21 +31,29 @@ export const routeDrafting = async (prompt: string, context: any, options: Draft
     systemPrompt: options.systemPrompt,
     cachePrompt: Boolean(options.systemPrompt),
     maxTokens: options.maxTokens,
+    userId: options.userId,
     meta: { action: context?.action || context?.type || 'draft' },
   });
   return result.text;
 };
 
 /**
- * One supervision pass on the most capable model (Opus-class, GPT fallback).
+ * One supervision call on the most capable model (Opus-class, GPT fallback).
+ * The caller decides what to do when the output was cut off.
  */
-export const routeSupervision = async (content: string, instructions: string): Promise<string> => {
+export const routeSupervision = async (
+  prompt: string,
+  options: { systemPrompt: string; maxTokens: number; meta?: Record<string, unknown> },
+): Promise<{ text: string; truncated: boolean }> => {
   const result = await aiCall({
-    prompt: `Review and improve the following academic content based on these instructions:\n\n${instructions}\n\nContent:\n${content}`,
+    prompt,
     tier: 'supervision',
-    meta: { action: 'supervise' },
+    systemPrompt: options.systemPrompt,
+    cachePrompt: true,
+    maxTokens: options.maxTokens,
+    meta: { action: 'supervise', ...options.meta },
   });
-  return result.text;
+  return { text: result.text, truncated: result.truncated };
 };
 
 // Re-export gateway functions for direct usage

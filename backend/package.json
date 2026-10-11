@@ -12,7 +12,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/lib/__tests__/*.test.ts"
+    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/services/pipeline/__tests__/*.test.ts src/lib/__tests__/*.test.ts"
   },
   "keywords": [],
   "author": "",

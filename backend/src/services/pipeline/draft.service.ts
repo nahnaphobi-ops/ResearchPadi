@@ -1,4 +1,4 @@
-import { routeDrafting } from '../ai/router.service.js';
+import { routeDrafting, tokensForWords } from '../ai/router.service.js';
 import { buildChapterPrompt } from '../ai/prompts.js';
 
 export const draftChapter = async (
@@ -27,6 +27,6 @@ export const draftChapter = async (
     paperData.research_questions
   );
 
-  const draft = await routeDrafting(prompt, { chapterNumber, chapterTitle });
+  const draft = await routeDrafting(prompt, { chapterNumber, chapterTitle }, { maxTokens: tokensForWords(wordTarget) });
   return draft;
 };

@@ -401,8 +401,17 @@ CHAPTER 5 — CONCLUSION AND RECOMMENDATIONS INSTRUCTIONS:
   return instructions[chapterNumber] || '';
 };
 
-export const buildSupervisionPrompt = (
-  fullPaper: string,
+const sourceSurname = (s: any): string => {
+  if (s.author_surname) return s.author_surname;
+  const first = String(s.authors ?? '').split(';')[0].split(',')[0].trim();
+  return first || 'Unknown';
+};
+
+/**
+ * Supervisor instructions shared by every chapter of one paper. Sent as the
+ * system prompt so the five chapter reviews read it from the prompt cache.
+ */
+export const buildSupervisionSystemPrompt = (
   topic: string,
   course: string,
   institutionType: string,
@@ -411,26 +420,25 @@ export const buildSupervisionPrompt = (
 ): string => {
   return `
 You are a senior Ghanaian research supervisor, academic editor,
-and writing quality specialist reviewing a complete research paper.
+and writing quality specialist. You review a research paper one
+chapter at a time. Each message gives you one chapter to revise,
+plus reference material from other chapters for consistency.
 
-Your job has THREE passes:
+Revise the chapter in THREE passes:
 
 PASS 1 — STRUCTURAL REVIEW
-Check every item:
-□ Does each chapter begin and end properly?
-□ Do all section numbers match the table of contents?
-□ Does the introduction's objectives match Ch.4 findings?
-□ Does Ch.5 summary match what Ch.4 actually found?
-□ Are all chapters within their word targets?
-□ Is the abstract accurate to the paper's actual content?
+□ The chapter begins and ends properly, with its heading
+□ Section numbers are sequential and match the chapter number
+□ Chapter 4 findings answer the objectives stated in Chapter 1
+□ Chapter 5's summary matches what Chapter 4 actually found
+□ The chapter stays close to its word target
 
 PASS 2 — CITATION AND ACCURACY REVIEW
 □ Every in-text citation follows APA 7th: (Author, Year)
 □ Three or more authors use et al.: (Owusu et al., 2022)
-□ No source is cited that does not appear in the reference list
-□ No source appears in reference list that is not cited in text
-□ All DOIs are included for journal articles in reference list
-□ Ghana-specific sources appear in multiple chapters
+□ Only the verified sources below are cited — remove or replace
+  any citation that is not on the list
+□ Ghana-specific sources appear where relevant
 
 PASS 3 — HUMAN VOICE EDIT (Most Important Pass)
 Read every paragraph. Find and rewrite:
@@ -440,7 +448,7 @@ Read every paragraph. Find and rewrite:
    → Introduce short sentences after long ones
 □ Any overused transition (furthermore, moreover, notably etc.)
    → Replace with varied alternatives or restructure
-□ Any of these banned words anywhere in the paper:
+□ Any of these banned words anywhere in the chapter:
    furthermore, moreover, notably, it is worth noting,
    it is important to note, delve into, underscore, pivotal,
    paramount, multifaceted, shed light on, in the realm of,
@@ -458,21 +466,38 @@ PAPER DETAILS:
 Topic: ${topic}
 Course: ${course}
 Institution Type: ${institutionType}
-Target word count: ${wordTarget} words
-
-FULL PAPER TO REVIEW:
-${fullPaper}
+Target word count for the whole paper: ${wordTarget} words
 
 VERIFIED SOURCES (only these may be cited):
-${allSources.map(s =>
-  `(${s.author_surname || 'Unknown'}, ${s.year}) — ${s.title}`
-).join('\n')}
+${allSources.map(s => `(${sourceSurname(s)}, ${s.year || 'n.d.'}) — ${s.title}`).join('\n')}
 
 OUTPUT INSTRUCTIONS:
-Return the COMPLETE REVISED PAPER only.
-Begin directly with the title page content.
-No commentary. No checklist responses. No preamble.
+Return the COMPLETE REVISED CHAPTER only, starting with its
+chapter heading. Revise only the chapter marked CHAPTER TO REVISE;
+reference material is for consistency checks and must not be
+copied into your answer. No commentary. No checklist responses.
+No preamble.
   `.trim();
+};
+
+/** The per-chapter message for the supervisor (the changing part of each call). */
+export const buildChapterSupervisionPrompt = (
+  chapterNumber: number,
+  chapterTitle: string,
+  chapterText: string,
+  chapterWordTarget: number,
+  paperOutline: string,
+  reference: { label: string; text: string }[] = []
+): string => {
+  const refs = reference
+    .filter(r => r.text.trim())
+    .map(r => `REFERENCE — ${r.label} (do not revise):\n${r.text}`)
+    .join('\n\n');
+  return [
+    `PAPER OUTLINE:\n${paperOutline}`,
+    refs,
+    `CHAPTER TO REVISE — Chapter ${chapterNumber}: ${chapterTitle} (target about ${chapterWordTarget} words):\n${chapterText}`,
+  ].filter(Boolean).join('\n\n');
 };
 
 export const buildReferenceListPrompt = (

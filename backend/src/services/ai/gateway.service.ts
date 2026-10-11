@@ -1,10 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import axios from 'axios';
 import { supabase } from '../../db/supabase.js';
 import { childLogger } from '../../lib/logger.js';
 import { getReadyRedis } from '../../lib/redis.js';
 import { aiCircuitBreaker } from '../../lib/circuit-breaker.js';
+import { assertBudget, recordSpend, getBudget } from '../../lib/ai-budget.js';
+import { callPerplexityAgent, type AgentSource } from './perplexity-agent.js';
 import {
   MODELS,
   FAILOVER_CHAINS,
@@ -83,45 +84,6 @@ async function checkRateLimit(provider: Provider, userId?: string): Promise<bool
   }
 }
 
-// --- Token budget tracking (Redis-backed) ---
-const DEFAULT_DAILY_LIMIT = parseInt(process.env.AI_DAILY_TOKEN_LIMIT || '500000', 10);
-
-async function checkBudget(userId: string | undefined): Promise<{ allowed: boolean; remaining: number }> {
-  if (!userId) return { allowed: true, remaining: Infinity };
-
-  const now = Date.now();
-  const dayKey = new Date().toISOString().split('T')[0];
-  const budgetKey = `budget:${userId}:${dayKey}`;
-
-  try {
-    const redis = getReadyRedis();
-    if (!redis) return { allowed: true, remaining: DEFAULT_DAILY_LIMIT };
-    const used = parseInt((await redis.get(budgetKey)) || '0', 10);
-    const remaining = DEFAULT_DAILY_LIMIT - used;
-    return { allowed: remaining > 0, remaining };
-  } catch {
-    return { allowed: true, remaining: DEFAULT_DAILY_LIMIT };
-  }
-}
-
-async function deductTokens(userId: string | undefined, tokens: number): Promise<void> {
-  if (!userId) return;
-
-  const dayKey = new Date().toISOString().split('T')[0];
-  const budgetKey = `budget:${userId}:${dayKey}`;
-
-  try {
-    const redis = getReadyRedis();
-    if (!redis) return;
-    const pipeline = redis.pipeline();
-    pipeline.incrby(budgetKey, tokens);
-    pipeline.pexpire(budgetKey, 86_400_000);
-    await pipeline.exec();
-  } catch {
-    // ignore
-  }
-}
-
 // --- Core call function ---
 export interface GatewayRequest {
   prompt: string;
@@ -148,6 +110,10 @@ export interface GatewayResponse {
   cached: boolean;
   latencyMs: number;
   attempts: number;
+  /** The model stopped at maxTokens: the text is cut off. */
+  truncated: boolean;
+  /** Web sources behind the answer (research tier). */
+  sources?: AgentSource[];
 }
 
 /**
@@ -158,18 +124,14 @@ export interface GatewayResponse {
 export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
   const { tier, userId, prompt, context, systemPrompt, maxTokens, cachePrompt, meta } = req;
 
-  // Budget check
-  const budget = await checkBudget(userId);
-  if (!budget.allowed) {
-    throw new Error('Daily AI token budget exceeded. Please try again tomorrow.');
-  }
+  // Per-user daily spend cap (throws AiBudgetError → 429)
+  await assertBudget(userId);
 
   // Build chain
-  const chain = req.preferredModel
-    ? [MODELS[req.preferredModel], ...FAILOVER_CHAINS[tier].filter(m => m !== req.preferredModel)]
-        .map(n => MODELS[n as string])
-        .filter(Boolean)
-    : FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
+  const names = req.preferredModel
+    ? [req.preferredModel, ...FAILOVER_CHAINS[tier].filter(m => m !== req.preferredModel)]
+    : FAILOVER_CHAINS[tier];
+  const chain = names.map(n => MODELS[n]).filter(Boolean);
 
   let lastError: Error | null = null;
   let attempts = 0;
@@ -201,7 +163,10 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
       aiCircuitBreaker.recordSuccess(circuitKey);
 
       const cost = estimateCost(result.inputTokens, result.outputTokens, model);
-      await deductTokens(userId, result.inputTokens + result.outputTokens);
+      await recordSpend(userId, cost);
+      if (result.truncated) {
+        log.warn({ model: model.model, tier, outputTokens: result.outputTokens, meta }, 'AI output hit maxTokens and was cut off');
+      }
 
       // Log to DB (fire and forget)
       logUsage({
@@ -228,6 +193,8 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
         cached: result.cached,
         latencyMs,
         attempts,
+        truncated: result.truncated,
+        sources: result.sources,
       };
     } catch (err: any) {
       lastError = err;
@@ -246,6 +213,8 @@ interface ProviderResult {
   inputTokens: number;
   outputTokens: number;
   cached: boolean;
+  truncated: boolean;
+  sources?: AgentSource[];
 }
 
 async function callProvider(
@@ -262,7 +231,7 @@ async function callProvider(
     case 'openai':
       return callOpenAI(model, prompt, context, systemPrompt, maxTokens);
     case 'perplexity':
-      return callPerplexity(model, prompt, systemPrompt, maxTokens);
+      return callPerplexity(model, prompt, systemPrompt);
     default:
       throw new Error(`Unknown provider: ${model.provider}`);
   }
@@ -298,12 +267,14 @@ async function callAnthropic(
     messages: [{ role: 'user', content: userContent }],
   });
 
-  const text = (response.content[0] as any).text || '';
+  const text = response.content
+    .map((block) => (block.type === 'text' ? block.text : ''))
+    .join('');
   const inputTokens = response.usage?.input_tokens || 0;
   const outputTokens = response.usage?.output_tokens || 0;
   const cached = (response.usage?.cache_read_input_tokens || 0) > 0;
 
-  return { text, inputTokens, outputTokens, cached };
+  return { text, inputTokens, outputTokens, cached, truncated: response.stop_reason === 'max_tokens' };
 }
 
 async function callOpenAI(
@@ -327,47 +298,30 @@ async function callOpenAI(
 
   const response = await client.chat.completions.create({
     model: model.model,
-    max_tokens: maxTokens || model.maxTokens,
+    // GPT-5-series models reject `max_tokens`.
+    max_completion_tokens: maxTokens || model.maxTokens,
     messages,
   });
 
-  const text = response.choices[0]?.message?.content || '';
+  const choice = response.choices[0];
+  const text = choice?.message?.content || '';
   const inputTokens = response.usage?.prompt_tokens || 0;
   const outputTokens = response.usage?.completion_tokens || 0;
 
-  return { text, inputTokens, outputTokens, cached: false };
+  return { text, inputTokens, outputTokens, cached: false, truncated: choice?.finish_reason === 'length' };
 }
 
 async function callPerplexity(
   model: ModelConfig,
   prompt: string,
   systemPrompt?: string,
-  maxTokens?: number,
 ): Promise<ProviderResult> {
-  if (!process.env.PERPLEXITY_API_KEY) throw new Error('PERPLEXITY_API_KEY not configured');
+  // The Agent API takes a single input; instructions go in front of the question.
+  const input = systemPrompt ? `${systemPrompt}
 
-  const messages = [
-    { role: 'system', content: systemPrompt || 'You are a research assistant.' },
-    { role: 'user', content: prompt },
-  ];
-
-  const response = await axios.post(
-    'https://api.perplexity.ai/chat/completions',
-    { model: model.model, messages, max_tokens: maxTokens || model.maxTokens },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30_000,
-    },
-  );
-
-  const text = response.data.choices[0]?.message?.content || '';
-  const inputTokens = response.data.usage?.prompt_tokens || 0;
-  const outputTokens = response.data.usage?.completion_tokens || 0;
-
-  return { text, inputTokens, outputTokens, cached: false };
+${prompt}` : prompt;
+  const result = await callPerplexityAgent(model.model, input);
+  return { ...result, cached: false, truncated: false };
 }
 
 // --- Usage logging ---
@@ -500,30 +454,8 @@ export async function getUsageStats(userId?: string, days: number = 30) {
 }
 
 /**
- * Get remaining token budget for a user (Redis-backed).
+ * Today's AI allowance for a user (plan, limit, spent, remaining, reset time).
  */
-export async function getRemainingBudget(userId: string): Promise<{ remaining: number; limit: number; resetAt: number }> {
-  const dayKey = new Date().toISOString().split('T')[0];
-  const budgetKey = `budget:${userId}:${dayKey}`;
-
-  try {
-    const redis = getReadyRedis();
-    if (!redis) {
-      const resetAt = new Date();
-      resetAt.setHours(23, 59, 59, 999);
-      return { remaining: DEFAULT_DAILY_LIMIT, limit: DEFAULT_DAILY_LIMIT, resetAt: resetAt.getTime() };
-    }
-    const used = parseInt((await redis.get(budgetKey)) || '0', 10);
-    const resetAt = new Date();
-    resetAt.setHours(23, 59, 59, 999);
-    return {
-      remaining: DEFAULT_DAILY_LIMIT - used,
-      limit: DEFAULT_DAILY_LIMIT,
-      resetAt: resetAt.getTime(),
-    };
-  } catch {
-    const resetAt = new Date();
-    resetAt.setHours(23, 59, 59, 999);
-    return { remaining: DEFAULT_DAILY_LIMIT, limit: DEFAULT_DAILY_LIMIT, resetAt: resetAt.getTime() };
-  }
+export async function getRemainingBudget(userId: string) {
+  return getBudget(userId);
 }

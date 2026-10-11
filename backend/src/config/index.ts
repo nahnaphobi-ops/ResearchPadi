@@ -40,8 +40,16 @@ export const CONFIG = {
     AI_RATE_LIMIT_WINDOW: parseInt(process.env.AI_RATE_LIMIT_WINDOW || '60000', 10),
   },
   AI_GATEWAY: {
-    DAILY_TOKEN_LIMIT: parseInt(process.env.AI_DAILY_TOKEN_LIMIT || '500000', 10),
     ENABLE_PROMPT_CACHING: process.env.ENABLE_PROMPT_CACHING !== 'false',
+  },
+  // Daily AI spend per user (USD, resets 00:00 UTC) for workspace and other
+  // on-demand AI. Sized so a subscriber who hits the cap every day still costs
+  // well under their plan price (standard GHS 120 ≈ $10, premium GHS 200 ≈ $17
+  // a month). Paid papers are prepaid and not counted here.
+  AI_BUDGET: {
+    FREE_DAILY_USD: parseFloat(process.env.AI_BUDGET_FREE_USD || '0.02'),
+    STANDARD_DAILY_USD: parseFloat(process.env.AI_BUDGET_STANDARD_USD || '0.12'),
+    PREMIUM_DAILY_USD: parseFloat(process.env.AI_BUDGET_PREMIUM_USD || '0.30'),
   },
   STORAGE: {
     PROVIDER: (process.env.STORAGE_PROVIDER as any) || 'supabase',

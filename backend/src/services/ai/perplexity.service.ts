@@ -1,11 +1,19 @@
-import axios from 'axios';
 import { childLogger } from '../../lib/logger.js';
 import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
-import { primaryModel } from './models.js';
+import { aiCall } from './gateway.service.js';
 
 const log = childLogger('perplexity');
 
-export const searchPerplexity = async (topic: string) => {
+const RESEARCH_INSTRUCTIONS =
+  'You are a research assistant for a Ghanaian student. Give current facts, statistics and findings about the topic below, ' +
+  'with Ghana-specific data where it exists. Cite sources inline.';
+
+/**
+ * Live web research for the paper pipeline (Perplexity via the gateway, so it is
+ * logged and costed like every other model call). Returns null when Perplexity is
+ * not configured or fails; research then relies on the scholarly sources alone.
+ */
+export const searchPerplexity = async (topic: string): Promise<string | null> => {
   if (!process.env.PERPLEXITY_API_KEY) {
     log.debug('Perplexity API Key missing');
     return null;
@@ -16,29 +24,17 @@ export const searchPerplexity = async (topic: string) => {
     CACHE_TTL.PERPLEXITY,
     async () => {
       try {
-        const response = await axios.post(
-          'https://api.perplexity.ai/chat/completions',
-          {
-            model: primaryModel('research').model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a research assistant. Provide current facts and data about the given topic.',
-              },
-              { role: 'user', content: topic },
-            ],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            timeout: 30_000,
-          },
-        );
-
-        return response.data.choices[0].message.content;
+        const result = await aiCall({
+          prompt: topic,
+          tier: 'research',
+          systemPrompt: RESEARCH_INSTRUCTIONS,
+          meta: { action: 'research' },
+        });
+        const sources = (result.sources ?? [])
+          .slice(0, 10)
+          .map((s, i) => `[${i + 1}] ${s.title ?? s.url} — ${s.url}`)
+          .join('\n');
+        return sources ? `${result.text}\n\nWeb sources:\n${sources}` : result.text;
       } catch (error: any) {
         log.error({ err: error.message }, 'Perplexity request failed');
         return null;

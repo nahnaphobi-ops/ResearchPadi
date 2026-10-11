@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../db/supabase.js';
-import { supervisePaper } from '../services/pipeline/supervise.service.js';
+import { superviseAssembledPaper } from '../services/pipeline/supervise.service.js';
 import { humanizePaper } from '../services/pipeline/humanize.service.js';
 import { detectAIContent, getDisclosureTemplates, getDisclosureTemplate, suggestDisclosureTemplateId } from '../services/ai/ai-detector.service.js';
 import { routeDrafting } from '../services/ai/router.service.js';
@@ -19,10 +19,10 @@ export const refineTopic = async (req: Request, res: Response) => {
 
   try {
     const prompt = buildTopicRefinementPrompt(topic, course, institution_type);
-    const refined = await routeDrafting(prompt, { action: 'refine-topic' }, { tier: 'light' });
+    const refined = await routeDrafting(prompt, { action: 'refine-topic' }, { tier: 'light', userId: (req as any).user?.id });
     res.json({ refined });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 };
 
@@ -32,10 +32,10 @@ export const generateResearchQuestions = async (req: Request, res: Response) => 
 
   try {
     const prompt = buildResearchQuestionsPrompt(topic, course, institution_type);
-    const questions = await routeDrafting(prompt, { action: 'generate-questions' }, { tier: 'light' });
+    const questions = await routeDrafting(prompt, { action: 'generate-questions' }, { tier: 'light', userId: (req as any).user?.id });
     res.json({ questions });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 };
 
@@ -232,8 +232,28 @@ export const superviseCompletedPaper = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Paper must be completed first' });
   }
 
+  // One extra supervisor review per paper is included in the price (each costs
+  // about as much as the original review). Claim it atomically so a double
+  // click can't start two.
+  const { data: claimed, error: claimError } = await supabase
+    .from('papers')
+    .update({ resupervised_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .is('resupervised_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (claimError) {
+    log.error({ paperId: id, err: claimError.message }, 'Could not claim the extra review');
+    return res.status(500).json({ error: 'Could not start the review. Please try again.' });
+  }
+  if (!claimed) {
+    return res.status(409).json({ error: 'This paper has already had its extra supervisor review.' });
+  }
+
   try {
-    const revised = await supervisePaper(
+    const revised = await superviseAssembledPaper(
       paper.final_content,
       { topic: paper.topic, course: paper.course, institution_type: paper.institution_type, target_word_count: paper.target_word_count },
       paper.sources_used || []
@@ -245,7 +265,9 @@ export const superviseCompletedPaper = async (req: Request, res: Response) => {
       paperId: id
     });
   } catch (err: any) {
-    res.status(500).json({ error: `Supervision failed: ${err.message}` });
+    // Give the review back if it didn't run.
+    await supabase.from('papers').update({ resupervised_at: null }).eq('id', id).eq('user_id', userId);
+    res.status(err.status || 500).json({ error: `Supervision failed: ${err.message}` });
   }
 };
 

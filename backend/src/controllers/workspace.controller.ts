@@ -136,7 +136,8 @@ export const assist = async (req: Request, res: Response) => {
     selectedText || '',
     instruction,
     fullContext,
-    subscription?.plan
+    subscription?.plan,
+    userId
   );
 
   res.json(result);
@@ -220,7 +221,8 @@ export const assistAdvanced = async (req: Request, res: Response) => {
           content,
           'expand',
           `${fullContext}\n\nRelevant local sources:\n${sourceContext}`,
-          undefined
+          undefined,
+          (req as any).user?.id
         );
         return res.json({ action: 'rag-enhance', response, sources: (sources || []).slice(0, 5) });
       }
@@ -237,7 +239,7 @@ export const assistAdvanced = async (req: Request, res: Response) => {
     }
   } catch (err: any) {
     log.error({ action, err: err.message }, 'Advanced assist error');
-    return res.status(500).json({ error: err.message || 'Advanced assist failed' });
+    return res.status(err.status || 500).json({ error: err.message || 'Advanced assist failed' });
   }
 };
 

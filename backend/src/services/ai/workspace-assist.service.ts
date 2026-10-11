@@ -38,7 +38,8 @@ export const assistWithText = async (
   selectedText: string,
   instruction: string,
   context?: string,
-  plan?: string
+  plan?: string,
+  userId?: string
 ): Promise<AssistResult> => {
   const instructionText = INSTRUCTIONS[instruction] || instruction;
 
@@ -51,6 +52,7 @@ export const assistWithText = async (
     const response = await routeDrafting(prompt, { action: instruction }, {
       tier: LIGHT_ACTIONS.has(instruction) ? 'light' : 'drafting',
       systemPrompt: WORKSPACE_SYSTEM_PROMPT,
+      userId,
     });
     return { response, type: instruction };
   } catch (err: any) {

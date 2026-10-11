@@ -140,6 +140,7 @@ export default function PaperReview() {
       const { data } = await paperService.supervisePaper(id);
       setSupervised(data.supervised);
       setTab('supervised');
+      setPaper((p) => (p ? { ...p, resupervised_at: new Date().toISOString() } : p));
     } catch (err) {
       setError(apiErrorMessage(err, 'Supervision failed'));
     } finally {
@@ -244,10 +245,11 @@ export default function PaperReview() {
             <h1 className="text-sm font-bold truncate max-w-xs sm:max-w-md">{paper.topic}</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {!supervised && paper.status === 'completed' && (
+            {!supervised && paper.status === 'completed' && !paper.resupervised_at && (
               <button
                 onClick={handleSupervise}
                 disabled={supervising}
+                title="One extra supervisor review is included with each paper"
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-[10px] font-bold text-xs transition border border-white/20 disabled:opacity-50 inline-flex items-center gap-1.5"
               >
                 <RefreshCw size={13} className={supervising ? 'animate-spin' : ''} />

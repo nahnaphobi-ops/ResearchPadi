@@ -16,6 +16,6 @@ export async function getBudget(req: Request, res: Response) {
   const userId = (req as any).user?.id;
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-  const budget = getRemainingBudget(userId);
+  const budget = await getRemainingBudget(userId);
   res.json(budget);
 }

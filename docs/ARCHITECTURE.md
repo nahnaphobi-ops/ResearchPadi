@@ -225,11 +225,13 @@ LANGUAGE:
 ### AI & Research
 | Service | Role | Cost |
 |---|---|---|
-| Claude Sonnet 4.6 | Drafting (primary) | $3/$15/M tokens |
+| Claude Haiku 5.5 | Light edits and suggestions (primary) | $0.10/$0.50/M tokens |
+| GPT-5.4 mini | Light (fallback) | $0.75/$4.50/M tokens |
+| Claude Sonnet 5.5 | Drafting (primary) | $2/$10/M tokens |
 | GPT-5.4 | Drafting (fallback) | $2.50/$15/M tokens |
-| Claude Opus 4.8 | Supervision (primary) | $5/$25/M tokens |
+| Claude Opus 5.5 | Supervision (primary) | $4/$20/M tokens |
 | GPT-5.5 | Supervision (fallback) | $5/$30/M tokens |
-| Perplexity Sonar | Live web research | $0.25/$2.50/M |
+| Perplexity Agent API (`fast` preset) | Live web research | ~$1/$1 per M tokens + $0.005 per request |
 | OpenAlex API | Global papers | FREE |
 | Semantic Scholar | AI paper summaries | FREE |
 | OpenAI embeddings | RAG embeddings | ~$0.00002/1K |
@@ -682,7 +684,7 @@ chain and logs tokens and cost. A test fails if a model ID appears anywhere else
 | light | Short edits of a selection (shorten, rewrite, grammar, tone), topic and research-question suggestions, parsing references | claude-haiku-5-5 -> gpt-5.4-mini |
 | drafting | Chapters, abstracts, humanizing, reference lists, workspace continue/expand/outline | claude-sonnet-5-5 -> gpt-5.4 |
 | supervision | One review pass per paper | claude-opus-5-5 -> gpt-5.5 |
-| research | Live web research | sonar |
+| research | Live web research (Perplexity Agent API) | fast preset |
 
 Callers pick the smallest tier that does the job: `routeDrafting(prompt, context, { tier: 'light' })`.
 Stable instructions go in `systemPrompt`, which is cached with Anthropic so repeat calls

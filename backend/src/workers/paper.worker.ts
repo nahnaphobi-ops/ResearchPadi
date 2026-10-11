@@ -6,7 +6,7 @@ import { supabase } from '../db/supabase.js';
 import { refundPaperFee } from '../lib/wallet.js';
 import { performResearch } from '../services/pipeline/research.service.js';
 import { draftChapter } from '../services/pipeline/draft.service.js';
-import { supervisePaper } from '../services/pipeline/supervise.service.js';
+import { superviseChapters, type ChapterInfo } from '../services/pipeline/supervise.service.js';
 import { assembleFullPaper, generateAbstract, generateReferences } from '../services/pipeline/assemble.service.js';
 import { CHAPTER_STRUCTURE } from '../services/ai/prompts.js';
 import { runCitationVerification } from '../services/citations/verify/citation-verify.service.js';
@@ -63,6 +63,7 @@ async function runPipeline(job: Job<PaperJobData>) {
 
     // Step 2: Draft chapters
     const chapters: string[] = [];
+    const chapterInfo: ChapterInfo[] = [];
     const userWordTarget = d.target_word_count ? Math.floor(d.target_word_count / 5) : undefined;
     const chaptersToDraft = [
       { num: 1, ...CHAPTER_STRUCTURE.chapter1 },
@@ -79,6 +80,7 @@ async function runPipeline(job: Job<PaperJobData>) {
       await updateProgress(d.paperId, `Drafting Chapter ${ch.num}...`);
 
       const wordTarget = userWordTarget || ch.wordTarget;
+      chapterInfo.push({ num: ch.num, title: ch.title, wordTarget });
       const draft = await draftChapter(
         ch.num, ch.title, ch.sections, wordTarget,
         d, researchContext, chapters.join('\n\n'), allSources
@@ -86,18 +88,19 @@ async function runPipeline(job: Job<PaperJobData>) {
       chapters.push(draft);
     }
 
-    // Step 3: Assemble
-    await job.updateProgress(70);
-    await updateProgress(d.paperId, 'Assembling and refining...');
-    const fullContentBeforeSupervision = chapters.join('\n\n');
-    const abstract = await generateAbstract(fullContentBeforeSupervision, d);
-    const references = await generateReferences(allSources, d.institution_type);
-    const assembledPaper = assembleFullPaper(chapters, abstract, references);
-
-    // Step 4: Supervision
-    await job.updateProgress(85);
+    // Step 3: Supervision, one chapter per call (a whole-paper review was cut off at the output limit)
+    await job.updateProgress(65);
     await updateProgress(d.paperId, 'Human voice supervision pass...');
-    const finalizedPaper = await supervisePaper(assembledPaper, d, allSources);
+    const supervisedChapters = await superviseChapters(chapters, chapterInfo, d, allSources);
+
+    // Step 4: Abstract from the supervised chapters, references, assemble
+    await job.updateProgress(85);
+    await updateProgress(d.paperId, 'Assembling and refining...');
+    const [abstract, references] = await Promise.all([
+      generateAbstract(supervisedChapters.join('\n\n'), d),
+      generateReferences(allSources, d.institution_type),
+    ]);
+    const finalizedPaper = assembleFullPaper(supervisedChapters, abstract, references);
 
     // Step 4.5: Citation verification (after supervision, before delivery)
     await job.updateProgress(92);

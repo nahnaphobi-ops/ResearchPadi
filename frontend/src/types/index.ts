@@ -30,6 +30,8 @@ export interface Paper {
   progress_step?: string;
   chapters: Record<string, string>;
   final_content?: string;
+  // When the one included extra supervisor review was used.
+  resupervised_at?: string | null;
   abstract?: string;
   sources_used: unknown[];
   file_url_docx?: string;

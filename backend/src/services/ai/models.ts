@@ -23,6 +23,7 @@ export interface ModelConfig {
   inputPricePer1M: number;   // USD per 1M input tokens
   outputPricePer1M: number;  // USD per 1M output tokens
   supportsCaching: boolean;  // Anthropic prompt caching
+  perRequestUsd?: number;    // flat fee per call (Perplexity search fee)
 }
 
 export const MODELS: Record<string, ModelConfig> = {
@@ -83,15 +84,16 @@ export const MODELS: Record<string, ModelConfig> = {
     outputPricePer1M: 30.0,
     supportsCaching: false,
   },
-  // Perplexity
-  'sonar': {
+  // Perplexity Agent API preset (`fast` replaced the retired `sonar` model).
+  'fast': {
     provider: 'perplexity',
-    model: 'sonar',
+    model: 'fast',
     tier: 'research',
     maxTokens: 2048,
     inputPricePer1M: 1.0,
     outputPricePer1M: 1.0,
     supportsCaching: false,
+    perRequestUsd: 0.005,
   },
 };
 
@@ -101,7 +103,7 @@ export const FAILOVER_CHAINS: Record<ModelTier, string[]> = {
   light: ['claude-haiku-5-5', 'gpt-5.4-mini'],
   drafting: ['claude-sonnet-5-5', 'gpt-5.4'],
   supervision: ['claude-opus-5-5', 'gpt-5.5'],
-  research: ['sonar'],
+  research: ['fast'],
 };
 
 /** The model a tier uses when its primary provider is up (for callers outside the gateway). */
@@ -126,6 +128,7 @@ export function estimateCost(
 ): number {
   return (
     (inputTokens / 1_000_000) * config.inputPricePer1M +
-    (outputTokens / 1_000_000) * config.outputPricePer1M
+    (outputTokens / 1_000_000) * config.outputPricePer1M +
+    (config.perRequestUsd ?? 0)
   );
 }
