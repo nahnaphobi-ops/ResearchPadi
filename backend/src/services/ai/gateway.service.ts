@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import axios from 'axios';
 import { supabase } from '../../db/supabase.js';
 import { childLogger } from '../../lib/logger.js';
-import { getRedis } from '../../lib/redis.js';
+import { getReadyRedis } from '../../lib/redis.js';
 import { aiCircuitBreaker } from '../../lib/circuit-breaker.js';
 import {
   MODELS,
@@ -59,7 +59,7 @@ const PER_USER_AI_MAX = parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10);
 async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
   const limit = RATE_LIMITS[provider];
   const window = Math.floor(Date.now() / limit.windowMs);
-  const redis = getRedis();
+  const redis = getReadyRedis();
   if (!redis) return true;
 
   try {
@@ -94,7 +94,7 @@ async function checkBudget(userId: string | undefined): Promise<{ allowed: boole
   const budgetKey = `budget:${userId}:${dayKey}`;
 
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return { allowed: true, remaining: DEFAULT_DAILY_LIMIT };
     const used = parseInt((await redis.get(budgetKey)) || '0', 10);
     const remaining = DEFAULT_DAILY_LIMIT - used;
@@ -111,7 +111,7 @@ async function deductTokens(userId: string | undefined, tokens: number): Promise
   const budgetKey = `budget:${userId}:${dayKey}`;
 
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return;
     const pipeline = redis.pipeline();
     pipeline.incrby(budgetKey, tokens);
@@ -507,7 +507,7 @@ export async function getRemainingBudget(userId: string): Promise<{ remaining: n
   const budgetKey = `budget:${userId}:${dayKey}`;
 
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) {
       const resetAt = new Date();
       resetAt.setHours(23, 59, 59, 999);

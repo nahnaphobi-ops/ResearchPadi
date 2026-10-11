@@ -45,6 +45,17 @@ export function getRedis(): Redis | null {
 }
 
 /**
+ * The shared client only while it is connected. Request-path callers (OTP,
+ * cache, rate limits) use this so an unreachable REDIS_URL makes them fall
+ * back instead of hanging on ioredis's offline queue or throwing
+ * "Connection is closed".
+ */
+export function getReadyRedis(): Redis | null {
+  const client = getRedis();
+  return client && client.status === 'ready' ? client : null;
+}
+
+/**
  * Get a separate Redis connection for pub/sub or blocking operations.
  * Shares the same connection pool config but is a distinct connection.
  */

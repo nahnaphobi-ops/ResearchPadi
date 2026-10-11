@@ -1,4 +1,4 @@
-import { getRedis } from './redis.js';
+import { getReadyRedis } from './redis.js';
 import { childLogger } from './logger.js';
 
 const log = childLogger('cache');
@@ -14,7 +14,7 @@ export async function cacheGet<T>(
   ttlSeconds: number,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const redis = getRedis();
+  const redis = getReadyRedis();
   if (!redis) {
     return fn();
   }
@@ -32,7 +32,7 @@ export async function cacheGet<T>(
   const result = await fn();
 
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return result;
     await redis.set(key, JSON.stringify(result), 'EX', ttlSeconds);
     log.debug({ key, ttl: ttlSeconds }, 'Cache stored');
@@ -49,7 +49,7 @@ export async function cacheGet<T>(
  */
 export async function cacheInvalidate(pattern: string): Promise<void> {
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return;
     let cursor = '0';
     let totalDeleted = 0;
@@ -83,7 +83,7 @@ export async function cacheInvalidate(pattern: string): Promise<void> {
  */
 export async function cacheDel(key: string): Promise<void> {
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return;
     await redis.del(key);
   } catch {
@@ -96,7 +96,7 @@ export async function cacheDel(key: string): Promise<void> {
  */
 export async function cacheMget<T>(keys: string[]): Promise<(T | null)[]> {
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return keys.map(() => null);
     const values = await redis.mget(...keys);
     return values.map(v => (v ? JSON.parse(v) as T : null));
@@ -110,7 +110,7 @@ export async function cacheMget<T>(keys: string[]): Promise<(T | null)[]> {
  */
 export async function cacheMset(entries: { key: string; value: any; ttl: number }[]): Promise<void> {
   try {
-    const redis = getRedis();
+    const redis = getReadyRedis();
     if (!redis) return;
     const pipeline = redis.pipeline();
     for (const entry of entries) {

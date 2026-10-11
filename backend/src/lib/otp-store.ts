@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { getRedis } from './redis.js';
+import { getReadyRedis } from './redis.js';
 import { toGhanaMsisdn } from './phone.js';
 
 export const OTP_TTL_MINUTES = 5;
@@ -17,7 +17,7 @@ export function generateNumericOtp(): string {
 
 export async function storeOtp(purpose: string, id: string, otp: string): Promise<void> {
   const hash = await bcrypt.hash(otp, 10);
-  const redis = getRedis();
+  const redis = getReadyRedis();
   const key = otpKey(purpose, id);
 
   if (redis) {
@@ -29,7 +29,7 @@ export async function storeOtp(purpose: string, id: string, otp: string): Promis
 }
 
 export async function consumeOtp(purpose: string, id: string, otp: string): Promise<boolean> {
-  const redis = getRedis();
+  const redis = getReadyRedis();
   const key = otpKey(purpose, id);
   let hash: string | null = null;
 
@@ -58,7 +58,7 @@ const cooldowns = new Map<string, number>();
  */
 export async function claimOtpCooldown(purpose: string, id: string, windowMs = 60 * 1000): Promise<boolean> {
   const key = `otp-cooldown:${purpose}:${id}`;
-  const redis = getRedis();
+  const redis = getReadyRedis();
 
   if (redis) {
     const result = await redis.set(key, '1', 'PX', windowMs, 'NX');
@@ -73,7 +73,7 @@ export async function claimOtpCooldown(purpose: string, id: string, windowMs = 6
 
 export async function releaseOtpCooldown(purpose: string, id: string): Promise<void> {
   const key = `otp-cooldown:${purpose}:${id}`;
-  const redis = getRedis();
+  const redis = getReadyRedis();
   if (redis) await redis.del(key);
   else cooldowns.delete(key);
 }

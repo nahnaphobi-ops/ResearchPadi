@@ -1,3 +1,4 @@
+import './config/runtime-env.js';
 import app from './app.js';
 import { CONFIG } from './config/index.js';
 import { validateEnv } from './config/env.js';

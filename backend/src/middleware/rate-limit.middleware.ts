@@ -14,7 +14,11 @@ function createRedisStore() {
     const { RedisStore } = _require('rate-limit-redis');
     const Store = RedisStore.default || RedisStore;
     return new Store({
-      sendCommand: (...args: string[]) => (redisClient.call as (...a: string[]) => Promise<any>)(...args),
+      sendCommand: (...args: string[]) => {
+        // Fail fast while Redis is down; passOnStoreError lets the request through.
+        if (redisClient.status !== 'ready') return Promise.reject(new Error('Redis not ready'));
+        return (redisClient.call as (...a: string[]) => Promise<any>)(...args);
+      },
       prefix: 'rl:global:',
     });
   } catch {
@@ -31,6 +35,7 @@ export function createGlobalRateLimit() {
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later' },
     store: createRedisStore(),
+    passOnStoreError: true,
   });
 }
 
@@ -42,6 +47,7 @@ export function createAuthRateLimit() {
     legacyHeaders: false,
     message: { error: 'Too many auth attempts, please try again later' },
     store: createRedisStore(),
+    passOnStoreError: true,
     keyGenerator: (req) => `auth:${req.ip}`,
   });
 }
