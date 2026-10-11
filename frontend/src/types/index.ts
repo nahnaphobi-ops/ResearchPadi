@@ -10,6 +10,8 @@ export interface User {
   programme?: string;
   level?: string;
   created_at?: string;
+  // Set by the API when this phone is on the admin list; the API re-checks on every admin call.
+  is_admin?: boolean;
 }
 
 export interface Paper {

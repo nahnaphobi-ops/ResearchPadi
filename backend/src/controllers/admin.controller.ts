@@ -1,7 +1,4 @@
 import { Response, NextFunction } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
@@ -9,283 +6,20 @@ import { auditLog, queryAuditLogs } from '../lib/audit.js';
 import { getUsageStats } from '../services/ai/gateway.service.js';
 import { sanitizeIlikeTerm, ilikeContains } from '../lib/postgrest-filter.js';
 import type { AdminRequest } from '../middleware/admin.middleware.js';
-import { toGhanaMsisdn } from '../lib/phone.js';
-import { isArkeselConfigured, sendSms } from '../services/sms/arkesel.service.js';
 
 const USER_LIST_COLUMNS = 'id, phone, full_name, institution_type, institution_name, programme, level, created_at';
 
 const log = childLogger('admin');
-
-const ADMIN_ACCESS_TOKEN_EXPIRES_IN = '1h';
-const ADMIN_REFRESH_TOKEN_EXPIRES_IN = '7d';
-const OTP_EXPIRY_MINUTES = 5;
-
-function generateOtp(): string {
-  return crypto.randomInt(100000, 999999).toString();
-}
 
 function logAdminEvent(event: string, details: Record<string, unknown>) {
   log.info({ event, ...details }, `[ADMIN_AUDIT] ${event}`);
   // Persist to DB (fire-and-forget)
   auditLog({
     event: event as any,
-    actorEmail: details.email as string,
+    actorEmail: (details.phone ?? details.email) as string,
     metadata: details,
     ip: details.ip as string,
   }).catch(() => {});
-}
-
-export async function login(req: AdminRequest, res: Response) {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password required' });
-  }
-
-  try {
-    const { data: admin, error } = await supabase
-      .from('admin_users')
-      .select('id, email, password_hash, full_name, mfa_enabled, phone')
-      .eq('email', email)
-      .single();
-
-    if (error || !admin) {
-      logAdminEvent('LOGIN_FAILED', { email, reason: 'user_not_found', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const valid = await bcrypt.compare(password, admin.password_hash);
-    if (!valid) {
-      logAdminEvent('LOGIN_FAILED', { email, reason: 'wrong_password', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    logAdminEvent('PASSWORD_VERIFIED', { email, ip: req.ip });
-
-    if (admin.mfa_enabled) {
-      // MFA codes go out by SMS. Fail closed if we can't deliver one in production.
-      const msisdn = admin.phone ? toGhanaMsisdn(admin.phone) : null;
-      const canSend = Boolean(msisdn) && isArkeselConfigured();
-      if (!canSend && CONFIG.NODE_ENV === 'production') {
-        log.error({ email, hasPhone: Boolean(msisdn) }, 'Admin MFA code cannot be delivered (missing phone or Arkesel config)');
-        return res.status(503).json({ error: 'Two-factor code could not be sent. Set ADMIN_PHONE for this admin and configure Arkesel SMS.' });
-      }
-
-      const otp = generateOtp();
-      const otpHash = await bcrypt.hash(otp, 10);
-      const otpExpires = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
-
-      await supabase
-        .from('admin_users')
-        .update({ otp_hash: otpHash, otp_expires: otpExpires })
-        .eq('id', admin.id);
-
-      if (canSend && msisdn) {
-        const sent = await sendSms(msisdn, `Your ResearchPadi admin code is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes. Do not share it.`);
-        if (!sent) {
-          return res.status(502).json({ error: "We couldn't send your two-factor code. Please try again." });
-        }
-      } else {
-        log.debug({ email, otp }, 'Admin OTP generated for development (not returned to client)');
-      }
-
-      logAdminEvent('OTP_SENT', { email, ip: req.ip });
-
-      return res.json({
-        mfa_required: true,
-        message: msisdn ? `Code sent by SMS to the number ending ${msisdn.slice(-3)}` : 'Code generated (check the server log in development)',
-        admin_id: admin.id,
-      });
-    }
-
-    const accessToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const refreshHash = await bcrypt.hash(refreshToken, 10);
-    await supabase
-      .from('admin_users')
-      .update({ refresh_token: refreshHash })
-      .eq('id', admin.id);
-
-    logAdminEvent('LOGIN_SUCCESS', { email, ip: req.ip });
-
-    res.json({
-      token: accessToken,
-      refreshToken,
-      admin: { id: admin.id, email: admin.email, full_name: admin.full_name },
-    });
-  } catch (err: any) {
-    logAdminEvent('LOGIN_ERROR', { email, error: err.message, ip: req.ip });
-    res.status(500).json({ error: err.message || 'Login failed' });
-  }
-}
-
-export async function verifyOtp(req: AdminRequest, res: Response) {
-  const { admin_id, otp } = req.body;
-
-  if (!admin_id || !otp) {
-    return res.status(400).json({ error: 'Admin ID and OTP required' });
-  }
-
-  try {
-    const { data: admin, error } = await supabase
-      .from('admin_users')
-      .select('id, email, full_name, otp_hash, otp_expires')
-      .eq('id', admin_id)
-      .single();
-
-    if (error || !admin) {
-      logAdminEvent('OTP_VERIFY_FAILED', { admin_id, reason: 'user_not_found', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid request' });
-    }
-
-    if (!admin.otp_hash || !admin.otp_expires) {
-      logAdminEvent('OTP_VERIFY_FAILED', { admin_id, reason: 'no_otp_pending', ip: req.ip });
-      return res.status(400).json({ error: 'No OTP pending. Please login again.' });
-    }
-
-    if (new Date(admin.otp_expires) < new Date()) {
-      await supabase
-        .from('admin_users')
-        .update({ otp_hash: null, otp_expires: null })
-        .eq('id', admin.id);
-
-      logAdminEvent('OTP_VERIFY_FAILED', { admin_id: admin.email, reason: 'otp_expired', ip: req.ip });
-      return res.status(401).json({ error: 'OTP has expired. Please login again.' });
-    }
-
-    const otpValid = await bcrypt.compare(otp, admin.otp_hash);
-    if (!otpValid) {
-      logAdminEvent('OTP_VERIFY_FAILED', { admin_id: admin.email, reason: 'wrong_otp', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid OTP' });
-    }
-
-    await supabase
-      .from('admin_users')
-      .update({ otp_hash: null, otp_expires: null })
-      .eq('id', admin.id);
-
-    const accessToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const refreshHash = await bcrypt.hash(refreshToken, 10);
-    await supabase
-      .from('admin_users')
-      .update({ refresh_token: refreshHash })
-      .eq('id', admin.id);
-
-    logAdminEvent('OTP_VERIFIED_LOGIN_SUCCESS', { email: admin.email, ip: req.ip });
-
-    res.json({
-      token: accessToken,
-      refreshToken,
-      admin: { id: admin.id, email: admin.email, full_name: admin.full_name },
-    });
-  } catch (err: any) {
-    logAdminEvent('OTP_VERIFY_ERROR', { admin_id, error: err.message, ip: req.ip });
-    res.status(500).json({ error: err.message || 'OTP verification failed' });
-  }
-}
-
-export async function refreshToken(req: AdminRequest, res: Response) {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return res.status(400).json({ error: 'Refresh token required' });
-  }
-
-  try {
-    const decoded = jwt.verify(refreshToken, CONFIG.JWT_SECRET, { algorithms: ['HS256'] }) as {
-      id: string;
-      email: string;
-      isAdmin?: boolean;
-      type?: string;
-    };
-
-    if (decoded.type !== 'refresh' || !decoded.isAdmin) {
-      logAdminEvent('REFRESH_FAILED', { reason: 'invalid_token_type', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid refresh token' });
-    }
-
-    const { data: admin, error } = await supabase
-      .from('admin_users')
-      .select('id, email, full_name, refresh_token')
-      .eq('id', decoded.id)
-      .single();
-
-    if (error || !admin || !admin.refresh_token) {
-      logAdminEvent('REFRESH_FAILED', { email: decoded.email, reason: 'no_stored_token', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid refresh token' });
-    }
-
-    const tokenValid = await bcrypt.compare(refreshToken, admin.refresh_token);
-    if (!tokenValid) {
-      logAdminEvent('REFRESH_FAILED', { email: decoded.email, reason: 'token_mismatch', ip: req.ip });
-      return res.status(401).json({ error: 'Invalid refresh token' });
-    }
-
-    const newAccessToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_ACCESS_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const newRefreshToken = jwt.sign(
-      { id: admin.id, email: admin.email, isAdmin: true, type: 'refresh' },
-      CONFIG.JWT_SECRET,
-      { expiresIn: ADMIN_REFRESH_TOKEN_EXPIRES_IN, algorithm: 'HS256' }
-    );
-
-    const refreshHash = await bcrypt.hash(newRefreshToken, 10);
-    await supabase
-      .from('admin_users')
-      .update({ refresh_token: refreshHash })
-      .eq('id', admin.id);
-
-    logAdminEvent('TOKEN_REFRESHED', { email: admin.email, ip: req.ip });
-
-    res.json({
-      token: newAccessToken,
-      refreshToken: newRefreshToken,
-    });
-  } catch (err: any) {
-    logAdminEvent('REFRESH_ERROR', { error: err.message, ip: req.ip });
-    res.status(401).json({ error: 'Invalid or expired refresh token' });
-  }
-}
-
-export async function logout(req: AdminRequest, res: Response) {
-  try {
-    if (req.admin) {
-      await supabase
-        .from('admin_users')
-        .update({ refresh_token: null })
-        .eq('id', req.admin.id);
-
-      logAdminEvent('LOGOUT', { email: req.admin.email, ip: req.ip });
-    }
-    res.json({ message: 'Logged out successfully' });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Logout failed' });
-  }
 }
 
 export async function getOverview(req: AdminRequest, res: Response) {
@@ -665,7 +399,7 @@ export async function approvePaper(req: AdminRequest, res: Response) {
 
     logAdminEvent(`PAPER_${newStatus.toUpperCase()}`, {
       paperId: id,
-      adminEmail: req.admin?.email,
+      adminPhone: req.admin?.phone,
       notes,
     });
 

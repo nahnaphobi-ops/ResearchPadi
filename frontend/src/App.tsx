@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
@@ -17,7 +17,6 @@ const Subscribe = lazy(() => import('./pages/Subscribe'));
 const WorkspaceList = lazy(() => import('./pages/WorkspaceList'));
 const WorkspaceEditor = lazy(() => import('./pages/WorkspaceEditor'));
 const NotFound = lazy(() => import('./pages/NotFound'));
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminOverview = lazy(() => import('./pages/admin/Overview'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminTransactions = lazy(() => import('./pages/admin/Transactions'));
@@ -50,7 +49,7 @@ function App() {
           <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
           <Route path="/workspace" element={<ProtectedRoute><WorkspaceList /></ProtectedRoute>} />
           <Route path="/workspace/:id" element={<ProtectedRoute><WorkspaceEditor /></ProtectedRoute>} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<Navigate to="/login" replace />} />
           <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
           <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
           <Route path="/admin/transactions" element={<ProtectedAdminRoute><AdminTransactions /></ProtectedAdminRoute>} />

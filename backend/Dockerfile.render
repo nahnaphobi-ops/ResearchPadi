@@ -32,5 +32,4 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD curl -fsS http://localhost:5000/health/live || exit 1
 ENTRYPOINT ["/usr/bin/tini", "--"]
-# Use `;` so a failed admin seed never blocks the API from starting
-CMD ["sh", "-c", "node dist/scripts/create-admin-table.js; node dist/index.js"]
+CMD ["node", "dist/index.js"]

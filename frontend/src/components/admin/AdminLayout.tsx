@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAdminStore } from '../../store/useAdminStore';
-import { adminService } from '../../services/adminService';
+import { useAuthStore } from '../../store/useAuthStore';
 import BrandLogo from '../common/BrandLogo';
 
 const adminLinks = [
@@ -15,19 +14,14 @@ const adminLinks = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const admin = useAdminStore(state => state.admin);
-  const logout = useAdminStore(state => state.logout);
+  const user = useAuthStore(state => state.user);
+  const logout = useAuthStore(state => state.logout);
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = async () => {
-    try {
-      await adminService.logout();
-    } catch {
-      // proceed with local logout even if API call fails
-    }
+  const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate('/login');
   };
 
   return (
@@ -39,7 +33,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-white/45 font-normal text-sm">/ admin</span>
           </div>
           <div className="flex items-center gap-3 shrink-0 lg:order-last">
-            <span className="hidden sm:inline text-sm text-white/55 truncate max-w-[200px]">{admin?.email}</span>
+            <span className="hidden sm:inline text-sm text-white/55 truncate max-w-[200px]">{user?.full_name || user?.phone}</span>
+            <button onClick={() => navigate('/dashboard')} className="text-sm text-white/65 hover:text-white font-medium">
+              Back to app
+            </button>
             <button onClick={handleLogout} className="text-sm text-white/65 hover:text-white font-medium">
               Logout
             </button>

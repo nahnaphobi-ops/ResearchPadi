@@ -11,8 +11,6 @@
     dockerContext: .
     healthCheckPath: /health/live
     envVars:
-      - key: ADMIN_MFA
-        value: "false"
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -30,10 +28,13 @@
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: ADMIN_EMAIL
+      # Phones (comma-separated) that may open /admin after the normal SMS login.
+      - key: ADMIN_PHONE
         sync: false
-      - key: ADMIN_PASSWORD
+      - key: ARKESEL_API_KEY
         sync: false
+      - key: ARKESEL_SENDER_ID
+        value: RsrchPadi
       - key: SUPABASE_ACCESS_TOKEN
         sync: false
       - key: ANTHROPIC_API_KEY

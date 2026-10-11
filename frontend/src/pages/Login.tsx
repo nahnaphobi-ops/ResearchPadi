@@ -93,6 +93,8 @@ export default function Login() {
 
       if (isNewUser) {
         navigate(withPlan('/register', plan));
+      } else if (user.is_admin && !plan) {
+        navigate('/admin');
       } else {
         navigate(planDestination(plan));
       }
@@ -215,13 +217,10 @@ export default function Login() {
               type="button"
               onClick={handleTryDemo}
               disabled={loading}
-              className="w-full p-3.5 mb-3 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition inline-flex items-center justify-center gap-2"
+              className="w-full p-3.5 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition inline-flex items-center justify-center gap-2"
             >
               {loading ? 'Loading demo...' : '✦ Try demo — no phone needed'}
             </button>
-            <a href="/admin/login" className="block text-center text-xs text-muted hover:text-ink underline">
-              Admin login
-            </a>
           </div>
         </div>
       </div>

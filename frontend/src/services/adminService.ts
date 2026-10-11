@@ -1,26 +1,6 @@
 import adminApi from './adminApi';
 
 export const adminService = {
-  login: async (email: string, password: string) => {
-    const res = await adminApi.post('/admin/login', { email, password });
-    return res.data;
-  },
-
-  verifyOtp: async (adminId: string, otp: string) => {
-    const res = await adminApi.post('/admin/verify-otp', { admin_id: adminId, otp });
-    return res.data;
-  },
-
-  refreshToken: async (refreshToken: string) => {
-    const res = await adminApi.post('/admin/refresh-token', { refreshToken });
-    return res.data;
-  },
-
-  logout: async () => {
-    const res = await adminApi.post('/admin/logout');
-    return res.data;
-  },
-
   getOverview: async () => {
     const res = await adminApi.get('/admin/overview');
     return res.data;

@@ -20,12 +20,11 @@ const RECOMMENDED_VARS = [
   'SUPABASE_PROJECT_REF',
   'ARKESEL_API_KEY',
   'ARKESEL_SENDER_ID',
+  'ADMIN_PHONE',
 ];
 
 const PRODUCTION_REQUIRED_VARS = [
   'DATABASE_URL',
-  'ADMIN_EMAIL',
-  'ADMIN_PASSWORD',
   'FRONTEND_URL',
 ];
 
@@ -66,10 +65,6 @@ export function validateEnv(): EnvValidation {
   const senderId = process.env.ARKESEL_SENDER_ID;
   if (senderId && senderId.length > 11) {
     missing.push('ARKESEL_SENDER_ID (must be 11 characters or fewer)');
-  }
-
-  if (isProduction && process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length < 12) {
-    missing.push('ADMIN_PASSWORD (must be at least 12 characters)');
   }
 
   return {

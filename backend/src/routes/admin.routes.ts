@@ -1,23 +1,10 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
 import * as adminController from '../controllers/admin.controller.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
 
 const router = Router();
 
-const adminLoginLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  message: { error: 'Too many login attempts. Please try again after 1 minute.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Auth
-router.post('/login', adminLoginLimiter, adminController.login);
-router.post('/verify-otp', adminLoginLimiter, adminController.verifyOtp);
-router.post('/refresh-token', adminController.refreshToken);
-router.post('/logout', requireAdmin, adminController.logout);
+// Admins sign in through the normal phone login (/api/auth); see lib/admins.
 
 // Dashboard
 router.get('/overview', requireAdmin, adminController.getOverview);
