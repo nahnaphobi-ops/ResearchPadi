@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as adminController from '../controllers/admin.controller.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
+import * as reviews from '../controllers/reviews.controller.js';
 
 const router = Router();
 
@@ -29,5 +30,12 @@ router.get('/knowledge-base', requireAdmin, adminController.getKnowledgeBase);
 // Monitoring
 router.get('/audit-logs', requireAdmin, adminController.getAuditLogs);
 router.get('/ai-usage', requireAdmin, adminController.getAiUsage);
+
+// Human supervisor reviews
+router.get('/reviews', requireAdmin, reviews.adminList);
+router.post('/reviews/:id/assign', requireAdmin, reviews.adminAssign);
+router.post('/reviews/:id/cancel', requireAdmin, reviews.adminCancel);
+router.post('/reviewers', requireAdmin, reviews.adminAddReviewer);
+router.patch('/reviewers/:userId', requireAdmin, reviews.adminSetReviewerActive);
 
 export default router;

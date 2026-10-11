@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import BrandLogo from '../common/BrandLogo';
-import { LayoutDashboard, PenLine, PanelsTopLeft, WalletCards, ShieldCheck, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, PenLine, PanelsTopLeft, WalletCards, ShieldCheck, GraduationCap, ClipboardCheck, LogOut, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -29,6 +29,8 @@ export default function Navbar() {
     { path: '/new-paper', icon: PenLine, label: 'New Paper' },
     { path: '/workspace', icon: PanelsTopLeft, label: 'Workspace' },
     { path: '/wallet', icon: WalletCards, label: 'Wallet' },
+    { path: '/reviews', icon: GraduationCap, label: 'Reviews' },
+    ...(user?.is_reviewer ? [{ path: '/review-desk', icon: ClipboardCheck, label: 'Review desk' }] : []),
     ...(user?.is_admin ? [{ path: '/admin', icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 

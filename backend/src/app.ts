@@ -13,6 +13,7 @@ import adminRoutes from './routes/admin.routes.js';
 import writingAssistRoutes from './routes/writing-assist.routes.js';
 import blueprintRoutes from './routes/blueprint.routes.js';
 import usageRoutes from './routes/usage.routes.js';
+import { reviewsRouter, reviewDeskRouter } from './routes/reviews.routes.js';
 import { healthCheck, liveness, readiness } from './controllers/health.controller.js';
 import { metricsEndpoint } from './controllers/metrics.controller.js';
 import { errorHandler } from './middleware/error.middleware.js';
@@ -107,6 +108,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/writing-assist', writingAssistRoutes);
 app.use('/api/blueprints', blueprintRoutes);
 app.use('/api/usage', usageRoutes);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/review-desk', reviewDeskRouter);
 
 // Health checks (no compression overhead)
 app.get('/health', healthCheck);

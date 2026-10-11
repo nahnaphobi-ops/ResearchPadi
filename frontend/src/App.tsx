@@ -17,6 +17,10 @@ const Subscribe = lazy(() => import('./pages/Subscribe'));
 const WorkspaceList = lazy(() => import('./pages/WorkspaceList'));
 const WorkspaceEditor = lazy(() => import('./pages/WorkspaceEditor'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Reviews = lazy(() => import('./pages/Reviews'));
+const ReviewDesk = lazy(() => import('./pages/ReviewDesk'));
+const ReviewWork = lazy(() => import('./pages/ReviewWork'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminOverview = lazy(() => import('./pages/admin/Overview'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminTransactions = lazy(() => import('./pages/admin/Transactions'));
@@ -49,6 +53,9 @@ function App() {
           <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
           <Route path="/workspace" element={<ProtectedRoute><WorkspaceList /></ProtectedRoute>} />
           <Route path="/workspace/:id" element={<ProtectedRoute><WorkspaceEditor /></ProtectedRoute>} />
+          <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+          <Route path="/review-desk" element={<ProtectedRoute><ReviewDesk /></ProtectedRoute>} />
+          <Route path="/review-desk/:id" element={<ProtectedRoute><ReviewWork /></ProtectedRoute>} />
           <Route path="/admin/login" element={<Navigate to="/login" replace />} />
           <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
           <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
@@ -56,6 +63,7 @@ function App() {
           <Route path="/admin/subscriptions" element={<ProtectedAdminRoute><AdminSubscriptions /></ProtectedAdminRoute>} />
           <Route path="/admin/papers" element={<ProtectedAdminRoute><AdminPapers /></ProtectedAdminRoute>} />
           <Route path="/admin/writing-assist" element={<ProtectedAdminRoute><AdminWritingAssist /></ProtectedAdminRoute>} />
+          <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviews /></ProtectedAdminRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

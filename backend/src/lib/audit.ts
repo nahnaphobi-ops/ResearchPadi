@@ -22,7 +22,12 @@ export type AuditEvent =
   | 'CONTENT_REJECTED'
   | 'USER_SUSPENDED'
   | 'SETTINGS_CHANGED'
-  | 'ADMIN_ACTION';
+  | 'ADMIN_ACTION'
+  | 'REVIEW_REQUESTED'
+  | 'REVIEW_CLAIMED'
+  | 'REVIEW_VIEWED'
+  | 'REVIEW_RETURNED'
+  | 'REVIEW_CANCELLED';
 
 interface AuditEntry {
   event: AuditEvent;

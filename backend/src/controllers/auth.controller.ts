@@ -7,6 +7,7 @@ import { generateNumericOtp, storeOtp, consumeOtp, normalizePhone, claimOtpCoold
 import { toGhanaMsisdn } from '../lib/phone.js';
 import { isArkeselConfigured, sendSms } from '../services/sms/arkesel.service.js';
 import { isAdminPhone } from '../lib/admins.js';
+import { isActiveReviewer } from '../services/reviews/review.service.js';
 
 const log = childLogger('auth');
 
@@ -21,8 +22,8 @@ function demoLoginAllowed(): boolean {
 }
 
 /** The frontend uses is_admin to show the admin area; the API re-checks on every admin request. */
-function withAdminFlag<T extends { phone?: string | null }>(user: T): T & { is_admin: boolean } {
-  return { ...user, is_admin: isAdminPhone(user.phone) };
+async function withRoles<T extends { id?: string; phone?: string | null }>(user: T): Promise<T & { is_admin: boolean; is_reviewer: boolean }> {
+  return { ...user, is_admin: isAdminPhone(user.phone), is_reviewer: await isActiveReviewer(user.id) };
 }
 
 function pickProfileUpdates(body: Record<string, unknown>) {
@@ -119,7 +120,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
   res.json({
     token,
-    user: withAdminFlag(user || { phone }),
+    user: await withRoles(user || { phone }),
     isNewUser,
   });
 };
@@ -135,7 +136,7 @@ export const getProfile = async (req: Request, res: Response) => {
     .single();
 
   if (error) return res.status(500).json({ error: 'Failed to load profile' });
-  res.json(withAdminFlag(user));
+  res.json(await withRoles(user));
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
@@ -156,7 +157,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     const newToken = signUserToken({ id: newUser.id, phone });
-    return res.json({ user: withAdminFlag(newUser), token: newToken });
+    return res.json({ user: await withRoles(newUser), token: newToken });
   }
 
   const { data: user, error } = await supabase
@@ -167,5 +168,5 @@ export const updateProfile = async (req: Request, res: Response) => {
     .single();
 
   if (error) return res.status(500).json({ error: 'Failed to update profile' });
-  res.json(withAdminFlag(user));
+  res.json(await withRoles(user));
 };

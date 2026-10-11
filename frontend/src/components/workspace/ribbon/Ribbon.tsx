@@ -7,7 +7,7 @@ import {
   Link as LinkIcon, List, ListChecks, ListOrdered, ListTree, Minus, Omega, PaintBucket, PanelRight, Pilcrow, Printer, Quote,
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
-  TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2,
+  TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -84,7 +84,8 @@ export interface RibbonProps {
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
-  onOpenPanel: (panel: 'ai' | 'citations' | 'sources') => void;
+  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'feedback') => void;
+  onRequestReview: () => void;
   onTogglePanel: () => void;
   onFitWidth: () => void;
   onBack: () => void;
@@ -583,6 +584,10 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="AI Review">
           <LargeButton icon={<Sparkles />} label="Check Document" onClick={() => props.onOpenPanel('ai')} />
           <LargeButton icon={<BookOpen />} label="Find Sources" onClick={() => props.onOpenPanel('citations')} />
+        </RibbonGroup>
+        <RibbonGroup label="Expert Review">
+          <LargeButton icon={<GraduationCap />} label="Request Review" onClick={props.onRequestReview} />
+          <LargeButton icon={<MessageSquareText />} label="Feedback" onClick={() => props.onOpenPanel('feedback')} />
         </RibbonGroup>
       </>
     ),

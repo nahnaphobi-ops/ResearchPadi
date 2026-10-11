@@ -12,6 +12,8 @@ export interface User {
   created_at?: string;
   // Set by the API when this phone is on the admin list; the API re-checks on every admin call.
   is_admin?: boolean;
+  // Approved human reviewer (opens the review desk).
+  is_reviewer?: boolean;
 }
 
 export interface Paper {

@@ -9,6 +9,7 @@ const adminLinks = [
   { path: '/admin/subscriptions', label: 'Subscriptions' },
   { path: '/admin/papers', label: 'Papers' },
   { path: '/admin/writing-assist', label: 'Writing Assist' },
+  { path: '/admin/reviews', label: 'Reviews' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

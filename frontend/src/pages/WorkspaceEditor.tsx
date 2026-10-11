@@ -1,25 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEditor, type JSONContent } from '@tiptap/react';
-import { StarterKit } from '@tiptap/starter-kit';
-import { Placeholder } from '@tiptap/extension-placeholder';
-import { TextAlign } from '@tiptap/extension-text-align';
-import { TextStyle } from '@tiptap/extension-text-style';
-import { Color } from '@tiptap/extension-color';
-import { FontFamily } from '@tiptap/extension-font-family';
-import { Highlight } from '@tiptap/extension-highlight';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableCell } from '@tiptap/extension-table-cell';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { Image } from '@tiptap/extension-image';
-import { Typography } from '@tiptap/extension-typography';
-import { Underline } from '@tiptap/extension-underline';
-import { TaskList } from '@tiptap/extension-task-list';
-import { TaskItem } from '@tiptap/extension-task-item';
-import { Subscript } from '@tiptap/extension-subscript';
-import { Superscript } from '@tiptap/extension-superscript';
 import { workspaceService } from '../services/workspaceService';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { exportToDocx } from '../utils/exportDocx';
@@ -29,13 +11,11 @@ import { SidePanel } from '../components/workspace/SidePanel';
 import { StatusBar } from '../components/workspace/StatusBar';
 import FindReplace from '../components/workspace/FindReplace';
 import Ribbon from '../components/workspace/ribbon/Ribbon';
-import { FontSize, Indent, LineHeight, PageBreak, ParagraphSpacing } from '../components/workspace/editorExtensions';
-import { SearchHighlight } from '../components/workspace/search';
-import { Bibliography, Citation, CitationManager } from '../components/workspace/citations/CitationExtension';
+import { workspaceExtensions } from '../components/workspace/editorSetup';
 import { MARGINS, PAGE_SIZES, loadPageSettings, pageDimensions, savePageSettings, type PageSettings } from '../components/workspace/pageLayout';
 import InlineAI from '../components/workspace/inlineAI/InlineAI';
+import RequestReviewModal from '../components/workspace/review/RequestReviewModal';
 import type { WorkspacePanel } from '../components/workspace/panels';
-import { AITargetHighlight } from '../components/workspace/inlineAI/aiTarget';
 import { subscriptionService } from '../services/subscriptionService';
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -48,7 +28,14 @@ export default function WorkspaceEditor() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
-  const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(null);
+  const [searchParams] = useSearchParams();
+  // ?panel=feedback (from the Reviews page or the review-ready SMS) opens that panel.
+  const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(() => {
+    const p = searchParams.get('panel');
+    return p === 'feedback' || p === 'sources' || p === 'citations' || p === 'ai' ? p : null;
+  });
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const [aiSelectedText, setAiSelectedText] = useState('');
   const [fullDocText, setFullDocText] = useState('');
   const [wordCount, setWordCount] = useState(0);
@@ -80,40 +67,7 @@ export default function WorkspaceEditor() {
   }, [toast]);
 
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
-        underline: false, // registered below with the rest of the formatting marks
-        link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
-      }),
-      Placeholder.configure({ placeholder: 'Start writing your paper here…' }),
-      TextStyle,
-      Color,
-      FontFamily,
-      FontSize,
-      LineHeight,
-      ParagraphSpacing,
-      Indent,
-      PageBreak,
-      SearchHighlight,
-      AITargetHighlight,
-      Citation,
-      Bibliography,
-      CitationManager,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Highlight.configure({ multicolor: true }),
-      Underline,
-      Subscript,
-      Superscript,
-      Table.configure({ resizable: true }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      Image,
-      Typography,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-    ],
+    extensions: workspaceExtensions(),
     content: activeSession?.content || '',
     editorProps: {
       attributes: {
@@ -314,6 +268,7 @@ export default function WorkspaceEditor() {
           onInsertToc={handleInsertToc}
           onOpenFind={setFind}
           onOpenPanel={(panel) => setSidePanel(panel)}
+          onRequestReview={() => setReviewOpen(true)}
           onTogglePanel={() => setSidePanel((cur) => (cur ? null : 'ai'))}
           onFitWidth={handleFitWidth}
           onBack={() => navigate('/workspace')}
@@ -356,7 +311,24 @@ export default function WorkspaceEditor() {
           fullDocText={fullDocText}
           onInsertAIContent={handleInsertAIContent}
           isPremium={isPremium}
+          onRequestReview={() => setReviewOpen(true)}
+          reviewRefreshKey={reviewRefreshKey}
         />
+        {reviewOpen && editor && (
+          <RequestReviewModal
+            editor={editor}
+            sessionId={id || ''}
+            isPremium={isPremium}
+            onBeforeSubmit={() => save(true)}
+            onClose={() => setReviewOpen(false)}
+            onSubmitted={() => {
+              setReviewOpen(false);
+              setReviewRefreshKey((k) => k + 1);
+              setSidePanel('feedback');
+              notify('Review requested. You will get an SMS when the feedback is ready.');
+            }}
+          />
+        )}
         {toast && (
           <div role="status" className="absolute left-1/2 -translate-x-1/2 bottom-4 z-50 max-w-[90%] bg-[#323130] text-white text-[12.5px] px-4 py-2 rounded shadow-lg no-print">
             {toast}

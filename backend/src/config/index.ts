@@ -20,6 +20,13 @@ export const CONFIG = {
       standard: 120,
       premium: 200,
     } as Record<string, number>,
+    // Human supervisor review (Premium). Reviewers are paid REVIEWER_SHARE of the fee.
+    REVIEW: {
+      EXCERPT_GHS: parseFloat(process.env.REVIEW_PRICE_EXCERPT_GHS || '120'),
+      FULL_GHS: parseFloat(process.env.REVIEW_PRICE_FULL_GHS || '350'),
+      TURNAROUND_HOURS: parseInt(process.env.REVIEW_TURNAROUND_HOURS || '48', 10),
+      REVIEWER_SHARE: parseFloat(process.env.REVIEWER_SHARE || '0.65'),
+    },
   },
   ARKESEL: {
     API_KEY: process.env.ARKESEL_API_KEY,
