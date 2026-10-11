@@ -57,6 +57,25 @@ async function ensureProjectActiveViaPat() {
   log.info({ httpStatus: restore.status }, '[KeepAlive] Restore requested');
 }
 
+// Render's free tier sleeps after 15 min without inbound traffic. Render sets
+// RENDER_EXTERNAL_URL on web services; hitting our own public URL counts as
+// inbound traffic, so the instance never goes idle. (The GitHub Actions
+// render-keepalive workflow is the backup that wakes it if it ever does sleep.)
+const SELF_URL = process.env.KEEPALIVE_URL || process.env.RENDER_EXTERNAL_URL;
+
+if (SELF_URL) {
+  cron.schedule('*/10 * * * *', async () => {
+    try {
+      const res = await fetch(`${SELF_URL.replace(/\/$/, '')}/health/live`, {
+        signal: AbortSignal.timeout(30_000),
+      });
+      log.debug({ status: res.status }, '[KeepAlive] Self-ping');
+    } catch (err: any) {
+      log.warn({ err: err.message }, '[KeepAlive] Self-ping failed');
+    }
+  });
+}
+
 // Every 6 hours: keep Supabase from pausing after ~7 days of inactivity
 cron.schedule('0 */6 * * *', async () => {
   log.info('[KeepAlive] Pinging Supabase to prevent project pausing');
