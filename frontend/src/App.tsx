@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { useAuthStore } from './store/useAuthStore';
+import { useIdleLogout } from './hooks/useIdleLogout';
 import { authService } from './services/apiService';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
@@ -50,6 +51,7 @@ function useRoleSync() {
 
 function App() {
   useRoleSync();
+  useIdleLogout();
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
