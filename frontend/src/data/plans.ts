@@ -7,11 +7,11 @@
 export const FULL_PAPER = {
   price: 250,
   features: [
-    'Complete paper researched and written for you',
+    'A full researched draft to study and learn from',
+    'Structured for your institution and programme',
     'AI supervisor review before delivery',
-    'APA 7th Edition citations',
-    'Tailored to your institution and programme',
-    'DOCX download with AI disclosure',
+    'References checked, with doubtful ones flagged',
+    'DOCX download, clearly marked as AI-written',
   ],
 };
 
@@ -36,6 +36,9 @@ export const WORKSPACE_PLANS = {
     features: [
       'Everything in Standard',
       'Unlimited workspace sessions',
+      'AI inside the editor: select text to improve, explain or continue it',
+      'Upload your own sources and ask questions about them',
+      'Book a human supervisor review of your writing',
       'Priority support',
     ],
   },

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import BrandLogo from '../components/common/BrandLogo';
 import HeroStudent from '../components/brand/HeroStudent';
@@ -118,12 +118,11 @@ export default function Landing() {
               <span className="h-1.5 w-1.5 rounded-full bg-gold/80" aria-hidden="true" /> Built for Ghanaian academic work
             </p>
             <h1 className="text-[2.35rem] sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.12] text-navy mb-6 fade-up fade-up-delay">
-              From brief to&nbsp;
-              <span className="text-brand">supervisor-ready</span>
-              &nbsp;draft in minutes.
+              Write your research paper with&nbsp;
+              <span className="text-brand">AI beside you</span>.
             </h1>
             <p className="text-sm text-muted leading-relaxed mb-6 max-w-md fade-up fade-up-delay">
-              ResearchPadi writes, cites, and quality-checks your research paper — written for students at KNUST, UG, UCC, UPSA and every Ghanaian university.
+              ResearchPadi helps you research, structure, cite and check your paper. Built for students at KNUST, UG, UCC, UPSA and every Ghanaian university.
             </p>
             <ul className="space-y-2 mb-7 fade-up fade-up-delay-2">
               {['Tailored to your institution and programme', 'AI writing workspace with live suggestions', 'Plagiarism check before you submit'].map((item) => (
@@ -233,7 +232,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center mb-10 reveal">
             <p className="eyebrow mb-3">What you get</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Everything you need to submit with confidence</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Everything you need to write with confidence</h2>
             <p className="text-sm text-muted mt-3 max-w-lg mx-auto">From first draft to final export — pick what you need and the plan that covers it.</p>
           </div>
 
@@ -310,7 +309,7 @@ export default function Landing() {
           <div className="text-center mb-12 reveal">
             <p className="eyebrow mb-3">Pricing</p>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Student-friendly plans. No surprises.</h2>
-            <p className="text-sm text-muted mt-3 max-w-lg mx-auto">All prices in GHS. Monthly plans never auto-renew. No hidden fees.</p>
+            <p className="text-sm text-muted mt-3 max-w-lg mx-auto">All prices in GHS. 30-day plans never auto-renew. No hidden fees.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {pricingPlans.map((plan, i) => (
@@ -359,7 +358,7 @@ export default function Landing() {
             <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full border border-white/10" />
             <div className="absolute -right-4 -bottom-8 w-24 h-24 rounded-full bg-brand/20" />
             <p className="eyebrow text-gold mb-3 relative z-10">Get in touch</p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 relative z-10">Your supervisor-ready draft is one brief away.</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 relative z-10">Your next paper starts with one brief.</h2>
             <p className="text-sm text-white/70 mb-8 relative z-10">Questions about plans, payment, or your university's format? Message us — we reply Mon–Fri, 8am–6pm.</p>
             <div className="space-y-3 mb-8 relative z-10">
               <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-3 text-sm text-white/85 hover:text-gold w-fit"><Mail size={16} /> {CONTACT_EMAIL}</a>
@@ -419,7 +418,11 @@ export default function Landing() {
             <p>&copy; {new Date().getFullYear()} ResearchPadi &middot; Kumasi, Ghana</p>
             <span className="text-white/20">|</span>
             <span className="inline-flex items-center gap-1"><Shield size={11} className="text-gold" /> SSL secured</span>
-            <span className="inline-flex items-center gap-1"><CheckCircle size={11} className="text-gold" /> KNUST · UG · UCC · UPSA</span>
+            <span className="inline-flex items-center gap-1"><CheckCircle size={11} className="text-gold" /> Built for Ghanaian students</span>
+            <span className="text-white/20">|</span>
+            <Link to="/terms" className="hover:text-white transition">Terms</Link>
+            <Link to="/privacy" className="hover:text-white transition">Privacy</Link>
+            <Link to="/refunds" className="hover:text-white transition">Refunds</Link>
           </div>
         </div>
       </footer>

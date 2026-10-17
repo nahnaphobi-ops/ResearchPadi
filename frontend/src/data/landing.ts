@@ -31,13 +31,13 @@ export const useCases: UseCase[] = [
   {
     key: 'research',
     icon: FileText,
-    title: 'Write a complete research paper',
-    desc: 'Give us your topic and brief. We draft the whole paper, chapter by chapter, ready for you to review.',
-    points: ['Brief-to-outline structuring', 'Chapter-by-chapter drafting', 'APA 7th citations, DOCX export'],
+    title: 'Study from a full research draft',
+    desc: 'Give us your topic and brief. We research and draft a full paper, chapter by chapter, for you to study and then rewrite in your own words.',
+    points: ['Brief-to-outline structuring', 'Chapter-by-chapter study draft', 'Checked references, DOCX export'],
     image: '/landing/course-research.webp',
     imageAlt: 'Student writing a research paper in a university library',
     plan: 'paper',
-    planLabel: 'Complete Paper · GHS 250 per paper',
+    planLabel: 'Study Draft · GHS 250 per draft',
   },
   {
     key: 'thesis',
@@ -86,12 +86,12 @@ export const pricingPlans: {
 }[] = [
   {
     key: 'paper',
-    name: 'Complete Paper',
+    name: 'Study Draft',
     price: `GHS ${FULL_PAPER.price}`,
-    period: '/paper',
-    desc: 'Full end-to-end AI paper generation',
+    period: '/draft',
+    desc: 'A full AI research draft to learn from',
     features: FULL_PAPER.features,
-    cta: 'Order a Paper',
+    cta: 'Order a Study Draft',
     highlighted: false,
   },
   {
@@ -117,9 +117,10 @@ export const pricingPlans: {
 ];
 
 export const faqs = [
-  { q: 'What makes ResearchPadi different from ChatGPT?', a: 'ResearchPadi is built around Ghanaian academic work: it writes for your institution and programme, uses standard citation styles, and draws on sources from Ghanaian university repositories. Your draft lives in a research workspace with citations and checks — not a generic chat thread.' },
-  { q: 'Is the content plagiarism-free?', a: 'Drafts are written fresh for your brief, and before you export, our plagiarism check compares your text against the Ghanaian academic repositories we index. Always review your draft and run your university\'s own checker before submitting.' },
+  { q: 'What makes ResearchPadi different from ChatGPT?', a: 'ResearchPadi is built around Ghanaian academic work: it follows your institution and programme\'s format, uses standard citation styles, and draws on sources from Ghanaian university repositories. Your draft lives in a research workspace with citations and checks — not a generic chat thread.' },
+  { q: 'Can I submit a study draft as my own work?', a: 'No. A study draft is written by AI, and the downloaded file says so on every page. Use it to understand your topic, plan your chapters and find sources, then write your paper yourself. The Workspace helps you do that with AI beside you. Submitting AI-written work as your own breaks most universities\' rules.' },
+  { q: 'Does ResearchPadi check for plagiarism?', a: 'Yes. In the Workspace, our plagiarism check compares your writing against the Ghanaian academic repositories we index. It doesn\'t replace your university\'s own checker, so run that too before you submit.' },
   { q: 'Which universities does ResearchPadi support?', a: 'We support Ghanaian tertiary institutions including KNUST, University of Ghana, UCC, UPSA, GIMPA, Ashesi, Technical Universities, and more.' },
-  { q: 'Can I use ResearchPadi for my thesis or dissertation?', a: 'Yes. The workspace has outline, abstract and chapter tools, and Premium removes the session limit so a long thesis fits in one place. The Complete Paper service can also draft up to 25,000 words.' },
-  { q: 'How accurate are the citations?', a: 'Citations come from real academic databases (OpenAlex and Semantic Scholar) and are cross-checked before they reach your draft. We support APA, MLA, Chicago, and Harvard. Always confirm each source before you submit.' },
+  { q: 'Can I use ResearchPadi for my thesis or dissertation?', a: 'Yes. The workspace has outline, abstract and chapter tools, and Premium removes the session limit so a long thesis fits in one place. A Study Draft can also cover up to 25,000 words for you to learn from.' },
+  { q: 'How accurate are the citations?', a: 'Sources come from real academic databases (OpenAlex and Semantic Scholar) and Ghanaian repositories. Before a study draft is delivered, every reference is checked against those sources, and any we can\'t match are flagged on your paper page so you can check or replace them. We support APA, MLA, Chicago and Harvard. Always confirm each source yourself.' },
 ];

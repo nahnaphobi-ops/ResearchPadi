@@ -1,15 +1,26 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Header, BorderStyle } from 'docx';
+
+/**
+ * Every study draft carries this statement: in a box above the title and again
+ * at the end. It can't be switched off, and it describes what actually happened
+ * (the AI wrote the draft), unlike the author-written disclosure templates.
+ */
+export const STUDY_DRAFT_NOTICE =
+  'This document was researched and written by artificial intelligence (ResearchPadi) from a brief supplied by the student. ' +
+  "It is a study and reference draft, not the student's own work. Use it to understand the topic, plan your chapters and find sources, " +
+  'then write your paper in your own words. Do not submit this draft, or any part of it, as your own work. ' +
+  'Check every reference against the original source before you rely on it.';
+
+export const STUDY_DRAFT_HEADER = 'AI-generated study draft (ResearchPadi) · not for submission as your own work';
 
 export interface DocxProvenance {
   paperId: string;
   generatedAt: string;
-  disclosureId: string;
-  disclosureName: string;
-  disclosureText: string;
-  includeStatement: boolean;
   toolName?: string;
   toolVersion?: string;
 }
+
+const FONT = 'Times New Roman';
 
 function bodyParagraphs(content: string) {
   return content.split('\n').map(line => {
@@ -19,7 +30,7 @@ function bodyParagraphs(content: string) {
         new TextRun({
           text: line,
           size: 24,
-          font: 'Times New Roman',
+          font: FONT,
           bold: !!isHeading
         })
       ],
@@ -33,32 +44,50 @@ function bodyParagraphs(content: string) {
   });
 }
 
-function disclosureParagraphs(provenance: DocxProvenance) {
-  if (!provenance.includeStatement) return [];
+function noticeBox(provenance: DocxProvenance) {
+  // Three paragraphs sharing side borders read as one shaded box.
+  const border = { style: BorderStyle.SINGLE, size: 8, color: 'B45309', space: 6 };
   return [
     new Paragraph({
-      text: 'AI Assistance Disclosure',
+      children: [new TextRun({ text: 'STUDY DRAFT · WRITTEN BY AI', bold: true, size: 22, font: FONT, color: 'B45309' })],
+      border: { top: border, left: border, right: border },
+      shading: { fill: 'FFF7ED' },
+      spacing: { before: 0, after: 0 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: STUDY_DRAFT_NOTICE, size: 22, font: FONT })],
+      border: { left: border, right: border },
+      shading: { fill: 'FFF7ED' },
+      alignment: AlignmentType.JUSTIFIED,
+      spacing: { before: 80, after: 0, line: 300 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: `Draft ID ${provenance.paperId} · Generated ${provenance.generatedAt}`, size: 18, font: FONT, color: '6B7C93' })],
+      border: { bottom: border, left: border, right: border },
+      shading: { fill: 'FFF7ED' },
+      spacing: { before: 80, after: 400 },
+    }),
+  ];
+}
+
+function closingStatement(provenance: DocxProvenance) {
+  return [
+    new Paragraph({
+      text: 'About this study draft',
       heading: HeadingLevel.HEADING_2,
       spacing: { before: 600, after: 200 }
     }),
     new Paragraph({
-      children: [
-        new TextRun({
-          text: provenance.disclosureText,
-          size: 24,
-          font: 'Times New Roman',
-          italics: true
-        })
-      ],
+      children: [new TextRun({ text: STUDY_DRAFT_NOTICE, size: 24, font: FONT, italics: true })],
       alignment: AlignmentType.JUSTIFIED,
       spacing: { line: 360, before: 120, after: 120 }
     }),
     new Paragraph({
       children: [
         new TextRun({
-          text: `Marked under EU AI Act Article 50 · ${provenance.disclosureName} · Generated ${provenance.generatedAt}`,
+          text: `Marked as AI-generated under EU AI Act Article 50 · Draft ID ${provenance.paperId} · Generated ${provenance.generatedAt}`,
           size: 20,
-          font: 'Times New Roman',
+          font: FONT,
           color: '6B7C93'
         })
       ],
@@ -67,20 +96,17 @@ function disclosureParagraphs(provenance: DocxProvenance) {
   ];
 }
 
-export const generateDocx = async (title: string, content: string, provenance?: DocxProvenance) => {
-  const generatedAt = provenance?.generatedAt || new Date().toISOString();
-  const toolName = provenance?.toolName || 'ResearchPadi';
-  const toolVersion = provenance?.toolVersion || '1.0';
+export const generateDocx = async (title: string, content: string, provenance: DocxProvenance) => {
+  const toolName = provenance.toolName || 'ResearchPadi';
+  const toolVersion = provenance.toolVersion || '1.0';
 
   const doc = new Document({
     creator: toolName,
     lastModifiedBy: toolName,
     title,
-    subject: 'AI-assisted academic research paper',
-    description: provenance
-      ? `AI-generated academic content marked for EU AI Act Article 50 transparency. Disclosure: ${provenance.disclosureName}.`
-      : 'Academic research paper exported from ResearchPadi.',
-    keywords: 'AI-generated, ResearchPadi, EU AI Act Article 50, academic writing, provenance',
+    subject: 'AI-generated academic study draft',
+    description: 'AI-generated study draft, not the student\'s own work. Marked for EU AI Act Article 50 transparency.',
+    keywords: 'AI-generated, study draft, ResearchPadi, EU AI Act Article 50, provenance',
     customProperties: [
       { name: 'c2pa.claimGenerator', value: `${toolName}/${toolVersion}` },
       { name: 'c2pa.digitalSourceType', value: 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' },
@@ -92,11 +118,10 @@ export const generateDocx = async (title: string, content: string, provenance?: 
       { name: 'ai.generated', value: 'true' },
       { name: 'ai.tool', value: toolName },
       { name: 'ai.toolVersion', value: toolVersion },
-      { name: 'ai.generatedAt', value: generatedAt },
-      { name: 'ai.paperId', value: provenance?.paperId || '' },
-      { name: 'ai.disclosureId', value: provenance?.disclosureId || '' },
-      { name: 'ai.disclosureName', value: provenance?.disclosureName || '' },
-      { name: 'ai.disclosureText', value: (provenance?.disclosureText || '').slice(0, 255) },
+      { name: 'ai.generatedAt', value: provenance.generatedAt },
+      { name: 'ai.paperId', value: provenance.paperId },
+      { name: 'ai.documentType', value: 'study-draft' },
+      { name: 'ai.disclosureText', value: STUDY_DRAFT_NOTICE.slice(0, 255) },
     ],
     sections: [
       {
@@ -110,7 +135,18 @@ export const generateDocx = async (title: string, content: string, provenance?: 
             }
           }
         },
+        headers: {
+          default: new Header({
+            children: [
+              new Paragraph({
+                children: [new TextRun({ text: STUDY_DRAFT_HEADER, size: 16, font: FONT, color: 'B45309' })],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        },
         children: [
+          ...noticeBox(provenance),
           new Paragraph({
             text: title,
             heading: HeadingLevel.HEADING_1,
@@ -118,7 +154,7 @@ export const generateDocx = async (title: string, content: string, provenance?: 
             spacing: { after: 400 }
           }),
           ...bodyParagraphs(content),
-          ...(provenance ? disclosureParagraphs(provenance) : [])
+          ...closingStatement(provenance)
         ]
       }
     ]

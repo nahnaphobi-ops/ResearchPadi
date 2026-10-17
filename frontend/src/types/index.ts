@@ -36,10 +36,28 @@ export interface Paper {
   resupervised_at?: string | null;
   abstract?: string;
   sources_used: unknown[];
+  // Reference check run before delivery (missing if the check couldn't run).
+  citation_status?: 'verified' | 'needs_review' | null;
+  citation_report?: CitationReport | null;
   file_url_docx?: string;
   file_url_pdf?: string;
   created_at: string;
   completed_at?: string;
+}
+
+/** Summary saved on a paper by the backend's citation verification (verify/types.ts). */
+export interface CitationReport {
+  total_citations: number;
+  verified: number;
+  partial_match: number;
+  unverified: number;
+  results: {
+    citation_id: string;
+    raw_string: string;
+    parsed_title?: string;
+    parsed_year?: number;
+    match_status: 'verified' | 'partial_match' | 'unverified';
+  }[];
 }
 
 export interface Wallet {

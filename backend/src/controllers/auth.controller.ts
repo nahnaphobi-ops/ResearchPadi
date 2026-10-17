@@ -103,9 +103,12 @@ export const verifyOtp = async (req: Request, res: Response) => {
 
   const isDemo = demoLoginAllowed() && phone === DEMO_PHONE && otp === DEMO_OTP;
   const isDevBypass = CONFIG.NODE_ENV !== 'production' && otp === DEMO_OTP;
-  const valid = isDemo || isDevBypass || await consumeOtp('user', phone, otp);
+  const check = isDemo || isDevBypass ? 'valid' : await consumeOtp('user', phone, otp);
 
-  if (!valid) {
+  if (check === 'locked') {
+    return res.status(429).json({ error: 'Too many wrong codes. Please request a new code.' });
+  }
+  if (check !== 'valid') {
     return res.status(400).json({ error: 'Invalid OTP' });
   }
 

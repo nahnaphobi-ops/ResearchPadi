@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
 import BrandLogo from '../components/common/BrandLogo';
@@ -131,7 +131,7 @@ export default function Login() {
           <HeroStudent className="w-full max-w-sm" />
           <div className="max-w-md">
             <p className="display text-4xl leading-tight mb-4">
-              From brief to <span className="text-gold">supervisor-ready</span> draft.
+              Research and write with <span className="text-gold">AI beside you</span>.
             </p>
             <p className="text-white/70 text-sm leading-relaxed mb-6">
               The AI writing platform built for students at KNUST, UG, UCC, UPSA and every Ghanaian university.
@@ -189,6 +189,11 @@ export default function Login() {
               <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
                 {loading ? 'Sending...' : 'Send OTP'}
               </button>
+              <p className="text-xs text-muted text-center leading-relaxed">
+                By continuing you agree to our{' '}
+                <Link to="/terms" className="text-brand font-semibold hover:underline">Terms of Service</Link> and{' '}
+                <Link to="/privacy" className="text-brand font-semibold hover:underline">Privacy Policy</Link>.
+              </p>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">

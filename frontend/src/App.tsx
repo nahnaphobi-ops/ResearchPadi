@@ -30,6 +30,9 @@ const AdminTransactions = lazy(() => import('./pages/admin/Transactions'));
 const AdminSubscriptions = lazy(() => import('./pages/admin/Subscriptions'));
 const AdminPapers = lazy(() => import('./pages/admin/Papers'));
 const AdminWritingAssist = lazy(() => import('./pages/admin/WritingAssist'));
+const Terms = lazy(() => import('./pages/legal/Terms'));
+const Privacy = lazy(() => import('./pages/legal/Privacy'));
+const Refunds = lazy(() => import('./pages/legal/Refunds'));
 
 function LoadingSpinner() {
   return (
@@ -59,6 +62,9 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/refunds" element={<Refunds />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
           <Route path="/new-paper" element={<ProtectedRoute><NewPaper /></ProtectedRoute>} />

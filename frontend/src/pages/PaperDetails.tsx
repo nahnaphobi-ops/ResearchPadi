@@ -4,7 +4,8 @@ import { paperService } from '../services/apiService';
 import AppShell from '../components/layout/AppShell';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
 import PaperStatusBadge from '../components/papers/PaperStatusBadge';
-import { ArrowLeft, Download, FileSearch } from 'lucide-react';
+import ReferenceCheck from '../components/papers/ReferenceCheck';
+import { ArrowLeft, BookOpen, Download, FileSearch } from 'lucide-react';
 import type { Paper } from '../types';
 
 export default function PaperDetails() {
@@ -91,13 +92,22 @@ export default function PaperDetails() {
 
         {inProgress && (
           <div className="mb-6 p-4 rounded-xl bg-orange-50 border border-orange-200 text-sm">
-            <p className="font-bold text-orange-700">Your paper is being written</p>
+            <p className="font-bold text-orange-700">Your study draft is being written</p>
             <p className="text-orange-700">{paper.progress_step || 'Working on it'} · this page updates automatically.</p>
           </div>
         )}
         {paper.status === 'failed' && (
           <div className="mb-6 p-4 rounded-xl bg-red-100 text-sm text-red-700">
-            Generation failed{paper.progress_step ? `: ${paper.progress_step}` : ''}. Contact hello@researchpadi.com and we'll sort it out.
+            {paper.progress_step || 'Generation failed.'} Contact hello@researchpadi.com if you need help.
+          </div>
+        )}
+        {paper.status === 'completed' && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-ink flex gap-2.5">
+            <BookOpen size={16} className="text-amber-700 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              <span className="font-bold">This is an AI-written study draft.</span> Use it to understand your topic and plan your work,
+              then write your paper in your own words. Don't submit it as your own work.
+            </p>
           </div>
         )}
 
@@ -109,9 +119,15 @@ export default function PaperDetails() {
         )}
 
         {paper.status === 'completed' && (
+          <div className="mb-6">
+            <ReferenceCheck paper={paper} />
+          </div>
+        )}
+
+        {paper.status === 'completed' && (
           <div className="flex flex-wrap gap-3">
             <button onClick={() => navigate(`/papers/${paper.id}/review`)} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
-              <FileSearch size={16} /> Review paper
+              <FileSearch size={16} /> Read study draft
             </button>
             <button onClick={() => setShowDownload(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
               <Download size={16} /> Download .docx
@@ -123,7 +139,6 @@ export default function PaperDetails() {
         <DownloadDisclosureModal
           paperId={id}
           topic={paper.topic}
-          institutionName={paper.institution_name}
           onClose={() => setShowDownload(false)}
         />
       )}

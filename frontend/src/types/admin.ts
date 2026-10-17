@@ -58,5 +58,6 @@ export interface AdminPaper {
   status: string;
   actual_word_count?: number;
   target_word_count?: number;
+  citation_status?: 'verified' | 'needs_review' | null;
   created_at: string;
 }

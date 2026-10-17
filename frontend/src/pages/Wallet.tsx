@@ -7,7 +7,7 @@ import type { Transaction } from '../types';
 const QUICK_AMOUNTS = [
   { value: 120, label: 'Standard' },
   { value: 200, label: 'Premium' },
-  { value: 250, label: 'Full paper' },
+  { value: 250, label: 'Study draft' },
 ];
 
 const PRODUCT_LABELS: Record<string, string> = {
@@ -16,8 +16,8 @@ const PRODUCT_LABELS: Record<string, string> = {
   workspace_premium: 'Premium plan (30 days)',
   workspace_standard_refund: 'Standard plan refund',
   workspace_premium_refund: 'Premium plan refund',
-  full_paper: 'Full paper',
-  full_paper_refund: 'Full paper refund',
+  full_paper: 'Study draft',
+  full_paper_refund: 'Study draft refund',
 };
 
 export default function Wallet() {
@@ -171,12 +171,15 @@ export default function Wallet() {
               <p className="text-muted text-center py-8 text-sm">No transactions yet. Top-ups and payments will show here.</p>
             ) : history.map(tx => (
               <div key={tx.id} className="flex justify-between items-center p-3 bg-navy-mist rounded-[10px]">
-                <div>
+                <div className="min-w-0">
                   <div className="text-sm font-bold text-ink">{new Date(tx.created_at).toLocaleDateString()}</div>
                   <div className="text-xs text-muted">{(tx.product && PRODUCT_LABELS[tx.product]) || tx.product || tx.reference}</div>
+                  {tx.reference && tx.product && (
+                    <div className="text-[10px] text-muted font-mono break-all">Ref: {tx.reference}</div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <div className={tx.type === 'credit' ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                <div className="text-right shrink-0 pl-3">
+                  <div className={`whitespace-nowrap font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                     {tx.type === 'credit' ? '+' : '-'}GHS {tx.amount_ghs.toFixed(2)}
                   </div>
                   <div className={`text-[10px] uppercase font-bold ${tx.status === 'success' ? 'text-green-500' : tx.status === 'pending' ? 'text-orange-500' : 'text-red-500'}`}>

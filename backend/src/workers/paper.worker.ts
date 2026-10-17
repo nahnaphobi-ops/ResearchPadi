@@ -90,7 +90,7 @@ async function runPipeline(job: Job<PaperJobData>) {
 
     // Step 3: Supervision, one chapter per call (a whole-paper review was cut off at the output limit)
     await job.updateProgress(65);
-    await updateProgress(d.paperId, 'Human voice supervision pass...');
+    await updateProgress(d.paperId, 'Supervisor review...');
     const supervisedChapters = await superviseChapters(chapters, chapterInfo, d, allSources);
 
     // Step 4: Abstract from the supervised chapters, references, assemble
@@ -110,14 +110,17 @@ async function runPipeline(job: Job<PaperJobData>) {
         paperId: d.paperId,
         fullContent: finalizedPaper,
       });
+      // Delivered either way: the paper's citation_report lists the references
+      // that couldn't be matched, and the student and admins see them flagged.
       if (citationSummary.policy.action === 'manual_review') {
         log.warn(
           { paperId: d.paperId, ratio: citationSummary.policy.unverified_ratio },
-          'Citations below confidence threshold — routing to manual review, blocking auto-delivery',
+          'Many references could not be matched; delivering with them flagged for the student',
         );
       }
     } catch (cvErr: any) {
-      // Verification must never block the pipeline. Flag and continue.
+      // Verification must never block the pipeline. The paper shows its
+      // references as unchecked (no citation_status) and the student is told.
       log.error({ paperId: d.paperId, err: cvErr.message }, 'Citation verification failed; continuing delivery');
     }
 
@@ -136,11 +139,16 @@ async function runPipeline(job: Job<PaperJobData>) {
     return { paperId: d.paperId, status: 'completed' };
 
   } catch (error: any) {
-    log.error({ paperId: d.paperId, err: error.message }, 'Pipeline failed');
-    await supabase.from('papers').update({
-      status: 'failed',
-      progress_step: `Error: ${error.message}`,
-    }).eq('id', d.paperId);
+    // attemptsMade counts earlier attempts while this one is running.
+    const attempts = job.opts.attempts ?? 1;
+    const finalAttempt = job.attemptsMade + 1 >= attempts;
+    log.error({ paperId: d.paperId, err: error.message, attempt: job.attemptsMade + 1, attempts }, 'Pipeline failed');
+    // Students see a plain message; the real error stays in the logs.
+    await supabase.from('papers').update(
+      finalAttempt
+        ? { status: 'failed', progress_step: 'Generation failed.' }
+        : { progress_step: 'We hit a problem and are retrying automatically...' },
+    ).eq('id', d.paperId);
     throw error;
   }
 }

@@ -47,12 +47,13 @@ export default function AdminPapers() {
       ) : (
         <>
           <div className="bg-white rounded-[14px] border border-rule shadow-soft overflow-x-auto">
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[760px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">User ID</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Title</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">References</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Words</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Created</th>
                 </tr>
@@ -70,6 +71,12 @@ export default function AdminPapers() {
                       }`}>
                         {paper.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {paper.status !== 'completed' ? <span className="text-gray-400">—</span>
+                        : paper.citation_status === 'needs_review' ? <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 font-semibold">Needs checking</span>
+                        : paper.citation_status === 'verified' ? <span className="px-2 py-1 rounded bg-green-100 text-green-700">Checked</span>
+                        : <span className="px-2 py-1 rounded bg-gray-100 text-gray-600">Not checked</span>}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{paper.actual_word_count || 0} / {paper.target_word_count || 0}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{new Date(paper.created_at).toLocaleDateString()}</td>

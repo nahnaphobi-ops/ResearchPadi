@@ -5,10 +5,44 @@ import { toGhanaMsisdn } from './phone.js';
 
 export const OTP_TTL_MINUTES = 5;
 const OTP_TTL_MS = OTP_TTL_MINUTES * 60 * 1000;
+/** Wrong guesses allowed per code before it is thrown away. */
+export const MAX_OTP_ATTEMPTS = 5;
 const memory = new Map<string, { hash: string; expires: number }>();
+const attempts = new Map<string, { count: number; expires: number }>();
+
+export type OtpCheck = 'valid' | 'invalid' | 'locked';
 
 function otpKey(purpose: string, id: string): string {
   return `otp:${purpose}:${id}`;
+}
+
+function attemptsKey(purpose: string, id: string): string {
+  return `otp-attempts:${purpose}:${id}`;
+}
+
+/** Count one verification attempt for this phone (atomic in Redis) and return the running total. */
+async function countAttempt(key: string): Promise<number> {
+  const redis = getReadyRedis();
+  if (redis) {
+    const count = await redis.incr(key);
+    if (count === 1) await redis.pexpire(key, OTP_TTL_MS);
+    return count;
+  }
+  const now = Date.now();
+  const row = attempts.get(key);
+  const live = row && row.expires > now;
+  const count = live ? row.count + 1 : 1;
+  attempts.set(key, { count, expires: live ? row.expires : now + OTP_TTL_MS });
+  if (attempts.size > 10_000) {
+    for (const [k, v] of attempts) if (v.expires <= now) attempts.delete(k);
+  }
+  return count;
+}
+
+async function clearAttempts(key: string): Promise<void> {
+  const redis = getReadyRedis();
+  if (redis) await redis.del(key);
+  else attempts.delete(key);
 }
 
 export function generateNumericOtp(): string {
@@ -20,6 +54,9 @@ export async function storeOtp(purpose: string, id: string, otp: string): Promis
   const redis = getReadyRedis();
   const key = otpKey(purpose, id);
 
+  // A new code gets a fresh set of attempts.
+  await clearAttempts(attemptsKey(purpose, id));
+
   if (redis) {
     await redis.set(key, hash, 'PX', OTP_TTL_MS);
     return;
@@ -28,9 +65,18 @@ export async function storeOtp(purpose: string, id: string, otp: string): Promis
   memory.set(key, { hash, expires: Date.now() + OTP_TTL_MS });
 }
 
-export async function consumeOtp(purpose: string, id: string, otp: string): Promise<boolean> {
+/**
+ * Check a code. Each attempt is counted per phone before the code is compared,
+ * so guesses spread across many IPs (or sent all at once) still stop after
+ * MAX_OTP_ATTEMPTS; then the code is deleted and a new one must be requested.
+ */
+export async function consumeOtp(purpose: string, id: string, otp: string): Promise<OtpCheck> {
   const redis = getReadyRedis();
   const key = otpKey(purpose, id);
+  const tries = attemptsKey(purpose, id);
+  const attempt = await countAttempt(tries);
+  if (attempt > MAX_OTP_ATTEMPTS) return 'locked';
+
   let hash: string | null = null;
 
   if (redis) {
@@ -40,14 +86,18 @@ export async function consumeOtp(purpose: string, id: string, otp: string): Prom
     if (row && row.expires > Date.now()) hash = row.hash;
   }
 
-  if (!hash) return false;
+  if (!hash) return 'invalid';
 
   const ok = await bcrypt.compare(String(otp), hash);
-  if (ok) {
+  if (ok || attempt >= MAX_OTP_ATTEMPTS) {
     if (redis) await redis.del(key);
     else memory.delete(key);
   }
-  return ok;
+  if (ok) {
+    await clearAttempts(tries);
+    return 'valid';
+  }
+  return attempt >= MAX_OTP_ATTEMPTS ? 'locked' : 'invalid';
 }
 
 const cooldowns = new Map<string, number>();

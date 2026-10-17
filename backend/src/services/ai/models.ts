@@ -5,7 +5,7 @@
  *
  * Tiers are sized to the job, cheapest first:
  *   light       short edits of a selection, topic/question suggestions
- *   drafting    long-form writing (chapters, abstracts, humanizing)
+ *   drafting    long-form writing (chapters, abstracts, references)
  *   supervision one review pass per paper, where quality matters most
  *   research    live web research with citations
  *

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiErrorMessage } from '../utils/apiError';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import { paymentService } from '../services/paymentService';
 import { useAuthStore } from '../store/useAuthStore';
@@ -24,6 +24,7 @@ export default function FullPaperForm() {
     research_questions: '',
   });
 
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refining, setRefining] = useState(false);
@@ -84,7 +85,7 @@ export default function FullPaperForm() {
     setLoading(true);
     setError('');
     try {
-      await paperService.submitFullPaper(formData);
+      await paperService.submitFullPaper({ ...formData, usage_agreed: agreed });
       navigate(`/dashboard`);
     } catch (err) {
       setError(apiErrorMessage(err, 'Submission failed'));
@@ -99,9 +100,9 @@ export default function FullPaperForm() {
       <button onClick={() => navigate('/new-paper')} className="text-sm text-muted hover:text-navy font-medium inline-flex items-center gap-1.5 mb-6">
         <ArrowLeft size={15} /> Back
       </button>
-      <p className="eyebrow mb-2">Full paper</p>
-      <h1 className="text-3xl font-bold mb-2 text-navy">New full paper</h1>
-      <p className="mb-6 text-muted">Provide your paper details below. Our AI pipeline will research, draft, and review a complete academic paper.</p>
+      <p className="eyebrow mb-2">Study draft</p>
+      <h1 className="text-3xl font-bold mb-2 text-navy">New study draft</h1>
+      <p className="mb-6 text-muted">Tell us about your paper. Our AI will research and draft a full paper for you to study from, then you write your own in your own words.</p>
 
       {error && <div role="alert" className="p-4 mb-6 bg-red-100 text-red-700 rounded-[10px] text-sm">{error}</div>}
 
@@ -227,8 +228,25 @@ export default function FullPaperForm() {
           )}
         </div>
 
+        <label className="flex items-start gap-3 p-4 rounded-[14px] border-2 border-amber-200 bg-amber-50 text-sm text-ink cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-1 w-4 h-4 accent-brand shrink-0"
+            required
+          />
+          <span className="leading-relaxed">
+            I understand this is a <strong>study draft written by AI</strong>. I'll use it to learn and plan my own work, and I
+            won't submit it, or any part of it, as my own work. I agree to the{' '}
+            <Link to="/terms" target="_blank" className="text-brand font-semibold hover:underline">Terms of Service</Link>{' '}
+            and{' '}
+            <Link to="/refunds" target="_blank" className="text-brand font-semibold hover:underline">Refund Policy</Link>.
+          </span>
+        </label>
+
         <button
-          disabled={loading || !canAfford}
+          disabled={loading || !canAfford || !agreed}
           className="btn-primary w-full p-4 text-lg disabled:opacity-50"
         >
           {loading ? 'Starting...' : 'Start research & drafting'}

@@ -4,6 +4,10 @@ import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { debitWallet, creditWallet } from '../lib/wallet.js';
 
+// Plans are sold as "30 days" on the pricing page, so add exactly that (a calendar month is 28–31).
+const PLAN_DAYS = 30;
+const addPlanDays = (from: Date) => new Date(from.getTime() + PLAN_DAYS * 86_400_000);
+
 const PLANS: Record<string, { price: number; features: string[] }> = {
   standard: { price: CONFIG.PRICING.PLANS.standard, features: ['5 workspace sessions', 'AI writing assistance', 'Citation search'] },
   premium: { price: CONFIG.PRICING.PLANS.premium, features: ['Unlimited sessions', 'Advanced AI tools', 'Full RAG citations', 'Export to DOCX', 'Priority support'] },
@@ -17,8 +21,7 @@ export const subscribe = async (req: Request, res: Response) => {
   if (!plan || !PLANS[plan]) return res.status(400).json({ error: 'Invalid plan. Choose "standard" or "premium".' });
 
   const price = PLANS[plan].price;
-  const expiresAt = new Date();
-  expiresAt.setMonth(expiresAt.getMonth() + 1);
+  const expiresAt = addPlanDays(new Date());
 
   // Charge the wallet atomically; refunded below if the subscription can't be saved.
   const chargeRef = `subscription:${crypto.randomUUID()}`;
@@ -44,11 +47,10 @@ export const subscribe = async (req: Request, res: Response) => {
   if (existing) {
     // Upgrade: extend from current expiry or now (whichever later)
     const baseDate = new Date(existing.expires_at) > new Date() ? new Date(existing.expires_at) : new Date();
-    baseDate.setMonth(baseDate.getMonth() + 1);
 
     const { data: updated, error: upErr } = await supabase
       .from('subscriptions')
-      .update({ plan, expires_at: baseDate.toISOString() })
+      .update({ plan, expires_at: addPlanDays(baseDate).toISOString() })
       .eq('id', existing.id)
       .select()
       .single();

@@ -54,8 +54,19 @@ async function creditPendingTransaction(reference: string, paidGhs: number, pays
   // runs exactly once per payment; the increment itself is atomic.
   const credited = await incrementWalletBalance(transaction.user_id, Number(transaction.amount_ghs));
   if (!credited.ok) {
-    log.error({ reference }, 'Payment marked successful but wallet credit failed — needs manual credit');
-    return { error: 'Payment received but your wallet could not be updated. Contact support.', transaction, alreadyPaid: false };
+    // Put the payment back to pending so the next verify call or Paystack's
+    // webhook retry credits it, instead of leaving it marked paid but uncredited.
+    const { error: revertError } = await supabase
+      .from('transactions')
+      .update({ status: 'pending' })
+      .eq('reference', reference)
+      .eq('status', 'success');
+    if (revertError) {
+      log.error({ reference, err: revertError.message }, 'Wallet credit failed and the payment could not be reset — needs manual credit');
+    } else {
+      log.error({ reference }, 'Wallet credit failed; payment reset to pending for retry');
+    }
+    return { error: 'Payment received but your wallet could not be updated yet. Please try again in a minute, or contact support.', transaction, alreadyPaid: false };
   }
 
   return { error: null, transaction, alreadyPaid: false, balance: credited.balance };
@@ -156,6 +167,9 @@ export const paystackWebhook = async (req: Request, res: Response) => {
       const credited = await creditPendingTransaction(data.reference, paidGhs, data.reference);
       if (credited.error && !credited.alreadyPaid) {
         log.error({ reference: data.reference, err: credited.error }, 'Webhook credit failed');
+        // A non-200 makes Paystack send the webhook again. Unknown references
+        // (not ours) still get a 200 so they aren't retried forever.
+        if (credited.error !== 'Transaction not found') return res.status(500).end();
       }
     }
   }

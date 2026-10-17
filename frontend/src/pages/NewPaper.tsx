@@ -7,12 +7,12 @@ const services = [
     key: 'full',
     icon: FileText,
     iconClass: 'bg-navy text-white',
-    title: 'Full Paper Service',
-    desc: 'Our AI researches, drafts, and reviews a complete research paper from your topic and brief.',
-    points: ['3,000–25,000 words, you choose', 'APA 7th Edition citations', 'AI supervisor review before delivery'],
+    title: 'Study Draft',
+    desc: 'Our AI researches and drafts a full paper from your topic, for you to study from and then rewrite in your own words.',
+    points: ['3,000–25,000 words, you choose', 'References checked, doubtful ones flagged', 'Clearly marked as AI-written'],
     price: 'GHS 250',
-    priceNote: 'per paper, paid from your wallet',
-    cta: 'Start a paper',
+    priceNote: 'per draft, paid from your wallet',
+    cta: 'Order a study draft',
     path: '/new-paper/full',
   },
   {
@@ -23,7 +23,7 @@ const services = [
     desc: 'Write the paper yourself with real-time AI help, suggestions, and citation search.',
     points: ['AI writing assistant (expand, rewrite, continue)', 'Real-time citation search', 'Rich text editor with auto-save'],
     price: 'From GHS 120',
-    priceNote: 'per month · Standard or Premium',
+    priceNote: 'per 30 days · Standard or Premium',
     cta: 'Open workspace',
     path: '/workspace',
   },
@@ -36,7 +36,7 @@ export default function NewPaper() {
     <AppShell>
       <p className="eyebrow mb-3 text-center">Start writing</p>
       <h1 className="text-3xl font-bold mb-2 text-center text-navy">Choose your service</h1>
-      <p className="text-sm text-muted text-center mb-8">Let AI write the whole paper, or write it yourself with AI beside you.</p>
+      <p className="text-sm text-muted text-center mb-8">Study from a full AI draft, or write your paper yourself with AI beside you.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {services.map((s) => {

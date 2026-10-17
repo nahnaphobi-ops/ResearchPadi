@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [downloadTarget, setDownloadTarget] = useState<{ id: string; topic: string; institution?: string } | null>(null);
+  const [downloadTarget, setDownloadTarget] = useState<{ id: string; topic: string } | null>(null);
   const user = useAuthStore(state => state.user);
   const navigate = useNavigate();
 
@@ -64,8 +64,8 @@ export default function Dashboard() {
     };
   }, [hasPaperInProgress]);
 
-  const handleDownload = (id: string, topic: string, institution?: string) => {
-    setDownloadTarget({ id, topic, institution });
+  const handleDownload = (id: string, topic: string) => {
+    setDownloadTarget({ id, topic });
   };
 
   const firstName = user?.full_name?.split(' ')[0] || 'Researcher';
@@ -87,7 +87,7 @@ export default function Dashboard() {
               onClick={() => navigate('/new-paper')}
               className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2"
             >
-              <Plus size={17} /> New AI paper
+              <Plus size={17} /> New paper
             </button>
             <button
               onClick={() => navigate('/workspace')}
@@ -173,9 +173,9 @@ export default function Dashboard() {
                 <FileText className="text-brand" size={28} />
               </div>
               <p className="mb-2 text-lg font-bold text-navy">No papers yet</p>
-              <p className="text-sm text-muted mb-6 max-w-xs mx-auto">Provide a topic and brief — ResearchPadi will generate a complete, supervisor-ready draft.</p>
+              <p className="text-sm text-muted mb-6 max-w-xs mx-auto">Order a study draft to learn from, or write your own paper in the Workspace with AI beside you.</p>
               <button onClick={() => navigate('/new-paper')} className="btn-primary px-5 py-2.5 text-sm inline-flex items-center gap-2">
-                <Plus size={15} /> Generate your first paper
+                <Plus size={15} /> Start your first paper
               </button>
             </div>
           ) : (
@@ -211,7 +211,7 @@ export default function Dashboard() {
                           Review
                         </button>
                         <button
-                          onClick={() => handleDownload(paper.id, paper.topic, paper.institution_name)}
+                          onClick={() => handleDownload(paper.id, paper.topic)}
                           className="btn-ghost px-3.5 py-2 text-sm inline-flex items-center gap-1.5"
                         >
                           <Download size={14} /> Download
@@ -237,7 +237,6 @@ export default function Dashboard() {
         <DownloadDisclosureModal
           paperId={downloadTarget.id}
           topic={downloadTarget.topic}
-          institutionName={downloadTarget.institution}
           onClose={() => setDownloadTarget(null)}
         />
       )}

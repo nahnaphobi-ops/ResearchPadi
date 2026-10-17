@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../db/supabase.js';
 import { superviseAssembledPaper } from '../services/pipeline/supervise.service.js';
-import { humanizePaper } from '../services/pipeline/humanize.service.js';
-import { detectAIContent, getDisclosureTemplates, getDisclosureTemplate, suggestDisclosureTemplateId } from '../services/ai/ai-detector.service.js';
 import { routeDrafting } from '../services/ai/router.service.js';
 import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts.js';
 import { generateDocx } from '../services/documents/docx.service.js';
@@ -10,8 +8,16 @@ import { paperQueue } from '../lib/queue.js';
 import { childLogger } from '../lib/logger.js';
 import { CONFIG } from '../config/index.js';
 import { debitWallet, paperChargeReference, refundPaperFee } from '../lib/wallet.js';
+import { attachmentDisposition } from '../lib/content-disposition.js';
+import { auditLog } from '../lib/audit.js';
 
 const log = childLogger('papers-controller');
+
+// Same range as the order form's slider.
+const MIN_WORDS = 3000;
+const MAX_WORDS = 25000;
+// Bump when the study-draft wording on the order form or in the Terms changes.
+const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-17';
 
 export const refineTopic = async (req: Request, res: Response) => {
   const { topic, course, institution_type } = req.body;
@@ -40,12 +46,22 @@ export const generateResearchQuestions = async (req: Request, res: Response) => 
 };
 
 export const submitFullPaper = async (req: Request, res: Response) => {
-  const { topic, course, institution_name, institution_type, programme, supervisor_name, target_word_count, research_questions } = req.body;
+  const { topic, course, institution_name, institution_type, programme, supervisor_name, research_questions, usage_agreed } = req.body;
   const userId = (req as any).user?.id;
 
   if (!topic || !course) {
     return res.status(400).json({ error: 'Topic and Course are required' });
   }
+  // The student confirms, before paying, that a study draft is for studying from
+  // and not for submitting as their own work. Recorded in the audit log below.
+  if (usage_agreed !== true) {
+    return res.status(400).json({ error: 'Please confirm how you will use the study draft before ordering.' });
+  }
+
+  const requestedWords = Number(req.body.target_word_count);
+  const target_word_count = Number.isFinite(requestedWords) && requestedWords > 0
+    ? Math.min(MAX_WORDS, Math.max(MIN_WORDS, Math.round(requestedWords)))
+    : undefined;
 
   // Never charge for a paper we can't generate.
   if (!paperQueue) {
@@ -63,7 +79,9 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     institution_type,
     programme,
     supervisor_name,
-    status: 'queued',
+    // 'processing', not 'queued': the papers.status CHECK in the initial schema
+    // never allowed 'queued', so inserting it is rejected by the database.
+    status: 'processing',
     progress_step: 'Queued',
   };
   if (target_word_count) insertData.target_word_count = target_word_count;
@@ -114,6 +132,16 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     return res.status(500).json({ error: `Could not start generation. GHS ${fee} has been refunded to your wallet.` });
   }
 
+  await auditLog({
+    event: 'PAPER_CREATED',
+    actorId: userId,
+    targetType: 'paper',
+    targetId: paper.id,
+    metadata: { product: 'study_draft', fee, usage_agreed: true, agreement_version: STUDY_DRAFT_AGREEMENT_VERSION },
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+  });
+
   res.json({ message: 'Paper submission successful', paperId: paper.id, jobId, balance: charge.balance });
 };
 
@@ -158,20 +186,10 @@ export const getPaperDetails = async (req: Request, res: Response) => {
   res.json(data);
 };
 
+/** The .docx always carries the study-draft notice (top box, page header, closing statement). */
 export const downloadPaper = async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = (req as any).user?.id;
-  const disclosureId = String(req.query.disclosureId || '');
-  const includeStatement = String(req.query.includeStatement || 'true') !== 'false';
-
-  if (!disclosureId) {
-    return res.status(400).json({ error: 'Select an AI disclosure template before downloading' });
-  }
-
-  const template = getDisclosureTemplate(disclosureId);
-  if (!template) {
-    return res.status(400).json({ error: 'Unknown disclosure template' });
-  }
 
   const { data: paper, error } = await supabase
     .from('papers')
@@ -184,33 +202,18 @@ export const downloadPaper = async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Paper not found or not completed' });
   }
 
-  const generatedAt = new Date().toISOString();
   const docxBuffer = await generateDocx(paper.topic, paper.final_content, {
     paperId: paper.id,
-    generatedAt,
-    disclosureId: template.id,
-    disclosureName: template.name,
-    disclosureText: template.content,
-    includeStatement,
+    generatedAt: new Date().toISOString(),
     toolName: 'ResearchPadi',
     toolVersion: '1.0',
   });
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.setHeader('Content-Disposition', `attachment; filename="${paper.topic.replace(/\s+/g, '_')}.docx"`);
+  res.setHeader('Content-Disposition', attachmentDisposition(`${paper.topic} - study draft`, '.docx'));
   res.setHeader('X-AI-Generated', 'true');
-  res.setHeader('X-AI-Disclosure-Id', template.id);
   res.setHeader('X-EU-AI-Act-Article', '50');
   res.send(docxBuffer);
-};
-
-export const listDisclosureTemplates = async (req: Request, res: Response) => {
-  const { category, institution } = req.query;
-  const templates = getDisclosureTemplates(category as string | undefined);
-  res.json({
-    templates,
-    suggestedId: suggestDisclosureTemplateId(institution as string | undefined),
-  });
 };
 
 export const superviseCompletedPaper = async (req: Request, res: Response) => {
@@ -311,76 +314,4 @@ export const deletePaper = async (req: Request, res: Response) => {
   if (error) return res.status(500).json({ error: 'Failed to delete paper' });
   if (!data) return res.status(404).json({ error: 'Paper not found' });
   res.json({ message: 'Paper deleted' });
-};
-
-/**
- * GET /api/papers/:id/ai-score
- * Returns an AI-pattern detectability score for the paper's current content.
- * Uses the local heuristic analyser — no external API call required.
- */
-export const getAiScore = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userId = (req as any).user?.id;
-
-  const { data: paper, error } = await supabase
-    .from('papers')
-    .select('final_content, status, topic')
-    .eq('id', id)
-    .eq('user_id', userId)
-    .single();
-
-  if (error || !paper) {
-    return res.status(404).json({ error: 'Paper not found' });
-  }
-
-  if (paper.status !== 'completed' || !paper.final_content) {
-    return res.status(400).json({ error: 'Paper must be completed before scoring' });
-  }
-
-  const result = detectAIContent(paper.final_content);
-  res.json(result);
-};
-
-/**
- * POST /api/papers/:id/humanize
- * Runs the prose-naturalisation pass on the paper's current content.
- * Returns humanized text + before/after AI scores.
- * Does NOT defeat cryptographic watermarks — improves prose quality only.
- */
-export const humanizePaperHandler = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const userId = (req as any).user?.id;
-
-  const { data: paper, error } = await supabase
-    .from('papers')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', userId)
-    .single();
-
-  if (error || !paper) {
-    return res.status(404).json({ error: 'Paper not found' });
-  }
-
-  if (paper.status !== 'completed' || !paper.final_content) {
-    return res.status(400).json({ error: 'Paper must be completed before humanizing' });
-  }
-
-  try {
-    const result = await humanizePaper(paper.final_content, {
-      topic: paper.topic,
-      course: paper.course,
-      institution_type: paper.institution_type,
-    });
-
-    res.json({
-      humanized: result.humanized,
-      beforeScore: result.beforeScore,
-      afterScore: result.afterScore,
-      paperId: id,
-    });
-  } catch (err: any) {
-    log.error({ paperId: id, err: err.message }, 'Humanize failed');
-    res.status(500).json({ error: `Humanize failed: ${err.message}` });
-  }
 };
