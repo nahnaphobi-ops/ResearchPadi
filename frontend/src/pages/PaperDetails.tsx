@@ -63,11 +63,13 @@ export default function PaperDetails() {
     );
   }
 
+  const isCareStudy = paper.document_type === 'care_study';
   const details = [
+    { label: 'Type', value: isCareStudy ? 'Maternity care study' : 'Research project' },
     { label: 'Institution', value: paper.institution_name },
     { label: 'Programme', value: paper.programme },
     { label: 'Supervisor', value: paper.supervisor_name },
-    { label: 'Target words', value: (paper.target_word_count || 12000).toLocaleString() },
+    ...(isCareStudy ? [] : [{ label: 'Target words', value: (paper.target_word_count || 12000).toLocaleString() }]),
   ];
 
   return (

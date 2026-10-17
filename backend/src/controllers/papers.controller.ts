@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { supabase } from '../db/supabase.js';
 import { superviseAssembledPaper } from '../services/pipeline/supervise.service.js';
+import { formatPlan } from '../services/pipeline/plan.service.js';
 import { routeDrafting } from '../services/ai/router.service.js';
 import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts.js';
 import { generateDocx } from '../services/documents/docx.service.js';
@@ -10,6 +11,7 @@ import { CONFIG } from '../config/index.js';
 import { debitWallet, paperChargeReference, refundPaperFee } from '../lib/wallet.js';
 import { attachmentDisposition } from '../lib/content-disposition.js';
 import { auditLog } from '../lib/audit.js';
+import { parseCareStudyBrief, type CareStudyBrief } from '../services/pipeline/care-study.service.js';
 
 const log = childLogger('papers-controller');
 
@@ -18,6 +20,19 @@ const MIN_WORDS = 3000;
 const MAX_WORDS = 25000;
 // Bump when the study-draft wording on the order form or in the Terms changes.
 const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-17';
+
+// Columns added by later migrations. Until one is applied, PostgREST rejects the
+// insert ("could not find the column", PGRST204); retry without them instead of
+// failing the order. The job still carries everything the pipeline needs.
+const OPTIONAL_PAPER_COLUMNS = ['research_questions', 'document_type', 'brief'];
+
+async function insertPaper(row: Record<string, unknown>) {
+  const first = await supabase.from('papers').insert(row).select().single();
+  const msg = first.error?.message ?? '';
+  if (!first.error || !(first.error.code === 'PGRST204' || /could not find the .*column|column .* does not exist/i.test(msg))) return first;
+  log.warn({ err: msg }, 'Paper columns missing (run the latest migrations); saving without them');
+  return supabase.from('papers').insert(Object.fromEntries(Object.entries(row).filter(([k]) => !OPTIONAL_PAPER_COLUMNS.includes(k)))).select().single();
+}
 
 export const refineTopic = async (req: Request, res: Response) => {
   const { topic, course, institution_type } = req.body;
@@ -46,8 +61,18 @@ export const generateResearchQuestions = async (req: Request, res: Response) => 
 };
 
 export const submitFullPaper = async (req: Request, res: Response) => {
-  const { topic, course, institution_name, institution_type, programme, supervisor_name, research_questions, usage_agreed } = req.body;
+  const { institution_name, institution_type, programme, supervisor_name, research_questions, usage_agreed } = req.body;
   const userId = (req as any).user?.id;
+
+  const isCareStudy = req.body.document_type === 'care_study';
+  let careStudy: CareStudyBrief | undefined;
+  if (isCareStudy) {
+    const parsed = parseCareStudyBrief(req.body.care_study);
+    if ('error' in parsed) return res.status(400).json({ error: parsed.error });
+    careStudy = parsed.brief;
+  }
+  const topic = careStudy ? `Maternity care study: ${careStudy.caseFocus}` : req.body.topic;
+  const course = careStudy ? req.body.course || 'Midwifery' : req.body.course;
 
   if (!topic || !course) {
     return res.status(400).json({ error: 'Topic and Course are required' });
@@ -84,17 +109,18 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     status: 'processing',
     progress_step: 'Queued',
   };
-  if (target_word_count) insertData.target_word_count = target_word_count;
-  if (research_questions) insertData.research_questions = research_questions;
+  if (target_word_count && !careStudy) insertData.target_word_count = target_word_count;
+  if (research_questions && !careStudy) insertData.research_questions = research_questions;
+  if (careStudy) {
+    insertData.document_type = 'care_study';
+    insertData.brief = { care_study: careStudy };
+  }
 
-  const { data: paper, error } = await supabase
-    .from('papers')
-    .insert(insertData)
-    .select()
-    .single();
+  const { data: paper, error } = await insertPaper(insertData);
 
   if (error) {
-    return res.status(500).json({ error: error.message });
+    log.error({ err: error.message }, 'Could not save the paper order');
+    return res.status(500).json({ error: 'Could not create your order. You have not been charged. Please try again.' });
   }
 
   // Charge the wallet, tied to this paper so a later refund can find it.
@@ -117,8 +143,10 @@ export const submitFullPaper = async (req: Request, res: Response) => {
       institution_type,
       programme,
       supervisor_name,
-      target_word_count,
-      research_questions,
+      target_word_count: careStudy ? undefined : target_word_count,
+      research_questions: careStudy ? undefined : research_questions,
+      document_type: careStudy ? 'care_study' : 'research',
+      care_study: careStudy,
     });
     jobId = job.id;
     log.info({ paperId: paper.id, jobId: job.id }, 'Paper job enqueued');
@@ -137,7 +165,7 @@ export const submitFullPaper = async (req: Request, res: Response) => {
     actorId: userId,
     targetType: 'paper',
     targetId: paper.id,
-    metadata: { product: 'study_draft', fee, usage_agreed: true, agreement_version: STUDY_DRAFT_AGREEMENT_VERSION },
+    metadata: { product: careStudy ? 'care_study_draft' : 'study_draft', fee, usage_agreed: true, agreement_version: STUDY_DRAFT_AGREEMENT_VERSION },
     ip: req.ip,
     userAgent: req.get('user-agent'),
   });
@@ -234,6 +262,11 @@ export const superviseCompletedPaper = async (req: Request, res: Response) => {
   if (paper.status !== 'completed' || !paper.final_content) {
     return res.status(400).json({ error: 'Paper must be completed first' });
   }
+  if (paper.document_type === 'care_study') {
+    // Research supervision rules don't fit a care study, which was already
+    // reviewed and checked against its case record while it was written.
+    return res.status(400).json({ error: 'Care studies are reviewed and checked against their case record while they are written.' });
+  }
 
   // One extra supervisor review per paper is included in the price (each costs
   // about as much as the original review). Claim it atomically so a double
@@ -259,7 +292,8 @@ export const superviseCompletedPaper = async (req: Request, res: Response) => {
     const revised = await superviseAssembledPaper(
       paper.final_content,
       { topic: paper.topic, course: paper.course, institution_type: paper.institution_type, target_word_count: paper.target_word_count },
-      paper.sources_used || []
+      paper.sources_used || [],
+      paper.brief?.plan ? formatPlan(paper.brief.plan) : undefined
     );
 
     res.json({

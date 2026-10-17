@@ -1,3 +1,5 @@
+import { citationKey } from '../pipeline/paper-source.js';
+
 // CORE WRITING RULES
 export const CORE_WRITING_RULES = `
 WRITING QUALITY RULES — FOLLOW EVERY ONE:
@@ -47,24 +49,21 @@ WRITING QUALITY RULES — FOLLOW EVERY ONE:
    not generic enough to have come from anywhere in the world.
 
 5. RESEARCHER VOICE IN DISCUSSION
-   In Chapter 4 (Results and Discussion), allow the
-   researcher's analytical voice to emerge naturally:
-   "The finding that X is particularly noteworthy in the
-   Ghanaian context because..."
-   "This result aligns with what Owusu et al. (2022)
-   observed in similar Ghanaian communities..."
-   "Unlike the pattern reported in Western literature,
-   the Ghanaian context reveals..."
+   In Chapter 4 (Results and Discussion), let the researcher's
+   own analysis come through: say what each finding means, why
+   it matters in this Ghanaian setting, and whether it agrees
+   or disagrees with the literature already cited, in your own
+   words. Do not reuse stock phrases from paper to paper.
 
-6. CITATION MIX — NATURAL, NOT PERFECT
-   Mix citation dates naturally: some recent (2020–2025),
-   some from 5–10 years ago.
-   Include realistic source types:
-   course textbooks, WHO Africa publications,
-   Ghana government documents, GHS reports,
-   Ghanaian university journals, AJOL sources.
-   Do NOT cite only the most prestigious international
-   journals — a real student cites what they accessed.
+6. CITATIONS — ONLY FROM THE SOURCE LIST
+   Cite only works in the SOURCES AVAILABLE FOR CITATION list,
+   using exactly the in-text form shown there. Never cite a
+   textbook, report, policy or article that is not on the list,
+   however well known. Prefer Ghanaian and African sources where
+   they fit, and mix older and recent work. You may name a Ghana
+   policy or programme (for example the National Health Insurance
+   Scheme) without a citation, but give no statistics for it unless
+   a listed source or the research context supplies them.
 
 7. PARAGRAPH NATURALNESS
    Vary paragraph lengths throughout each chapter.
@@ -212,7 +211,8 @@ export const buildChapterPrompt = (
   researchContext: string,
   previousChapters: string,
   allSources: any[],
-  researchQuestions?: string
+  researchQuestions?: string,
+  plan?: string
 ): string => {
   return `
 You are a skilled academic writer producing Chapter ${chapterNumber}
@@ -226,7 +226,7 @@ Programme: ${programme}
 Chapter: CHAPTER ${chapterNumber}: ${chapterTitle}
 Target word count: ${wordTarget} words
 Sections to write: ${sections.join(', ')}
-${researchQuestions ? `\nRESEARCH QUESTIONS THIS STUDY SEEKS TO ANSWER:\n${researchQuestions}\n` : ''}
+${plan ? `\nPAPER PLAN — every chapter follows this exactly (objectives, research questions, themes, study area, sample size):\n${plan}\n` : researchQuestions ? `\nRESEARCH QUESTIONS THIS STUDY SEEKS TO ANSWER:\n${researchQuestions}\n` : ''}
 
 ${CORE_WRITING_RULES}
 
@@ -241,10 +241,8 @@ ${previousChapters || 'None yet — this is Chapter 1.'}
 CHAPTER-SPECIFIC INSTRUCTIONS:
 ${buildChapterInstructions(chapterNumber)}
 
-SOURCES AVAILABLE FOR CITATION:
-${allSources.map(s =>
-  `(${s.author_surname || s.authors?.split(',')[0] || 'Unknown'}, ${s.year}) — ${s.title}`
-).join('\n')}
+SOURCES AVAILABLE FOR CITATION (cite with exactly the form in brackets):
+${allSources.map(s => `${citationKey(s)} — ${s.title}`).join('\n')}
 
 FORMATTING REQUIREMENTS:
 - Begin with: CHAPTER ${chapterNumber}
@@ -355,6 +353,16 @@ Write in past tense throughout ("Data were collected...")
 CHAPTER 4 — RESULTS AND DISCUSSION INSTRUCTIONS:
 This is the heart of the paper. Give it depth and analysis.
 
+ILLUSTRATIVE DATA: no data were actually collected for this study
+draft. Directly under the chapter heading, write this note in one
+line: "Note: The results in this chapter are illustrative examples
+that show how findings are presented and discussed. Your own study
+must report the data you actually collect."
+Keep every number internally consistent: use the planned sample
+size as n, make frequencies in each table add up to n, make
+percentages add up to 100 (rounded to one decimal place), and use
+the same figures when a result is mentioned again.
+
 4.2 Demographics: Present respondent profile in a table.
     (Table 4.1: Demographic Characteristics of Respondents)
     Comment on the table — don't just say "see table above."
@@ -401,11 +409,6 @@ CHAPTER 5 — CONCLUSION AND RECOMMENDATIONS INSTRUCTIONS:
   return instructions[chapterNumber] || '';
 };
 
-const sourceSurname = (s: any): string => {
-  if (s.author_surname) return s.author_surname;
-  const first = String(s.authors ?? '').split(';')[0].split(',')[0].trim();
-  return first || 'Unknown';
-};
 
 /**
  * Supervisor instructions shared by every chapter of one paper. Sent as the
@@ -416,7 +419,8 @@ export const buildSupervisionSystemPrompt = (
   course: string,
   institutionType: string,
   wordTarget: number,
-  allSources: any[]
+  allSources: any[],
+  plan?: string
 ): string => {
   return `
 You are a senior Ghanaian research supervisor, academic editor,
@@ -431,11 +435,17 @@ PASS 1 — STRUCTURAL REVIEW
 □ Section numbers are sequential and match the chapter number
 □ Chapter 4 findings answer the objectives stated in Chapter 1
 □ Chapter 5's summary matches what Chapter 4 actually found
+□ The objectives, research questions, study area and sample size
+  match the paper plan exactly, wherever they appear
+□ In Chapter 4, table frequencies add up to the sample size and
+  percentages add up to 100; repeated figures match; the
+  "illustrative examples" note stays directly under the heading
 □ The chapter stays close to its word target
 
 PASS 2 — CITATION AND ACCURACY REVIEW
-□ Every in-text citation follows APA 7th: (Author, Year)
-□ Three or more authors use et al.: (Owusu et al., 2022)
+□ Every in-text citation follows APA 7th, exactly as written in
+  the source list: (Surname, Year), (Surname & Surname, Year) or
+  (Surname et al., Year)
 □ Only the verified sources below are cited — remove or replace
   any citation that is not on the list
 □ Ghana-specific sources appear where relevant
@@ -456,9 +466,9 @@ Read every paragraph. Find and rewrite:
    → Replace every single instance
 □ Any section that could have been written about any country
    → Add a specific Ghana reference or data point
-□ Any place in Chapter 4 where the researcher's analytical
-   voice is absent → Add: "This finding is particularly
-   significant in the Ghanaian context because..."
+□ Any place in Chapter 4 where a finding is reported but not
+   interpreted → Add the researcher's own analysis of what it
+   means in this Ghanaian setting, in fresh wording
 □ Any paragraph where word choices feel uniform or predictable
    → Vary synonyms, restructure sentences, change rhythm
 
@@ -468,8 +478,8 @@ Course: ${course}
 Institution Type: ${institutionType}
 Target word count for the whole paper: ${wordTarget} words
 
-VERIFIED SOURCES (only these may be cited):
-${allSources.map(s => `(${sourceSurname(s)}, ${s.year || 'n.d.'}) — ${s.title}`).join('\n')}
+${plan ? `PAPER PLAN (the chapters must agree with it):\n${plan}\n\n` : ''}VERIFIED SOURCES (only these may be cited, in exactly this form):
+${allSources.map(s => `${citationKey(s)} — ${s.title}`).join('\n')}
 
 OUTPUT INSTRUCTIONS:
 Return the COMPLETE REVISED CHAPTER only, starting with its
@@ -498,70 +508,6 @@ export const buildChapterSupervisionPrompt = (
     refs,
     `CHAPTER TO REVISE — Chapter ${chapterNumber}: ${chapterTitle} (target about ${chapterWordTarget} words):\n${chapterText}`,
   ].filter(Boolean).join('\n\n');
-};
-
-export const buildReferenceListPrompt = (
-  citedSources: any[],
-  institutionType: string
-): string => {
-  return `
-Generate a correctly formatted APA 7th Edition reference list.
-
-FORMATTING RULES:
-- Heading: "References" (centred, bold)
-- Alphabetical order by first author's surname
-- Hanging indent (second line indented 0.5 inches)
-- Double-spaced between entries
-- Include DOI as full URL: https://doi.org/xxxxx
-- No bullet points or numbering — plain paragraphs only
-
-FORMAT BY SOURCE TYPE:
-
-Journal Article:
-Author, A. A., & Author, B. B. (Year). Title of article with
-  only first word and proper nouns capitalised. Journal Name
-  in Italics, Volume(Issue), Pages. https://doi.org/xxxxx
-
-Book:
-Author, A. A. (Year). Title of book in italics: Subtitle.
-  Publisher Name.
-
-Chapter in edited book:
-Author, A. A. (Year). Title of chapter. In E. Editor &
-  F. Editor (Eds.), Title of book in italics (pp. xx–xx).
-  Publisher.
-
-Government/Organisation Report:
-Organisation Name. (Year). Title of report in italics.
-  Publisher. URL if available.
-
-Ghana-Specific Sources (KNUST/UG/UCC theses):
-Author, A. A. (Year). Title of thesis in italics
-  [Doctoral dissertation/Master's thesis/Undergraduate
-  dissertation, Institution Name, Ghana]. Repository Name.
-
-GES/MOE/NaCCA Policy Documents:
-Ghana Education Service. (Year). Title of document in italics.
-  Ministry of Education.
-
-SOURCES TO FORMAT:
-${citedSources.map((s, i) => `
-Source ${i + 1}:
-  Authors: ${s.authors}
-  Year: ${s.year}
-  Title: ${s.title}
-  Journal/Publisher: ${s.journal || s.publisher || 'N/A'}
-  Volume: ${s.volume || 'N/A'}
-  Issue: ${s.issue || 'N/A'}
-  Pages: ${s.pages || 'N/A'}
-  DOI: ${s.doi || 'N/A'}
-  Type: ${s.type || 'journal-article'}
-  Institution: ${s.institution || 'N/A'}
-`).join('\n')}
-
-Return ONLY the formatted reference list.
-Start with "References" as the heading.
-  `.trim();
 };
 
 export const buildAbstractPrompt = (
@@ -600,196 +546,6 @@ Return ONLY the abstract paragraph followed by the keywords line.
 Do not include the word "Abstract" as a heading.
 Do not include any commentary or preamble.
   `.trim();
-};
-
-export const CARE_STUDY_CHAPTERS = {
-  chapter1: {
-    title: "CLIENT PROFILE",
-    sections: [
-      "1.1 Introduction",
-      "1.2 Social History",
-      "1.3 Family History",
-      "1.4 Medical/Surgical History",
-      "1.5 Past Obstetric History",
-      "1.6 Present Obstetric History",
-      "1.7 Nursing Care Plan"
-    ],
-    wordTarget: 1200
-  },
-  chapter2: {
-    title: "ANTENATAL CARE",
-    sections: [
-      "2.1 Introduction",
-      "2.2 First Contact with Client",
-      "2.3 First Antenatal Home Visit",
-      "2.4 Subsequent Visits",
-      "2.5 Nursing Care Plan"
-    ],
-    wordTarget: 1500
-  },
-  chapter3: {
-    title: "LABOUR AND DELIVERY",
-    sections: [
-      "3.1 Introduction",
-      "3.2 Admission and Assessment",
-      "3.3 First Stage of Labour",
-      "3.4 Second Stage of Labour",
-      "3.5 Third and Fourth Stages",
-      "3.6 Immediate Care of Newborn",
-      "3.7 Nursing Care Plan"
-    ],
-    wordTarget: 1800
-  },
-  chapter4: {
-    title: "PUERPERIUM",
-    sections: [
-      "4.1 Introduction",
-      "4.2 Management of Mother",
-      "4.3 Management of Newborn",
-      "4.4 Postnatal Visits",
-      "4.5 Summary and Conclusion",
-      "4.6 Bibliography"
-    ],
-    wordTarget: 1300
-  }
-};
-
-export const buildCareStudyPrompt = (
-  chapterNumber: number,
-  chapterTitle: string,
-  sections: string[],
-  wordTarget: number,
-  clientProfile: {
-    name: string;
-    age: number;
-    occupation: string;
-    religion: string;
-    maritalStatus: string;
-    district: string;
-    region: string;
-  },
-  previousChapters: string,
-  institution: string
-): string => {
-  return `
-You are a skilled student midwife writing Chapter ${chapterNumber} of a client/family-centered maternity care study.
-
-CLIENT INFORMATION:
-Name: ${clientProfile.name}
-Age: ${clientProfile.age} years
-Occupation: ${clientProfile.occupation}
-Religion: ${clientProfile.religion}
-Marital Status: ${clientProfile.maritalStatus}
-Location: ${clientProfile.district}, ${clientProfile.region}
-Institution: ${institution}
-
-CHAPTER TO WRITE: CHAPTER ${chapterNumber}: ${chapterTitle}
-Sections: ${sections.join(', ')}
-Target word count: ${wordTarget} words
-
-${CORE_WRITING_RULES}
-
-NMC GHANA CARE STUDY RULES:
-- Write in narrative form using third person: "The client was...", "Care was given..."
-- Use the client's first name throughout: "Madam ${clientProfile.name} was..."
-- Reference WHO guidelines, GHS protocols, NMC Ghana standards
-- Include specific clinical data: vital signs, gestational age, APGAR scores
-- Each chapter MUST end with a Nursing Care Plan table
-- Use nursing terminology: gravida, para, puerperium, lochia, involution, partograph
-- Reference KATH, Korle-Bu, or relevant Ghanaian health facilities
-- Include health education given to client and family
-- Citation style: APA 7th Edition
-- Mention confidentiality measures taken
-
-${previousChapters ? `PREVIOUS CHAPTERS (maintain continuity):\n${previousChapters}` : 'No previous chapters yet — this is Chapter 1.'}
-
-CHAPTER-SPECIFIC INSTRUCTIONS:
-${buildCareStudyChapterInstructions(chapterNumber)}
-
-FORMATTING:
-- Begin with: CHAPTER ${chapterNumber}: ${chapterTitle}
-- Each section heading bold and numbered
-- End with Nursing Care Plan table (if applicable)
-- APA 7th in-text citations: (Author, Year)
-- Only cite verifiable sources
-
-Write CHAPTER ${chapterNumber} now. Full content only.
-No preamble, no commentary, no meta-text.
-Begin directly with the chapter heading.
-  `.trim();
-};
-
-const buildCareStudyChapterInstructions = (chapterNumber: number): string => {
-  const instructions: Record<number, string> = {
-    1: `
-CHAPTER 1 — CLIENT PROFILE INSTRUCTIONS:
-1.2 Social History: Age, occupation, religion, education, tribe, family structure, economic status.
-
-1.3 Family History: Father, mother, siblings — health status, occupations, living conditions.
-   Include family health patterns and any hereditary conditions.
-
-1.4 Medical/Surgical History: Previous illnesses, hospitalisations, surgeries, allergies,
-   current medications, chronic conditions.
-
-1.5 Past Obstetric History: Previous pregnancies, deliveries, complications,
-   children's health status. Use G-parity notation.
-
-1.6 Present Obstetric History: Current pregnancy details — LMP, EDD, ANC visits,
-   complications, vital signs, fundal height, fetal heart rate.
-
-1.7 Nursing Care Plan: Identify 2-3 client problems from the history.
-   For each problem provide: Short-term goal, Long-term goal, Interventions, Evaluation.
-    `,
-    2: `
-CHAPTER 2 — ANTENATAL CARE INSTRUCTIONS:
-2.2 First Contact: Describe the first meeting — date, gestational age, purpose of visit.
-   Include initial assessment findings: vital signs, physical examination, laboratory results.
-
-2.3 First Antenatal Home Visit: Describe the home visit process — observations, health education,
-   family involvement. Reference WHO guidelines for home visiting.
-
-2.4 Subsequent Visits: Cover each visit chronologically. Include: purpose of visit,
-   assessment findings, health education provided, referrals made. Use the nursing process.
-
-2.5 Nursing Care Plan: Identify 2-3 problems from the antenatal period.
-   Each with: Problem, Goal, Intervention, Evaluation.
-    `,
-    3: `
-CHAPTER 3 — LABOUR AND DELIVERY INSTRUCTIONS:
-3.2 Admission: Date and time, presenting complaints, vital signs, cervical assessment.
-
-3.3 First Stage of Labour: Onset to full dilatation. Describe: contractions, cervical dilatation,
-   fetal monitoring, partograph use, pain management, emotional support.
-
-3.4 Second Stage of Labour: Full dilatation to delivery. Describe: pushing technique,
-   delivery of baby, APGAR scoring, immediate newborn care.
-
-3.5 Third and Fourth Stages: Delivery of placenta,检查 for completeness, active management
-   of third stage (AMTSL), monitoring for postpartum haemorrhage.
-
-3.6 Immediate Newborn Care: Drying, warmth, cord care, first breastfeed, vitamin K,
-   eye care, APGAR at 1 and 5 minutes.
-
-3.7 Nursing Care Plan: Identify problems during labour and how they were managed.
-    `,
-    4: `
-CHAPTER 4 — PUERPERIUM INSTRUCTIONS:
-4.2 Management of Mother: Daily monitoring — vital signs, lochia assessment, fundal height,
-   perineal care, bladder function, bowel function, breastfeeding support.
-
-4.3 Management of Newborn: Newborn assessment — vital signs, weight, feeding, cord care,
-   jaundice screening, immunisation, danger signs.
-
-4.4 Postnatal Visits: Describe each visit — assessment, health education, family planning
-   discussion, immunisation schedule, referral if needed.
-
-4.5 Summary and Conclusion: Summarise the care provided and its outcomes.
-   Reflect on what was learned from this care study.
-
-4.6 Bibliography: APA 7th format reference list.
-    `
-  };
-  return instructions[chapterNumber] || '';
 };
 
 export const buildTopicRefinementPrompt = (

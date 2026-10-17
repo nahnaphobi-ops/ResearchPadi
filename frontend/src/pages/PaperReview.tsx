@@ -108,7 +108,7 @@ export default function PaperReview() {
             <h1 className="text-sm font-bold truncate max-w-xs sm:max-w-md">{paper.topic}</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {!supervised && paper.status === 'completed' && !paper.resupervised_at && (
+            {!supervised && paper.status === 'completed' && !paper.resupervised_at && paper.document_type !== 'care_study' && (
               <button
                 onClick={handleSupervise}
                 disabled={supervising}

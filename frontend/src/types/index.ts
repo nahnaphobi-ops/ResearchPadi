@@ -36,6 +36,7 @@ export interface Paper {
   resupervised_at?: string | null;
   abstract?: string;
   sources_used: unknown[];
+  document_type?: 'research' | 'care_study';
   // Reference check run before delivery (missing if the check couldn't run).
   citation_status?: 'verified' | 'needs_review' | null;
   citation_report?: CitationReport | null;

@@ -46,14 +46,16 @@ export const superviseChapters = async (
   chapters: string[],
   info: ChapterInfo[],
   paperData: any,
-  allSources: any[]
+  allSources: any[],
+  plan?: string
 ): Promise<string[]> => {
   const systemPrompt = buildSupervisionSystemPrompt(
     paperData.topic,
     paperData.course,
     paperData.institution_type,
     paperData.target_word_count || info.reduce((sum, ch) => sum + ch.wordTarget, 0),
-    allSources
+    allSources,
+    plan
   );
   const outline = paperOutline(chapters, info);
   const revised = [...chapters];
@@ -129,11 +131,11 @@ export function splitPaper(content: string): { head: string; chapters: string[];
 }
 
 /** Re-run the supervisor on a finished paper, chapter by chapter, keeping abstract and references. */
-export const superviseAssembledPaper = async (content: string, paperData: any, allSources: any[]): Promise<string> => {
+export const superviseAssembledPaper = async (content: string, paperData: any, allSources: any[], plan?: string): Promise<string> => {
   const parts = splitPaper(content);
   if (!parts) {
     throw Object.assign(new Error("Couldn't find the chapter headings in this paper, so it can't be reviewed chapter by chapter."), { status: 422 });
   }
-  const revised = await superviseChapters(parts.chapters, parts.info, paperData, allSources);
+  const revised = await superviseChapters(parts.chapters, parts.info, paperData, allSources, plan);
   return [parts.head, ...revised, parts.tail].filter(Boolean).join('\n\n');
 };

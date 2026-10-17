@@ -9,7 +9,8 @@ export const draftChapter = async (
   paperData: any,
   researchContext: string,
   previousChapters: string,
-  allSources: any[]
+  allSources: any[],
+  plan?: string
 ) => {
   const prompt = buildChapterPrompt(
     chapterNumber,
@@ -24,7 +25,8 @@ export const draftChapter = async (
     researchContext,
     previousChapters,
     allSources,
-    paperData.research_questions
+    paperData.research_questions,
+    plan
   );
 
   const draft = await routeDrafting(prompt, { chapterNumber, chapterTitle }, { maxTokens: tokensForWords(wordTarget) });

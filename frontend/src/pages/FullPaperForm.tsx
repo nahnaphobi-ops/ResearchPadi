@@ -5,9 +5,18 @@ import { paperService } from '../services/apiService';
 import { paymentService } from '../services/paymentService';
 import { useAuthStore } from '../store/useAuthStore';
 import AppShell from '../components/layout/AppShell';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Baby, FileText, ShieldCheck, Sparkles } from 'lucide-react';
 
 const PAPER_FEE_GHS = 250;
+
+const GHANA_REGIONS = [
+  'Ahafo', 'Ashanti', 'Bono', 'Bono East', 'Central', 'Eastern', 'Greater Accra', 'North East',
+  'Northern', 'Oti', 'Savannah', 'Upper East', 'Upper West', 'Volta', 'Western', 'Western North',
+];
+const DELIVERY_MODES = ['spontaneous vaginal delivery', 'vacuum-assisted delivery', 'caesarean section'];
+const CASE_EXAMPLES = ['Primigravida with anaemia in pregnancy', 'Multigravida with pregnancy-induced hypertension', 'Primigravida with prolonged labour'];
+
+type DocType = 'research' | 'care_study';
 
 export default function FullPaperForm() {
   const user = useAuthStore(state => state.user);
@@ -24,6 +33,16 @@ export default function FullPaperForm() {
     research_questions: '',
   });
 
+  const [docType, setDocType] = useState<DocType>(user?.institution_type === 'nmtc' ? 'care_study' : 'research');
+  const [careStudy, setCareStudy] = useState({
+    caseFocus: '',
+    parity: 'primigravida',
+    gestationAtFirstContact: 16,
+    deliveryMode: DELIVERY_MODES[0],
+    region: '',
+    facility: '',
+  });
+  const isCareStudy = docType === 'care_study';
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -85,7 +104,17 @@ export default function FullPaperForm() {
     setLoading(true);
     setError('');
     try {
-      await paperService.submitFullPaper({ ...formData, usage_agreed: agreed });
+      const common = {
+        course: formData.course || (isCareStudy ? 'Midwifery' : ''),
+        institution_name: formData.institution_name,
+        institution_type: formData.institution_type,
+        programme: formData.programme,
+        supervisor_name: formData.supervisor_name,
+        usage_agreed: agreed,
+      };
+      await paperService.submitFullPaper(isCareStudy
+        ? { ...common, document_type: 'care_study', care_study: careStudy }
+        : { ...formData, ...common, document_type: 'research' });
       navigate(`/dashboard`);
     } catch (err) {
       setError(apiErrorMessage(err, 'Submission failed'));
@@ -102,12 +131,105 @@ export default function FullPaperForm() {
       </button>
       <p className="eyebrow mb-2">Study draft</p>
       <h1 className="text-3xl font-bold mb-2 text-navy">New study draft</h1>
-      <p className="mb-6 text-muted">Tell us about your paper. Our AI will research and draft a full paper for you to study from, then you write your own in your own words.</p>
+      <p className="mb-6 text-muted">Tell us what you need. Our AI researches and drafts it for you to study from, then you write your own in your own words.</p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6" role="radiogroup" aria-label="What do you need?">
+        {([
+          { key: 'research', icon: FileText, title: 'Research project', desc: 'Five chapters: introduction to recommendations.' },
+          { key: 'care_study', icon: Baby, title: 'Maternity care study', desc: 'Client/family centred care study for midwifery (NMTC).' },
+        ] as const).map((o) => (
+          <button
+            key={o.key}
+            type="button"
+            role="radio"
+            aria-checked={docType === o.key}
+            onClick={() => setDocType(o.key)}
+            className={`text-left p-4 rounded-[14px] border-2 transition ${docType === o.key ? 'border-brand bg-brand-soft' : 'border-rule bg-white hover:border-brand/40'}`}
+          >
+            <o.icon size={20} className="text-brand mb-2" />
+            <span className="block font-bold text-navy">{o.title}</span>
+            <span className="block text-xs text-muted mt-0.5">{o.desc}</span>
+          </button>
+        ))}
+      </div>
 
       {error && <div role="alert" className="p-4 mb-6 bg-red-100 text-red-700 rounded-[10px] text-sm">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
+        {isCareStudy && (
+          <div className="space-y-5">
+            <div className="p-4 rounded-[14px] bg-navy-mist border border-rule text-sm text-ink flex gap-2.5">
+              <ShieldCheck size={18} className="text-brand shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                We create a <strong>fictional client</strong> and one case record. Every date, reading and result in the four chapters is
+                checked against it, so they agree from booking to the six-week visit. Medicine doses are only given for routine items;
+                check any other dose against the Ghana Standard Treatment Guidelines.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="caseFocus" className="block font-bold mb-1 text-ink">The case</label>
+              <input
+                id="caseFocus"
+                className="w-full p-3 border-2 rounded-[10px]"
+                placeholder={`e.g. ${CASE_EXAMPLES[0]}`}
+                required
+                value={careStudy.caseFocus}
+                onChange={(e) => setCareStudy((c) => ({ ...c, caseFocus: e.target.value }))}
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {CASE_EXAMPLES.map((ex) => (
+                  <button key={ex} type="button" onClick={() => setCareStudy((c) => ({ ...c, caseFocus: ex }))} className="text-xs px-2.5 py-1 rounded-full border border-rule hover:border-brand hover:text-brand">
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="parity" className="block font-bold mb-1 text-ink">Client</label>
+                <select id="parity" className="w-full p-3 border rounded-[10px] bg-white" value={careStudy.parity} onChange={(e) => setCareStudy((c) => ({ ...c, parity: e.target.value }))}>
+                  <option value="primigravida">Primigravida (first pregnancy)</option>
+                  <option value="multigravida">Multigravida</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="deliveryMode" className="block font-bold mb-1 text-ink">Delivery</label>
+                <select id="deliveryMode" className="w-full p-3 border rounded-[10px] bg-white capitalize" value={careStudy.deliveryMode} onChange={(e) => setCareStudy((c) => ({ ...c, deliveryMode: e.target.value }))}>
+                  {DELIVERY_MODES.map((m) => <option key={m} value={m}>{m[0].toUpperCase() + m.slice(1)}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="region" className="block font-bold mb-1 text-ink">Region</label>
+                <select id="region" required className="w-full p-3 border rounded-[10px] bg-white" value={careStudy.region} onChange={(e) => setCareStudy((c) => ({ ...c, region: e.target.value }))}>
+                  <option value="">Choose a region</option>
+                  {GHANA_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="facility" className="block font-bold mb-1 text-ink">Facility <span className="font-normal text-muted">(optional)</span></label>
+                <input id="facility" className="w-full p-3 border rounded-[10px]" placeholder="e.g. a district hospital" value={careStudy.facility} onChange={(e) => setCareStudy((c) => ({ ...c, facility: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="gestation" className="block font-bold mb-1 text-ink">
+                First antenatal contact at: <span className="text-brand">{careStudy.gestationAtFirstContact} weeks</span>
+              </label>
+              <input
+                id="gestation"
+                type="range"
+                min={12}
+                max={30}
+                value={careStudy.gestationAtFirstContact}
+                onChange={(e) => setCareStudy((c) => ({ ...c, gestationAtFirstContact: Number(e.target.value) }))}
+                className="w-full h-2 bg-rule rounded-lg appearance-none cursor-pointer accent-brand"
+              />
+              <div className="flex justify-between text-xs text-muted mt-1"><span>12 weeks</span><span>30 weeks</span></div>
+            </div>
+          </div>
+        )}
+
+        {!isCareStudy && (<>
         <div>
           <label htmlFor="topic" className="block font-bold mb-1 text-ink">Research topic</label>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -187,6 +309,8 @@ export default function FullPaperForm() {
             <span>25,000</span>
           </div>
         </div>
+
+        </>)}
 
         <div className="bg-navy-mist p-5 sm:p-6 rounded-[14px] border border-rule">
           <h3 className="font-bold mb-1 text-navy">Your institution</h3>

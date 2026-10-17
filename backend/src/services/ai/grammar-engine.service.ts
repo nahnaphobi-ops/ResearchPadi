@@ -109,7 +109,7 @@ const GRAMMAR_RULES: GrammarRule[] = [
     name: 'redundant_phrases',
     type: 'style',
     severity: 'suggestion',
-    pattern: /\b(basic fundamentals|past history|future plans|free gift|true facts|actual事实|end result|final outcome|completely eliminate|absolutely essential|each and every|first and foremost|in order to|due to the fact|in spite of the fact|at this point in time|in the event that)\b/gi,
+    pattern: /\b(basic fundamentals|past history|future plans|free gift|true facts|actual facts|end result|final outcome|completely eliminate|absolutely essential|each and every|first and foremost|in order to|due to the fact|in spite of the fact|at this point in time|in the event that)\b/gi,
     replacement: '',
     message: 'This phrase is redundant. Simplify for conciseness.',
     rule: 'Style: Redundancy',
