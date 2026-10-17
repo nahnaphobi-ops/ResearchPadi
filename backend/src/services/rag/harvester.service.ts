@@ -4,7 +4,8 @@ import { generateEmbeddings } from './embedder.service.js';
 import { CONFIG } from '../../config/index.js';
 import { parseAuthors, serializeAuthors } from '../../lib/authors.js';
 import { childLogger } from '../../lib/logger.js';
-import { harvestMetadata, listSets, type OaiRecord, type RepositoryConfig } from './oai-harvester.service.js';
+import { harvestMetadata, identifyRepository, listSets, type OaiRecord, type RepositoryConfig } from './oai-harvester.service.js';
+import { OPENALEX_GHANA, harvestOpenAlexGhana } from './openalex-harvester.service.js';
 import { DSPACE_REPOSITORIES, listRecentItems, thesisGenre, type DSpaceItem, type DSpaceRepo } from './dspace.service.js';
 import { GHANA_REPOSITORIES } from './repositories.js';
 
@@ -27,6 +28,8 @@ interface StoredRow {
   document_type: string | null;
   language: string | null;
   doi: string | null;
+  journal?: string | null;
+  publisher?: string | null;
   embedding: number[] | null;
 }
 
@@ -76,6 +79,8 @@ function recordToRows(record: OaiRecord, repo: RepositoryConfig): Omit<StoredRow
     document_type: record.type?.slice(0, 80) || null,
     language: record.language?.slice(0, 20) || null,
     doi: pickDoi(record),
+    // For journals the "institution" is the journal itself; cite it as the container.
+    journal: repo.platform === 'ojs' ? repo.institution : null,
   }));
 }
 
@@ -186,6 +191,11 @@ export async function harvestRepository(repo: RepositoryConfig, opts: { maxPages
   const dspace = DSPACE_REPOSITORIES.find((d) => d.sourceName === repo.name);
 
   try {
+    if (!dspace && !(await identifyRepository(repo))) {
+      await logHarvest(repo.name, 0, 0, 'error', 'Unreachable: the OAI-PMH Identify request failed');
+      log.warn({ repo: repo.name }, 'Repository unreachable; skipped');
+      return { repo: repo.name, fetched: 0, added: 0, complete: false };
+    }
     const { fetched, added, exhausted } = dspace
       ? await harvestViaRest(dspace, from, maxPages)
       : await harvestViaOai(repo, from, maxPages);
@@ -201,10 +211,77 @@ export async function harvestRepository(repo: RepositoryConfig, opts: { maxPages
   }
 }
 
-/** Weekly job: harvest every Ghanaian repository in turn. */
-export async function runFullHarvest(opts: { maxPages?: number; repos?: string[] } = {}) {
-  const repos = opts.repos?.length ? GHANA_REPOSITORIES.filter((r) => opts.repos!.includes(r.name)) : GHANA_REPOSITORIES;
+// ── OpenAlex: research by authors at Ghanaian institutions ───────────────────
+
+const OPENALEX_FIRST_YEAR = 2010;
+const RESUME = 'resume:';
+
+async function latestLog(source: string) {
+  const { data } = await supabase
+    .from('harvest_logs')
+    .select('status, error_message')
+    .eq('source', source)
+    .order('harvested_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as { status: string; error_message: string | null } | null;
+}
+
+/** Harvest one OpenAlex date range; a partial run records its cursor so the next run carries on. */
+async function harvestOpenAlexRange(source: string, range: { from: string; to?: string }, maxPages: number) {
+  const last = await latestLog(source);
+  const resume = last?.status === 'partial' && last.error_message?.startsWith(RESUME) ? last.error_message.slice(RESUME.length) : undefined;
+  try {
+    let result;
+    try {
+      result = await harvestOpenAlexGhana(range, maxPages, insertFresh, resume);
+    } catch (err) {
+      if (!resume) throw err;
+      log.warn({ source, err: (err as Error).message }, 'Saved OpenAlex cursor no longer works; starting the range again');
+      result = await harvestOpenAlexGhana(range, maxPages, insertFresh);
+    }
+    await logHarvest(source, result.fetched, result.added, result.complete ? 'success' : 'partial', result.complete ? undefined : `${RESUME}${result.nextCursor}`);
+    log.info({ source, ...range, fetched: result.fetched, added: result.added, complete: result.complete }, 'OpenAlex range harvested');
+    return { repo: source, fetched: result.fetched, added: result.added, complete: result.complete };
+  } catch (err) {
+    const message = (err as Error).message;
+    await logHarvest(source, 0, 0, 'error', message);
+    log.error({ source, err: message }, 'OpenAlex harvest failed');
+    return { repo: source, fetched: 0, added: 0, complete: false };
+  }
+}
+
+/** The newest past year whose works haven't all been harvested yet. */
+async function nextBackfillYear(): Promise<number | null> {
+  const { data } = await supabase.from('harvest_logs').select('source').like('source', `${OPENALEX_GHANA} %`).eq('status', 'success');
+  const done = new Set((data ?? []).map((r: { source: string }) => r.source));
+  for (let year = new Date().getUTCFullYear() - 1; year >= OPENALEX_FIRST_YEAR; year--) {
+    if (!done.has(`${OPENALEX_GHANA} ${year}`)) return year;
+  }
+  return null;
+}
+
+/**
+ * Each run: recent works since the last complete run, then one more past year
+ * (newest first), so the whole back-catalogue fills in over the weeks.
+ */
+export async function harvestOpenAlex(opts: { maxPages?: number } = {}) {
+  const since = (await lastSuccessfulHarvest(OPENALEX_GHANA)) ?? new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
+  const results = [await harvestOpenAlexRange(OPENALEX_GHANA, { from: since }, opts.maxPages ?? 10)];
+  const year = await nextBackfillYear();
+  if (year) results.push(await harvestOpenAlexRange(`${OPENALEX_GHANA} ${year}`, { from: `${year}-01-01`, to: `${year}-12-31` }, opts.maxPages ?? 50));
+  return results;
+}
+
+/**
+ * Weekly job: every Ghanaian repository and journal in turn, then OpenAlex.
+ * `repos` limits the repositories (an empty list means none); OpenAlex runs
+ * by default only when no repositories were named.
+ */
+export async function runFullHarvest(opts: { maxPages?: number; repos?: string[]; openAlex?: boolean } = {}) {
+  const repos = opts.repos ? GHANA_REPOSITORIES.filter((r) => opts.repos!.includes(r.name)) : GHANA_REPOSITORIES;
   const results = [];
   for (const repo of repos) results.push(await harvestRepository(repo, { maxPages: opts.maxPages }));
+  if (opts.openAlex ?? !opts.repos) results.push(...(await harvestOpenAlex({ maxPages: opts.maxPages })));
   return results;
 }

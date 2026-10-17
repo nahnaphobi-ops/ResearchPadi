@@ -1,5 +1,10 @@
 import api from './api';
 import type { Source } from '../components/workspace/citations/types';
+import { postSse } from '../utils/sse';
+
+export interface StudyDraftSection { heading: string; number: string; text: string }
+export interface StudyDraft { paperId: string; title: string; documentType: 'research' | 'care_study'; sections: StudyDraftSection[]; fullText: string }
+export type CoachMode = 'guide' | 'feedback';
 
 export const workspaceService = {
   listSessions: () => api.get('/workspace/sessions'),
@@ -8,6 +13,15 @@ export const workspaceService = {
   getSession: (id: string) => api.get(`/workspace/sessions/${id}`),
   updateSession: (id: string, data: { title?: string; content?: string; course?: string; institution_type?: string; sources_used?: unknown[] }) => api.put(`/workspace/sessions/${id}`, data),
   deleteSession: (id: string) => api.delete(`/workspace/sessions/${id}`),
+
+  // Write your own version of a study draft
+  createFromDraft: (paperId: string) => api.post<{ id: string; existing: boolean }>('/workspace/sessions/from-draft', { paperId }),
+  getStudyDraft: (id: string) => api.get<StudyDraft>(`/workspace/sessions/${id}/study-draft`),
+  coach: async (id: string, body: { mode: CoachMode; heading: string; text?: string }, onDelta: (text: string) => void, signal?: AbortSignal) => {
+    await postSse(`/workspace/sessions/${id}/coach`, body, (event, data) => {
+      if (event === 'delta') onDelta(String(data.text ?? ''));
+    }, signal);
+  },
   assist: (data: { selectedText?: string; instruction: string; context?: string; sessionId?: string }) =>
     api.post('/workspace/assist', data),
   searchCitations: (data: { topic: string; query?: string; format?: string }) =>

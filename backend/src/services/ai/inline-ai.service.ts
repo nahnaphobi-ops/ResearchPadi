@@ -14,12 +14,14 @@ OUTPUT FORMAT — the answer is inserted straight into the student's document:
   "1. " for numbered lists, **bold**, *italic*, and pipe tables (| a | b |) for tables.
 - When editing selected text, keep the same language and roughly the same format (a
   paragraph stays a paragraph) unless the instruction asks otherwise.
-- Keep existing in-text citations such as (Owusu et al., 2022) exactly as written. Never
-  invent new citations or references.`;
+- Keep existing in-text citations such as (Surname et al., Year) exactly as written. Never
+  invent new citations or references.
+- For feedback or explanations, write advice for the student, not text for the document.`;
 
 export type InlineAction =
   | 'improve' | 'shorten' | 'expand' | 'grammar' | 'academic' | 'simplify' | 'summarise'
-  | 'continue' | 'draft' | 'table' | 'brainstorm' | 'summarise-above' | 'ask' | 'refine';
+  | 'continue' | 'draft' | 'table' | 'brainstorm' | 'summarise-above' | 'ask' | 'refine'
+  | 'feedback' | 'explain';
 
 type Tier = 'light' | 'drafting';
 
@@ -45,7 +47,13 @@ const ACTIONS: Record<InlineAction, ActionSpec> = {
   'summarise-above': { tier: 'light', instruction: 'Summarise the text before the cursor in one paragraph.' },
   ask: { tier: 'drafting', needsPrompt: true, instruction: 'Carry out the request. If text is selected, the request applies to the selected text and the answer replaces it.' },
   refine: { tier: 'drafting', needsPrompt: true, instruction: 'Revise your previous answer according to the request. Return the full revised answer.' },
+  // Advice for the student; the editor shows these without a Replace or Insert button.
+  feedback: { tier: 'drafting', needsSelection: true, instruction: 'Give the student feedback on the selected text as a short Markdown list under "**What works**", "**Improve next**" (specific, with why) and "**Needs a source**" (claims that need a citation). Do not rewrite the text; quote at most 8 words when pointing at something.' },
+  explain: { tier: 'light', needsSelection: true, instruction: 'Explain the selected text in plain, simple English for a student: what it means and why it matters, in 3 to 5 short sentences. Define any technical term.' },
 };
+
+/** Actions whose answer is advice for the student, never text for the document. */
+export const ADVICE_ACTIONS = new Set<InlineAction>(['feedback', 'explain']);
 
 export function isInlineAction(value: unknown): value is InlineAction {
   return typeof value === 'string' && value in ACTIONS;
@@ -59,6 +67,7 @@ export interface InlineInput {
   prompt?: string;    // the student's request
   previous?: string;  // the previous answer, for 'refine'
   title?: string;     // document title
+  outline?: string;   // the document's headings, one per line
 }
 
 const clip = (value: string | undefined, max: number, fromEnd = false) => {
@@ -78,6 +87,8 @@ export function buildInlinePrompt(input: InlineInput): { tier: Tier; prompt: str
 
   const parts: string[] = [];
   if (input.title) parts.push(`DOCUMENT TITLE: ${clip(input.title, 200)}`);
+  const outline = clip(input.outline, 2_000);
+  if (outline) parts.push(`DOCUMENT OUTLINE (its headings; fit new material into this structure):\n${outline}`);
   const before = clip(input.before, 4_000, true);
   const after = clip(input.after, 1_500);
   if (before) parts.push(`TEXT BEFORE THE ${text ? 'SELECTION' : 'CURSOR'} (context only):\n${before}`);

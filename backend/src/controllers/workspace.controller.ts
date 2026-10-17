@@ -12,6 +12,14 @@ import { childLogger } from '../lib/logger.js';
 import { aiStream } from '../services/ai/gateway.service.js';
 import { lazySse } from '../lib/sse.js';
 import { INLINE_SYSTEM_PROMPT, buildInlinePrompt, isInlineAction } from '../services/ai/inline-ai.service.js';
+import { CONFIG } from '../config/index.js';
+import { formatPlan } from '../services/pipeline/plan.service.js';
+import {
+  COACH_SYSTEM_PROMPT, buildCoachPrompt, draftOutline, draftSections, findDraftSection, outlineToHtml, type CoachMode,
+} from '../services/workspace/study-draft.service.js';
+
+// Mirrors subscription.middleware: session limits only apply in production.
+const sessionLimitsApply = () => CONFIG.NODE_ENV === 'production';
 
 const log = childLogger('workspace');
 
@@ -327,10 +335,10 @@ export const searchLocalCitations = async (req: Request, res: Response) => {
  */
 export const inlineAi = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  const { action, text, before, after, prompt, previous, title } = req.body ?? {};
+  const { action, text, before, after, prompt, previous, title, outline } = req.body ?? {};
   if (!isInlineAction(action)) return res.status(400).json({ error: 'Unknown AI action' });
 
-  const built = buildInlinePrompt({ action, text, before, after, prompt, previous, title });
+  const built = buildInlinePrompt({ action, text, before, after, prompt, previous, title, outline });
   if ('error' in built) return res.status(400).json({ error: built.error });
 
   const sse = lazySse(req, res);
@@ -354,5 +362,146 @@ export const inlineAi = async (req: Request, res: Response) => {
     log.warn({ action, err: err.message }, 'Inline AI failed');
     const status = err.status || 502;
     sse.fail(status, status === 429 || status === 502 ? err.message : 'The AI could not finish that. Please try again.');
+  }
+};
+
+// ── Write your own version of a study draft ─────────────────────────────────
+
+const STANDARD_SESSION_LIMIT = 5;
+
+interface StudyDraftLink { type: 'study_draft'; paperId: string }
+
+function studyDraftLink(materials: unknown): StudyDraftLink | undefined {
+  return Array.isArray(materials)
+    ? (materials as StudyDraftLink[]).find((m) => m?.type === 'study_draft' && typeof m.paperId === 'string')
+    : undefined;
+}
+
+/**
+ * A new document for the student's own version: the study draft's headings
+ * only. Opening it again returns the same document.
+ */
+export const createFromDraft = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const paperId = typeof req.body?.paperId === 'string' ? req.body.paperId : '';
+  if (!paperId) return res.status(400).json({ error: 'Choose a study draft.' });
+
+  const { data: paper } = await supabase
+    .from('papers')
+    .select('id, topic, course, institution_type, status, final_content, document_type')
+    .eq('id', paperId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!paper || paper.status !== 'completed' || !paper.final_content) {
+    return res.status(404).json({ error: 'That study draft is not ready yet.' });
+  }
+
+  const { data: existing } = await supabase
+    .from('workspace_sessions')
+    .select('id')
+    .eq('user_id', userId)
+    // A JSON string: supabase-js turns a JS array into a Postgres array literal, which jsonb can't match.
+    .contains('uploaded_materials', JSON.stringify([{ type: 'study_draft', paperId }]))
+    .limit(1)
+    .maybeSingle();
+  if (existing) return res.json({ id: existing.id, existing: true });
+
+  if ((req as any).subscription?.plan !== 'premium' && sessionLimitsApply()) {
+    const { count } = await supabase.from('workspace_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+    if ((count ?? 0) >= STANDARD_SESSION_LIMIT) {
+      return res.status(403).json({ error: `Standard plan limit reached (${STANDARD_SESSION_LIMIT} documents). Delete one or upgrade to Premium.` });
+    }
+  }
+
+  const title = `${String(paper.topic).slice(0, 180)} — my version`;
+  const content = outlineToHtml(title, draftOutline(paper.final_content), paper.document_type !== 'care_study');
+  const { data: session, error } = await supabase
+    .from('workspace_sessions')
+    .insert({
+      user_id: userId,
+      title,
+      course: paper.course || '',
+      institution_type: paper.institution_type || '',
+      content,
+      sources_used: [],
+      uploaded_materials: [{ type: 'study_draft', paperId }],
+    })
+    .select('id')
+    .single();
+  if (error || !session) {
+    log.error({ err: error?.message }, 'Could not create a document from a study draft');
+    return res.status(500).json({ error: 'Could not create your document. Please try again.' });
+  }
+  res.status(201).json({ id: session.id, existing: false });
+};
+
+async function linkedDraft(sessionId: string, userId: string) {
+  const { data: session } = await supabase
+    .from('workspace_sessions')
+    .select('id, uploaded_materials')
+    .eq('id', sessionId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  const link = studyDraftLink(session?.uploaded_materials);
+  if (!link) return null;
+  const { data: paper } = await supabase
+    .from('papers')
+    .select('id, topic, final_content, document_type, brief')
+    .eq('id', link.paperId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  return paper?.final_content ? paper : null;
+}
+
+/** The study draft behind a document, split by section for the reference pane. */
+export const getStudyDraft = async (req: Request, res: Response) => {
+  const paper = await linkedDraft(req.params.id as string, (req as any).user?.id);
+  if (!paper) return res.status(404).json({ error: 'This document is not linked to a study draft.' });
+  res.json({
+    paperId: paper.id,
+    title: paper.topic,
+    documentType: paper.document_type ?? 'research',
+    sections: draftSections(paper.final_content),
+    fullText: paper.final_content,
+  });
+};
+
+/** Coaching for one section: a plan to write it, or feedback on what the student wrote. Never rewrites. */
+export const coach = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const mode: CoachMode = req.body?.mode === 'feedback' ? 'feedback' : 'guide';
+  const heading = typeof req.body?.heading === 'string' ? req.body.heading.trim().slice(0, 200) : '';
+  const studentText = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+  if (!heading) return res.status(400).json({ error: 'Choose a section first.' });
+  if (mode === 'feedback' && studentText.split(/\s+/).length < 25) {
+    return res.status(400).json({ error: 'Write at least a short paragraph (about 25 words) before asking for feedback.' });
+  }
+
+  const paper = await linkedDraft(req.params.id as string, userId);
+  if (!paper) return res.status(404).json({ error: 'This document is not linked to a study draft.' });
+  const section = findDraftSection(paper.final_content, heading);
+  const plan = paper.brief?.plan ? formatPlan(paper.brief.plan) : undefined;
+
+  const sse = lazySse(req, res);
+  try {
+    const result = await aiStream(
+      {
+        prompt: buildCoachPrompt({ mode, heading, draftSection: section?.text, studentText, plan }),
+        tier: 'drafting',
+        systemPrompt: COACH_SYSTEM_PROMPT,
+        cachePrompt: true,
+        maxTokens: 1_500,
+        userId,
+        signal: sse.signal,
+        meta: { action: `coach:${mode}` },
+      },
+      (delta) => sse.send('delta', { text: delta }),
+    );
+    sse.send('done', { truncated: result.truncated });
+    res.end();
+  } catch (err: any) {
+    log.warn({ err: err.message }, 'Coach failed');
+    const status = err.status || 502;
+    sse.fail(status, status === 429 || status === 502 ? err.message : 'The coach could not finish. Please try again.');
   }
 };

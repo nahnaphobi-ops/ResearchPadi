@@ -4,17 +4,35 @@ import { useNavigate } from 'react-router-dom';
 import type { Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import {
-  ArrowDownToLine, Check, ChevronDown, Heading1, Heading2, Heading3, Lightbulb, List, ListOrdered,
+  ArrowDownToLine, BookOpen, Check, ChevronDown, Copy, Heading1, Heading2, Heading3, Library, Lightbulb, List, ListOrdered,
   Lock, PenLine, Quote, RotateCcw, Scissors, Send, Sparkles, SpellCheck, Square, Table, Text, Wand2, X,
 } from 'lucide-react';
 import { markdownToHtml, inlineContent } from './markdown';
 import { streamInlineAI, type InlineAction, type InlineAIError, type InlineRequest } from './stream';
 import { setAITarget } from './aiTarget';
+import { notebookService, type NotebookCitation } from '../../../services/notebookService';
+import { answerToDocumentHtml } from '../notebook/citeHtml';
 
 interface Props {
   editor: Editor;
   isPremium: boolean;
   docTitle?: string;
+  sessionId?: string;
+  /** Open the citations panel (used by the toolbar's Cite button). */
+  onOpenCitations?: () => void;
+}
+
+/** 'sources' writes from the student's notebook sources (notebook chat), not the inline-AI endpoint. */
+type Action = InlineAction | 'sources';
+const ADVICE: ReadonlySet<Action> = new Set<Action>(['feedback', 'explain']);
+
+/** The document's headings, one per line, so drafts fit its structure. */
+function documentOutline(editor: Editor): string {
+  const lines: string[] = [];
+  editor.state.doc.forEach((node) => {
+    if (node.type.name === 'heading' && node.textContent.trim() && lines.length < 60) lines.push(node.textContent.trim());
+  });
+  return lines.join('\n');
 }
 
 type Mode = 'idle' | 'slash' | 'ask' | 'result' | 'upsell';
@@ -38,12 +56,15 @@ const SELECTION_ACTIONS: { action: InlineAction; label: string }[] = [
   { action: 'simplify', label: 'Simplify language' },
   { action: 'grammar', label: 'Fix spelling & grammar' },
   { action: 'summarise', label: 'Summarise' },
+  { action: 'feedback', label: 'Get feedback (no rewrite)' },
+  { action: 'explain', label: 'Explain this' },
 ];
 
 const SLASH_ITEMS: SlashItem[] = [
   { id: 'continue', label: 'Continue writing', hint: 'AI writes the next paragraph', icon: <PenLine size={16} />, group: 'AI', keywords: 'continue next write more', ai: true },
   { id: 'draft', label: 'Draft a section…', hint: 'Describe it, AI drafts it', icon: <Wand2 size={16} />, group: 'AI', keywords: 'draft section write generate', ai: true },
   { id: 'table', label: 'Make a table…', hint: 'AI builds a table', icon: <Table size={16} />, group: 'AI', keywords: 'table matrix compare', ai: true },
+  { id: 'sources', label: 'Write from my sources…', hint: 'Cites your uploaded sources', icon: <Library size={16} />, group: 'AI', keywords: 'sources cite notebook evidence write', ai: true },
   { id: 'brainstorm', label: 'Brainstorm ideas', hint: 'Bullet list of angles', icon: <Lightbulb size={16} />, group: 'AI', keywords: 'brainstorm ideas list', ai: true },
   { id: 'summarise-above', label: 'Summarise above', hint: 'One-paragraph summary', icon: <Text size={16} />, group: 'AI', keywords: 'summary summarise summarize tldr', ai: true },
   { id: 'ask', label: 'Ask AI…', hint: 'Anything else', icon: <Sparkles size={16} />, group: 'AI', keywords: 'ask ai prompt', ai: true },
@@ -76,7 +97,7 @@ function cardPosition(anchor: { left: number; top: number; bottom: number }, wid
  * menu on an empty line, Ctrl/⌘+J for Ask AI, and a result card that streams the
  * answer and lets the student replace, insert below, retry or refine it.
  */
-export default function InlineAI({ editor, isPremium, docTitle }: Props) {
+export default function InlineAI({ editor, isPremium, docTitle, sessionId, onOpenCitations }: Props) {
   const navigate = useNavigate();
   const [, rerender] = useReducer((x: number) => x + 1, 0);
   const [mode, setModeState] = useState<Mode>('idle');
@@ -89,7 +110,10 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
   const setTarget = useCallback((t: Target | null) => { targetRef.current = t; setTargetState(t); }, []);
   const [slashQuery, setSlashQuery] = useState('');
   const [slashIndex, setSlashIndex] = useState(0);
-  const [askAction, setAskAction] = useState<InlineAction>('ask');
+  const [askAction, setAskAction] = useState<Action>('ask');
+  const [resultAction, setResultAction] = useState<Action>('ask');
+  const [citations, setCitations] = useState<NotebookCitation[]>([]);
+  const [copied, setCopied] = useState(false);
   const [askPlaceholder, setAskPlaceholder] = useState('');
   const [askText, setAskText] = useState('');
   const [result, setResult] = useState('');
@@ -98,7 +122,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
   const [refineText, setRefineText] = useState('');
   const [moreOpen, setMoreOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const lastRequest = useRef<InlineRequest | null>(null);
+  const lastRequest = useRef<(Omit<InlineRequest, 'action'> & { action: Action }) | null>(null);
   const [canRetry, setCanRetry] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -116,7 +140,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
   }, [editor, setTarget]);
 
   // ── Run an AI action and stream the answer ───────────────────────────────
-  const run = useCallback(async (req: Pick<InlineRequest, 'action' | 'prompt'>) => {
+  const run = useCallback(async (req: { action: Action; prompt?: string }) => {
     const t = targetRef.current;
     if (!t) return;
     if (!isPremium) { setMode('upsell'); return; }
@@ -125,15 +149,16 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
     const from = Math.min(t.from, doc.content.size);
     const to = Math.min(t.to, doc.content.size);
     const isRefine = req.action === 'refine';
-    const body: InlineRequest = {
+    const body = {
       ...req,
       text: isRefine ? lastRequest.current?.text : t.selection ? doc.textBetween(from, to, '\n', ' ') : undefined,
       before: doc.textBetween(Math.max(0, from - 6000), from, '\n', ' '),
       after: doc.textBetween(to, Math.min(doc.content.size, to + 2000), '\n', ' '),
       previous: isRefine ? result : undefined,
       title: docTitle,
+      outline: documentOutline(editor),
     };
-    if (!isRefine) { lastRequest.current = body; setCanRetry(true); }
+    if (!isRefine) { lastRequest.current = body; setCanRetry(true); setResultAction(req.action); }
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -147,8 +172,21 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
     if (t.selection) setAITarget(editor, { from, to });
 
     let text = '';
+    setCitations([]);
+    setCopied(false);
     try {
-      const { truncated } = await streamInlineAI(body, (delta) => { text += delta; setResult(text); }, controller.signal);
+      let truncated = false;
+      if (req.action === 'sources') {
+        if (!sessionId) throw new Error('Open the Sources panel and add a source first.');
+        ({ truncated } = await notebookService.stream(
+          sessionId,
+          { type: 'chat', question: `Write one or two paragraphs for my paper about: ${req.prompt}. Use only my sources and cite each point by number.`, history: [] },
+          { onSources: setCitations, onDelta: (delta) => { text += delta; setResult(text); } },
+          controller.signal,
+        ));
+      } else {
+        ({ truncated } = await streamInlineAI({ ...body, action: req.action }, (delta) => { text += delta; setResult(text); }, controller.signal));
+      }
       setStatus('done');
       if (truncated) setNote('The answer reached the length limit and may be cut off.');
       if (!text.trim()) { setStatus('error'); setNote('The AI returned nothing. Try again or rephrase.'); }
@@ -159,10 +197,10 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
       setStatus('error');
       setNote(err.message || 'Something went wrong.');
     }
-  }, [editor, isPremium, docTitle, result]);
+  }, [editor, isPremium, docTitle, result, sessionId]);
 
   // ── Open the Ask AI box at the selection or cursor ───────────────────────
-  const openAsk = useCallback((action: InlineAction = 'ask', placeholder?: string) => {
+  const openAsk = useCallback((action: Action = 'ask', placeholder?: string) => {
     const { from, to, empty } = editor.state.selection;
     editor.commands.scrollIntoView();
     setTarget({ from, to, selection: !empty });
@@ -192,7 +230,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
   const accept = useCallback((how: 'replace' | 'below' | 'insert') => {
     const t = targetRef.current;
     if (!t || !result.trim()) return;
-    const html = markdownToHtml(result);
+    const html = resultAction === 'sources' ? answerToDocumentHtml(result, citations) : markdownToHtml(result);
     const doc = editor.state.doc;
     const chain = editor.chain().focus();
     if (how === 'replace') {
@@ -210,7 +248,16 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
       chain.insertContentAt(at, html).run();
     }
     close();
-  }, [editor, result, close]);
+  }, [editor, result, close, resultAction, citations]);
+
+  const copyResult = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(result);
+      setCopied(true);
+    } catch {
+      setNote('Your browser blocked copying. Select the text and press Ctrl+C.');
+    }
+  }, [result]);
 
   // ── "/" menu ─────────────────────────────────────────────────────────────
   const runSlash = useCallback((id: string) => {
@@ -219,6 +266,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
       case 'continue': return void run({ action: 'continue' });
       case 'draft': return openAsk('draft', 'What should this section cover? e.g. "2.3 Theoretical framework on TAM"');
       case 'table': return openAsk('table', 'What should the table show? e.g. "Summary of studies on mobile learning in Ghana"');
+      case 'sources': return openAsk('sources', 'What should the paragraph say? e.g. "barriers to mobile money for market women"');
       case 'brainstorm': return void run({ action: 'brainstorm' });
       case 'summarise-above': return void run({ action: 'summarise-above' });
       case 'ask': return openAsk('ask');
@@ -389,6 +437,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
         <ToolbarButton icon={<Wand2 size={14} />} label="Improve" onClick={() => runOnSelection('improve')} />
         <ToolbarButton icon={<Scissors size={14} />} label="Shorten" onClick={() => runOnSelection('shorten')} />
         <ToolbarButton icon={<SpellCheck size={14} />} label="Grammar" onClick={() => runOnSelection('grammar')} />
+        {onOpenCitations && <ToolbarButton icon={<BookOpen size={14} />} label="Cite" onClick={onOpenCitations} />}
         <div className="relative">
           <button type="button" onClick={() => setMoreOpen((o) => !o)} aria-expanded={moreOpen} className="inline-flex items-center gap-0.5 rounded-md px-2 py-1.5 text-[12.5px] text-[#323130] hover:bg-[#f3f2f1]">
             More <ChevronDown size={13} />
@@ -451,7 +500,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
     );
   } else if (mode === 'ask') {
     const hasSelection = target?.selection;
-    const chips: { label: string; action: InlineAction }[] = askAction !== 'ask' ? [] : hasSelection
+    const chips: { label: string; action: Action }[] = askAction !== 'ask' ? [] : hasSelection
       ? SELECTION_ACTIONS.slice(0, 5)
       : [{ label: 'Continue writing', action: 'continue' }, { label: 'Brainstorm ideas', action: 'brainstorm' }, { label: 'Summarise above', action: 'summarise-above' }];
     content = (
@@ -490,7 +539,7 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
       <div style={cardPosition(anchor)} className="z-[70] flex max-h-[min(460px,70vh)] flex-col rounded-xl border border-[#d8b4fe] bg-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] no-print" aria-live="polite">
         <div className="flex items-center gap-2 border-b border-[#f3f2f1] px-3 py-2 text-[12px] text-[#6d28d9]">
           <Sparkles size={14} />
-          <span className="font-semibold">{status === 'streaming' ? 'Writing…' : status === 'error' ? 'Could not finish' : 'AI suggestion'}</span>
+          <span className="font-semibold">{status === 'streaming' ? (ADVICE.has(resultAction) ? 'Reading…' : 'Writing…') : status === 'error' ? 'Could not finish' : resultAction === 'feedback' ? 'Feedback for you' : resultAction === 'explain' ? 'Explanation' : resultAction === 'sources' ? 'From your sources' : 'AI suggestion'}</span>
           {status === 'streaming' && <span className="ml-auto inline-flex gap-1"><Dot /><Dot delay={150} /><Dot delay={300} /></span>}
         </div>
         <div className="min-h-[48px] flex-1 overflow-y-auto px-3 py-2">
@@ -501,7 +550,9 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
         </div>
         <div className="border-t border-[#f3f2f1] px-2 py-2">
           <div className="flex flex-wrap items-center gap-1.5">
-            {hasSelection ? (
+            {ADVICE.has(resultAction) ? (
+              <ActionButton disabled={status !== 'done'} onClick={() => void copyResult()} icon={copied ? <Check size={14} /> : <Copy size={14} />} label={copied ? 'Copied' : 'Copy'} />
+            ) : hasSelection ? (
               <>
                 <ActionButton primary disabled={status !== 'done'} onClick={() => accept('replace')} icon={<Check size={14} />} label="Replace selection" />
                 <ActionButton disabled={status !== 'done'} onClick={() => accept('below')} icon={<ArrowDownToLine size={14} />} label="Insert below" />
@@ -510,9 +561,9 @@ export default function InlineAI({ editor, isPremium, docTitle }: Props) {
               <ActionButton primary disabled={status !== 'done'} onClick={() => accept('insert')} icon={<Check size={14} />} label="Insert" />
             )}
             <ActionButton disabled={status === 'streaming' || !canRetry} onClick={retry} icon={<RotateCcw size={14} />} label="Try again" />
-            <ActionButton onClick={() => { close(); editor.commands.focus(); }} icon={<X size={14} />} label={status === 'streaming' ? 'Stop' : 'Discard'} />
+            <ActionButton onClick={() => { close(); editor.commands.focus(); }} icon={<X size={14} />} label={status === 'streaming' ? 'Stop' : ADVICE.has(resultAction) ? 'Done' : 'Discard'} />
           </div>
-          {status === 'done' && result.trim() && (
+          {status === 'done' && result.trim() && !ADVICE.has(resultAction) && resultAction !== 'sources' && (
             <form onSubmit={(e) => { e.preventDefault(); if (refineText.trim()) void run({ action: 'refine', prompt: refineText.trim() }); }} className="mt-2 flex items-center gap-2 rounded-lg border border-[#e1dfdd] px-2">
               <input value={refineText} onChange={(e) => setRefineText(e.target.value)} placeholder="Tell AI what to change… e.g. “more formal”, “add a Ghana example”" aria-label="Refine the answer" className="min-w-0 flex-1 bg-transparent py-1.5 text-[12.5px] outline-none placeholder:text-[#a19f9d]" />
               <button type="submit" disabled={!refineText.trim()} aria-label="Refine" className="p-1 text-[#7c3aed] disabled:opacity-40"><Send size={14} /></button>

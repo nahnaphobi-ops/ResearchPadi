@@ -60,7 +60,7 @@ export async function listSources(sessionId: string): Promise<NotebookSource[]> 
 export async function addSource(
   sessionId: string,
   userId: string,
-  input: { kind: SourceKind; title: string; text: string; url?: string | null },
+  input: { kind: SourceKind; title: string; text: string; url?: string | null; authors?: string | null; year?: number | null },
 ): Promise<NotebookSource> {
   const text = input.text.slice(0, MAX_SOURCE_CHARS).trim();
   if (text.length < 40) throw new NotebookError("That source doesn't contain enough text to use.");
@@ -86,6 +86,8 @@ export async function addSource(
       title: input.title.slice(0, 300) || 'Untitled source',
       kind: input.kind,
       url: input.url ?? null,
+      authors: input.authors ?? null,
+      year: input.year ?? null,
       char_count: text.length,
       chunk_count: chunks.length,
     })
@@ -158,20 +160,24 @@ export interface SourceExcerpt {
  * Most relevant passages for a question, grouped by source and numbered by
  * source, so [2] always means "the second source in the list".
  */
-export async function searchSources(sessionId: string, query: string, limit = 10): Promise<SourceExcerpt[]> {
+export async function searchSources(sessionId: string, query: string, limit = 10, only?: string[]): Promise<SourceExcerpt[]> {
   const sources = await listSources(sessionId);
   if (!sources.length) return [];
+  const chosen = only?.length ? new Set(only) : null;
   const embedding = await generateEmbedding(query).catch(() => null);
 
   const { data, error } = await supabase.rpc('search_notebook', {
     p_session: sessionId,
     p_query: query,
     p_embedding: embedding,
-    p_limit: limit,
+    // Fetch extra when filtering to chosen sources, then trim.
+    p_limit: chosen ? limit * 4 : limit,
   });
   if (error) throw new NotebookError('Could not search your sources.', 500);
 
-  let rows = (data ?? []) as { source_id: string; chunk_index: number; content: string }[];
+  let rows = ((data ?? []) as { source_id: string; chunk_index: number; content: string }[])
+    .filter((r) => !chosen || chosen.has(r.source_id))
+    .slice(0, limit);
   if (!rows.length) {
     // No keyword overlap and no embeddings: fall back to each source's opening passages.
     const { data: first } = await supabase
@@ -180,7 +186,7 @@ export async function searchSources(sessionId: string, query: string, limit = 10
       .eq('session_id', sessionId)
       .lt('chunk_index', 2)
       .order('chunk_index');
-    rows = (first ?? []) as typeof rows;
+    rows = ((first ?? []) as typeof rows).filter((r) => !chosen || chosen.has(r.source_id));
   }
 
   const bySource = new Map<string, string[]>();
@@ -198,12 +204,14 @@ export async function searchSources(sessionId: string, query: string, limit = 10
  * Text from every source for whole-notebook outputs (summary, literature matrix…),
  * shared out evenly so one long PDF doesn't crowd out the rest.
  */
-export async function sourceDigest(sessionId: string, maxChars = 60_000): Promise<SourceExcerpt[]> {
-  const sources = await listSources(sessionId);
-  if (!sources.length) return [];
-  const perSource = Math.floor(maxChars / sources.length);
+export async function sourceDigest(sessionId: string, maxChars = 60_000, only?: string[]): Promise<SourceExcerpt[]> {
+  const all = await listSources(sessionId);
+  // Numbers stay those of the full list, so [3] always means the third source.
+  const numbered = all.map((source, i) => ({ source, n: i + 1 })).filter((e) => !only?.length || only.includes(e.source.id));
+  if (!numbered.length) return [];
+  const perSource = Math.floor(maxChars / numbered.length);
 
-  return Promise.all(sources.map(async (source, i) => {
+  return Promise.all(numbered.map(async ({ source, n }) => {
     const take = Math.max(1, Math.ceil(perSource / 1_400)); // ~1,400 characters per chunk
     const { data } = await supabase
       .from('notebook_chunks')
@@ -218,6 +226,6 @@ export async function sourceDigest(sessionId: string, maxChars = 60_000): Promis
       passages.push(row.content.slice(0, budget));
       budget -= row.content.length;
     }
-    return { source, n: i + 1, passages };
+    return { source, n, passages };
   }));
 }

@@ -1,10 +1,11 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
-import { BookOpen, GraduationCap, Library, Sparkles, X } from 'lucide-react';
+import { BookOpen, FileText, GraduationCap, Library, Sparkles, X } from 'lucide-react';
 import AIAssistantPanel from '../workspace/AIAssistantPanel';
 import CitationPanel from '../workspace/CitationPanel';
 import NotebookPanel from './notebook/NotebookPanel';
 import FeedbackPanel from './review/FeedbackPanel';
+import StudyDraftPanel from './draft/StudyDraftPanel';
 import type { WorkspacePanel } from './panels';
 
 interface Props {
@@ -18,9 +19,11 @@ interface Props {
   isPremium: boolean;
   onRequestReview: () => void;
   reviewRefreshKey: number;
+  hasStudyDraft: boolean;
 }
 
 const tabs = [
+  { key: 'draft' as const, label: 'Draft', icon: FileText },
   { key: 'ai' as const, label: 'AI', icon: Sparkles },
   { key: 'citations' as const, label: 'Citations', icon: BookOpen },
   { key: 'sources' as const, label: 'Sources', icon: Library },
@@ -42,6 +45,7 @@ export const SidePanel: React.FC<Props> = ({
   isPremium,
   onRequestReview,
   reviewRefreshKey,
+  hasStudyDraft,
 }) => (
   <>
     {sidePanel && (
@@ -55,20 +59,26 @@ export const SidePanel: React.FC<Props> = ({
       aria-label="Writing tools"
     >
       <div className="flex border-b border-rule">
-        {tabs.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setSidePanel(sidePanel === key ? null : key)}
-            aria-pressed={sidePanel === key}
-            className={`flex-1 py-2.5 text-xs font-semibold transition inline-flex items-center justify-center gap-1.5 ${
-              sidePanel === key
-                ? 'text-brand border-b-2 border-brand bg-brand-soft'
-                : 'text-muted hover:text-ink'
-            }`}
-          >
-            <Icon size={14} /> {label}
-          </button>
-        ))}
+        {tabs.filter((t) => t.key !== 'draft' || hasStudyDraft).map(({ key, label, icon: Icon }, _i, shown) => {
+          // Five tabs don't fit with labels: show the open tab's label only.
+          const compact = shown.length > 4 && sidePanel !== key;
+          return (
+            <button
+              key={key}
+              onClick={() => setSidePanel(sidePanel === key ? null : key)}
+              aria-pressed={sidePanel === key}
+              aria-label={label}
+              title={label}
+              className={`${compact ? 'px-2.5' : 'flex-1 px-1.5'} min-w-0 py-2.5 text-xs font-semibold transition inline-flex items-center justify-center gap-1.5 ${
+                sidePanel === key
+                  ? 'text-brand border-b-2 border-brand bg-brand-soft'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              <Icon size={14} className="shrink-0" /> {!compact && <span className="truncate">{label}</span>}
+            </button>
+          );
+        })}
         <button
           onClick={() => setSidePanel(null)}
           className="px-3 text-muted hover:text-ink"
@@ -79,6 +89,7 @@ export const SidePanel: React.FC<Props> = ({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
+        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'ai' && (
           <AIAssistantPanel
             sessionId={sessionId}

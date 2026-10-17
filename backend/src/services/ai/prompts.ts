@@ -111,8 +111,8 @@ NMTC NURSING/MIDWIFERY-SPECIFIC RULES:
 - Reference NMC Ghana guidelines where appropriate
 - Reference KATH, Korle-Bu, or relevant Ghanaian health facilities
 - Citation style: APA 7th Edition, DOIs mandatory for journals
-- Sampling: justify with reference to Cochran (1977) or
-  Krejcie & Morgan (1970) — standard in Ghana nursing research
+- Sampling: justify with (Cochran, 1977) or
+  (Krejcie & Morgan, 1970) — standard in Ghana nursing research
   `,
   technical_university: `
 TECHNICAL UNIVERSITY-SPECIFIC RULES:
@@ -320,16 +320,16 @@ Write in past tense throughout ("Data were collected...")
 
 3.2 Research Design: Name the design. Justify it with a citation.
     "A descriptive cross-sectional design was employed because..."
-    Cite a methodology textbook: Creswell (2018) is standard.
+    Cite the methodology text in the source list as (Creswell & Creswell, 2018).
 
 3.3 Study Area and Population: Name the specific location
     (hospital, school, district, region). Give context.
     State total population size with source.
 
 3.4 Sampling: State technique (purposive/random/stratified).
-    State sample size and how it was calculated.
-    Reference Cochran (1977) or Krejcie & Morgan (1970)
-    for sample size justification — standard in Ghana research.
+    State the planned sample size and how it was calculated.
+    Justify it with (Krejcie & Morgan, 1970) or (Cochran, 1977),
+    both in the source list — standard in Ghana research.
 
 3.5 Instrument: Describe the questionnaire/interview guide/
     observation schedule. How many sections? What scales used?

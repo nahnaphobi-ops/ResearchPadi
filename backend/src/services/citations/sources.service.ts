@@ -20,6 +20,12 @@ const REPOSITORY_LABELS: Record<string, string> = {
   HF_NMTC_Berekum: 'Holy Family NMTC Berekum Repository',
   UCC: 'UCC Institutional Repository',
   UEW: 'UEW Institutional Repository',
+  AJOL_GMJ: 'African Journals Online',
+  AJOL_JUST: 'African Journals Online',
+  AJOL_GJAS: 'African Journals Online',
+  AJOL_GJDS: 'African Journals Online',
+  AJOL_GJG: 'African Journals Online',
+  AJOL_LJH: 'African Journals Online',
 };
 
 const OPENALEX_GHANA_SOURCE = 'OpenAlex (Ghana)';

@@ -5,6 +5,7 @@ import AppShell from '../components/layout/AppShell';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
 import PaperStatusBadge from '../components/papers/PaperStatusBadge';
 import ReferenceCheck from '../components/papers/ReferenceCheck';
+import WriteOwnVersion from '../components/papers/WriteOwnVersion';
 import { ArrowLeft, BookOpen, Download, FileSearch } from 'lucide-react';
 import type { Paper } from '../types';
 
@@ -128,7 +129,8 @@ export default function PaperDetails() {
 
         {paper.status === 'completed' && (
           <div className="flex flex-wrap gap-3">
-            <button onClick={() => navigate(`/papers/${paper.id}/review`)} className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2">
+            <WriteOwnVersion paperId={paper.id} />
+            <button onClick={() => navigate(`/papers/${paper.id}/review`)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
               <FileSearch size={16} /> Read study draft
             </button>
             <button onClick={() => setShowDownload(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">

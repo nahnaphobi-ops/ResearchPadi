@@ -2,7 +2,8 @@ import { postSse, StreamError } from '../../../utils/sse';
 
 export type InlineAction =
   | 'improve' | 'shorten' | 'expand' | 'grammar' | 'academic' | 'simplify' | 'summarise'
-  | 'continue' | 'draft' | 'table' | 'brainstorm' | 'summarise-above' | 'ask' | 'refine';
+  | 'continue' | 'draft' | 'table' | 'brainstorm' | 'summarise-above' | 'ask' | 'refine'
+  | 'feedback' | 'explain';
 
 export interface InlineRequest {
   action: InlineAction;
@@ -12,6 +13,7 @@ export interface InlineRequest {
   prompt?: string;
   previous?: string;
   title?: string;
+  outline?: string;
 }
 
 export { StreamError as InlineAIError };

@@ -13,9 +13,12 @@ router.use(requireSubscription);
 
 router.get('/sessions', workspaceController.listSessions);
 router.post('/sessions', enforceSessionLimit, workspaceController.createSession);
+router.post('/sessions/from-draft', workspaceController.createFromDraft);
 router.get('/sessions/:id', workspaceController.getSession);
 router.put('/sessions/:id', workspaceController.updateSession);
 router.delete('/sessions/:id', workspaceController.deleteSession);
+router.get('/sessions/:id/study-draft', workspaceController.getStudyDraft);
+router.post('/sessions/:id/coach', workspaceController.coach);
 
 router.post('/assist', workspaceController.assist);
 router.post('/assist-advanced', workspaceController.assistAdvanced);
@@ -34,5 +37,6 @@ router.patch('/sessions/:id/notebook/sources/:sourceId', requirePremium, noteboo
 router.delete('/sessions/:id/notebook/sources/:sourceId', requirePremium, notebook.remove);
 router.post('/sessions/:id/notebook/chat', requirePremium, notebook.chat);
 router.post('/sessions/:id/notebook/generate', requirePremium, notebook.generate);
+router.get('/sessions/:id/notebook/suggestions', requirePremium, notebook.suggestions);
 
 export default router;

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { paperService } from '../services/apiService';
 import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModal';
 import ReferenceCheck from '../components/papers/ReferenceCheck';
+import WriteOwnVersion from '../components/papers/WriteOwnVersion';
 import type { Paper } from '../types';
 import {
   AlertTriangle, BookOpen, CheckCircle, Download, ArrowLeft, RefreshCw,
@@ -127,6 +128,7 @@ export default function PaperReview() {
                 <CheckCircle size={13} /> Accept & Save
               </button>
             )}
+            {paper.status === 'completed' && id && <WriteOwnVersion paperId={id} variant="dark" />}
             {paper.status === 'completed' && (
               <button
                 onClick={() => setShowDownload(true)}
@@ -196,7 +198,7 @@ export default function PaperReview() {
             <ol className="text-xs text-ink leading-relaxed list-decimal pl-4 space-y-1.5">
               <li>Read it to understand the topic and how each chapter builds on the last.</li>
               <li>Follow up the sources it uses, and check every reference before you rely on it.</li>
-              <li>Write your paper in your own words. The Workspace can help you with that.</li>
+              <li>Write your paper in your own words: "Write your own version" opens it in the Workspace with this draft and a coach beside you.</li>
             </ol>
             <p className="text-[11px] text-muted leading-relaxed mt-3">
               Don't submit this draft, or parts of it, as your own work. Most universities treat that as misconduct, and the downloaded file is marked as AI-written on every page.

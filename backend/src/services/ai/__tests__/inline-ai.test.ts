@@ -34,3 +34,18 @@ test('only known actions are accepted', () => {
   assert.equal(isInlineAction('delete-everything'), false);
   assert.equal(isInlineAction(undefined), false);
 });
+
+test('feedback and explain need a selection and are advice-only', async () => {
+  const { ADVICE_ACTIONS } = await import('../inline-ai.service.js');
+  assert.ok('error' in buildInlinePrompt({ action: 'feedback' }));
+  const fb = buildInlinePrompt({ action: 'feedback', text: 'Mobile money is used by traders.' });
+  assert.ok(!('error' in fb) && fb.tier === 'drafting' && /Do not rewrite/.test(fb.prompt));
+  const ex = buildInlinePrompt({ action: 'explain', text: 'Burstiness' });
+  assert.ok(!('error' in ex) && ex.tier === 'light');
+  assert.ok(ADVICE_ACTIONS.has('feedback') && ADVICE_ACTIONS.has('explain') && !ADVICE_ACTIONS.has('improve'));
+});
+
+test('the document outline is passed as context', () => {
+  const built = buildInlinePrompt({ action: 'continue', outline: 'CHAPTER 1: INTRODUCTION\n1.1 Background' });
+  assert.ok(!('error' in built) && built.prompt.includes('DOCUMENT OUTLINE') && built.prompt.includes('1.1 Background'));
+});

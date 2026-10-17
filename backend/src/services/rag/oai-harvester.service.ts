@@ -32,6 +32,8 @@ export interface RepositoryConfig {
   institution: string;
   institutionType: 'university' | 'nmtc' | 'technical_university' | 'college_of_education';
   dspaceVersion: 6 | 7;
+  /** OJS journals (e.g. on AJOL) use their /oai URL as given. Default 'dspace'. */
+  platform?: 'dspace' | 'ojs';
 }
 
 interface HarvestState {
@@ -68,8 +70,9 @@ function loadState(repoName: string): HarvestState | null {
   }
 }
 
-function getOaiBaseUrl(repo: RepositoryConfig): string {
+export function getOaiBaseUrl(repo: RepositoryConfig): string {
   const base = repo.oaiBaseUrl.replace(/\/+$/, '');
+  if (repo.platform === 'ojs') return base;
   if (repo.dspaceVersion === 7) {
     return base.endsWith('/server/oai/request') ? base : `${base}/server/oai/request`;
   }
@@ -259,6 +262,26 @@ function extractArray(field: any): string[] {
     return field.map((f: any) => f?._ || f || '').filter(Boolean);
   }
   return [String(field)];
+}
+
+/** True when the endpoint answers an OAI-PMH Identify request. */
+export function isIdentifyResponse(xml: string): boolean {
+  return /<(?:oai:)?Identify\b/.test(xml) && /<(?:oai:)?repositoryName\b/.test(xml);
+}
+
+/** Check a repository is up before harvesting it; unreachable ones are skipped and logged. */
+export async function identifyRepository(repo: RepositoryConfig): Promise<boolean> {
+  try {
+    const { data } = await axios.get(getOaiBaseUrl(repo), {
+      params: { verb: 'Identify' },
+      timeout: 20_000,
+      headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
+      responseType: 'text',
+    });
+    return isIdentifyResponse(String(data));
+  } catch {
+    return false;
+  }
 }
 
 /** All setSpecs a repository exposes (following resumption tokens). */

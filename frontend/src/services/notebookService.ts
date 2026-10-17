@@ -1,5 +1,6 @@
 import api from './api';
 import { postSse } from '../utils/sse';
+import type { Source } from '../components/workspace/citations/types';
 
 export type NotebookSourceKind = 'pdf' | 'docx' | 'txt' | 'url' | 'text';
 
@@ -27,7 +28,7 @@ export interface NotebookCitation {
   snippet: string;
 }
 
-export type NotebookOutput = 'summary' | 'matrix' | 'questions' | 'faq' | 'study-guide';
+export type NotebookOutput = 'summary' | 'matrix' | 'questions' | 'faq' | 'study-guide' | 'outline' | 'compare';
 
 const base = (sessionId: string) => `/workspace/sessions/${sessionId}/notebook`;
 
@@ -44,16 +45,20 @@ export const notebookService = {
   update: (sessionId: string, sourceId: string, patch: { title?: string; authors?: string; year?: number | null }) =>
     api.patch<{ source: NotebookSource }>(`${base(sessionId)}/sources/${sourceId}`, patch),
   remove: (sessionId: string, sourceId: string) => api.delete(`${base(sessionId)}/sources/${sourceId}`),
+  addFromLibrary: (sessionId: string, library: Source) => api.post<{ source: NotebookSource }>(`${base(sessionId)}/sources`, { library }),
+  suggestions: (sessionId: string) => api.get<{ questions: string[] }>(`${base(sessionId)}/suggestions`),
 
   /** Stream an answer; `onSources` fires once, before the first text. */
   stream: async (
     sessionId: string,
-    request: { type: 'chat'; question: string; history: { role: 'user' | 'assistant'; content: string }[] } | { type: 'generate'; kind: NotebookOutput },
+    request: ({ type: 'chat'; question: string; history: { role: 'user' | 'assistant'; content: string }[] } | { type: 'generate'; kind: NotebookOutput }) & { sourceIds?: string[] },
     handlers: { onSources: (sources: NotebookCitation[]) => void; onDelta: (text: string) => void },
     signal?: AbortSignal,
   ) => {
     const path = request.type === 'chat' ? `${base(sessionId)}/chat` : `${base(sessionId)}/generate`;
-    const body = request.type === 'chat' ? { question: request.question, history: request.history } : { kind: request.kind };
+    const body = request.type === 'chat'
+      ? { question: request.question, history: request.history, sourceIds: request.sourceIds }
+      : { kind: request.kind, sourceIds: request.sourceIds };
     let truncated = false;
     await postSse(path, body, (event, data) => {
       if (event === 'sources') handlers.onSources((data.sources as NotebookCitation[] | undefined) ?? []);

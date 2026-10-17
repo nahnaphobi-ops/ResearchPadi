@@ -1,1 +1,1 @@
-export type WorkspacePanel = 'ai' | 'citations' | 'sources' | 'feedback';
+export type WorkspacePanel = 'ai' | 'citations' | 'sources' | 'feedback' | 'draft';

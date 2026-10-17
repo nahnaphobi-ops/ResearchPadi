@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Editor } from '@tiptap/react';
 import {
-  BookOpenCheck, ClipboardList, Copy, ExternalLink, FileText, FileType2, Globe, HelpCircle, Link2, Lightbulb,
-  Loader2, Lock, Pencil, Plus, Quote, Send, Sparkles, StickyNote, Table, Trash2, Upload, X,
+  BookOpenCheck, ClipboardList, Columns3, Copy, ExternalLink, FileText, FileType2, Globe, HelpCircle, Library, Link2, Lightbulb,
+  ListTree, Loader2, Lock, Pencil, Plus, Quote, Search, Send, Sparkles, StickyNote, Table, Trash2, Upload, X,
 } from 'lucide-react';
+import { workspaceService } from '../../../services/workspaceService';
+import type { Source } from '../citations/types';
 import { apiErrorMessage } from '../../../utils/apiError';
 import type { StreamError } from '../../../utils/sse';
 import {
@@ -39,6 +41,8 @@ const OUTPUTS: { kind: NotebookOutput; label: string; hint: string; icon: typeof
   { kind: 'questions', label: 'Research questions', hint: 'Five grounded questions to investigate', icon: Lightbulb },
   { kind: 'faq', label: 'FAQ', hint: 'Questions and cited answers', icon: HelpCircle },
   { kind: 'study-guide', label: 'Study guide', hint: 'Key terms, main ideas, self-check', icon: BookOpenCheck },
+  { kind: 'outline', label: 'Chapter outline', hint: 'Headings, with which source to use where', icon: ListTree },
+  { kind: 'compare', label: 'Compare sources', hint: 'Agreements and differences by theme', icon: Columns3 },
 ];
 
 const STARTERS = ['What are the main findings across my sources?', 'Where do the sources disagree?', 'What gaps do they leave for my study?'];
@@ -52,7 +56,13 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
   const navigate = useNavigate();
   const [sources, setSources] = useState<NotebookSource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<'menu' | 'link' | 'text' | null>(null);
+  const [adding, setAdding] = useState<'menu' | 'link' | 'text' | 'library' | null>(null);
+  // Sources the AI uses; null means all of them.
+  const [chosen, setChosen] = useState<Set<string> | null>(null);
+  const [libraryQuery, setLibraryQuery] = useState('');
+  const [libraryResults, setLibraryResults] = useState<Source[] | null>(null);
+  const [librarySearching, setLibrarySearching] = useState(false);
+  const [suggested, setSuggested] = useState<string[]>([]);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [linkValue, setLinkValue] = useState('');
@@ -87,6 +97,44 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  // Questions grounded in the sources, refreshed when the set of sources changes.
+  const sourceKey = sources.map((s) => s.id).join(',');
+  useEffect(() => {
+    if (!isPremium || !sourceKey) return;
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      notebookService.suggestions(sessionId)
+        .then((res) => { if (!cancelled) setSuggested(res.data.questions ?? []); })
+        .catch(() => { if (!cancelled) setSuggested([]); });
+    }, 600);
+    return () => { cancelled = true; window.clearTimeout(t); };
+  }, [sessionId, isPremium, sourceKey]);
+
+  const visibleSuggestions = sourceKey ? suggested : [];
+  const sourceIds = useMemo(() => (chosen ? [...chosen] : undefined), [chosen]);
+  const isChosen = (id: string) => !chosen || chosen.has(id);
+  const toggleChosen = (id: string) => setChosen((cur) => {
+    const next = new Set(cur ?? sources.map((s) => s.id));
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next.size === sources.length ? null : next;
+  });
+
+  const searchLibrary = async (e: FormEvent) => {
+    e.preventDefault();
+    const q = libraryQuery.trim();
+    if (!q) return;
+    setLibrarySearching(true);
+    setError('');
+    try {
+      const res = await workspaceService.findSources({ query: q, ghanaFirst: true, limit: 8 });
+      setLibraryResults(res.data.sources ?? []);
+    } catch (err) {
+      setError(apiErrorMessage(err, 'Search failed. Please try again.'));
+    } finally {
+      setLibrarySearching(false);
+    }
+  };
+
   // ── Sources ─────────────────────────────────────────────────────────────
   const addWith = useCallback(async (label: string, request: () => Promise<{ data: { source: NotebookSource } }>) => {
     setBusy(label);
@@ -94,7 +142,10 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
     try {
       const res = await request();
       setSources((list) => [...list, res.data.source]);
+      setChosen((cur) => (cur ? new Set([...cur, res.data.source.id]) : cur));
       setAdding(null);
+      setLibraryResults(null);
+      setLibraryQuery('');
       setLinkValue('');
       setPasteTitle('');
       setPasteText('');
@@ -133,6 +184,12 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
     try {
       await notebookService.remove(sessionId, source.id);
       setSources((list) => list.filter((s) => s.id !== source.id));
+      setChosen((cur) => {
+        if (!cur) return cur;
+        const next = new Set(cur);
+        next.delete(source.id);
+        return next;
+      });
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not remove the source'));
     }
@@ -167,7 +224,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
     try {
       const { truncated } = await notebookService.stream(
         sessionId,
-        request.type === 'chat' ? { type: 'chat', question: request.question, history } : { type: 'generate', kind: request.kind },
+        request.type === 'chat' ? { type: 'chat', question: request.question, history, sourceIds } : { type: 'generate', kind: request.kind, sourceIds },
         {
           onSources: (citations) => patchLast({ citations }),
           onDelta: (text) => patchLast((m) => ({ content: m.content + text })),
@@ -180,7 +237,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
       const e = err as StreamError;
       patchLast({ status: 'error', error: e.message || 'Something went wrong.' });
     }
-  }, [messages, sessionId]);
+  }, [messages, sessionId, sourceIds]);
 
   const submitQuestion = (e: FormEvent) => {
     e.preventDefault();
@@ -219,13 +276,14 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
   }
 
   const full = sources.length >= MAX_SOURCES;
+  const noneChosen = chosen !== null && chosen.size === 0;
 
   return (
     <div className="flex h-full flex-col">
       {/* Sources */}
       <div className="border-b border-rule px-3 py-2.5">
         <div className="flex items-center justify-between">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#605e5c]">Your sources <span className="font-normal normal-case text-[#8a8886]">({sources.length}/{MAX_SOURCES})</span></p>
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#605e5c]">Your sources <span className="font-normal normal-case text-[#8a8886]">({chosen ? `using ${chosen.size} of ${sources.length}` : `${sources.length}/${MAX_SOURCES}`})</span></p>
           <button
             type="button"
             disabled={full || Boolean(busy)}
@@ -240,10 +298,33 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
         <input ref={fileRef} type="file" accept=".pdf,.docx,.txt,.md,application/pdf" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
 
         {adding === 'menu' && (
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
             <AddOption icon={<Upload size={15} />} label="Upload file" onClick={() => { setAdding(null); fileRef.current?.click(); }} />
+            <AddOption icon={<Library size={15} />} label="From library" onClick={() => setAdding('library')} />
             <AddOption icon={<Link2 size={15} />} label="Web link" onClick={() => setAdding('link')} />
             <AddOption icon={<StickyNote size={15} />} label="Paste text" onClick={() => setAdding('text')} />
+          </div>
+        )}
+        {adding === 'library' && (
+          <div className="mt-2 space-y-1.5">
+            <form onSubmit={searchLibrary} className="flex gap-1.5">
+              <input autoFocus value={libraryQuery} onChange={(e) => setLibraryQuery(e.target.value)} placeholder="Search Ghanaian theses and journals…" aria-label="Search the library" className="min-w-0 flex-1 rounded-md border border-[#c8c6c4] px-2 py-1.5 text-[12.5px] outline-none focus:border-[#7c3aed]" />
+              <button type="submit" disabled={!libraryQuery.trim() || librarySearching} aria-label="Search" className="rounded-md bg-[#7c3aed] px-2.5 text-white disabled:opacity-40">{librarySearching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}</button>
+            </form>
+            {libraryResults && libraryResults.length === 0 && <p className="text-[12px] text-[#8a8886]">No matches. Try different words.</p>}
+            {libraryResults && libraryResults.length > 0 && (
+              <ul className="max-h-[32vh] space-y-1 overflow-y-auto">
+                {libraryResults.map((r) => (
+                  <li key={r.id} className="flex items-start gap-2 rounded-md border border-[#e1dfdd] px-2 py-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-medium leading-snug text-[#252423]">{r.title}</p>
+                      <p className="truncate text-[11px] text-[#8a8886]">{[r.authors[0]?.family, r.year, r.repository || r.containerTitle].filter(Boolean).join(' · ')}{r.ghanaian ? ' · Ghana' : ''}</p>
+                    </div>
+                    <button type="button" disabled={Boolean(busy) || full} onClick={() => void addWith('Adding from the library…', () => notebookService.addFromLibrary(sessionId, r))} className="shrink-0 rounded bg-[#7c3aed] px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-40">Add</button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
         {adding === 'link' && (
@@ -292,6 +373,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
             }
             return (
               <div key={s.id} className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-[#f3f2f1]">
+                <input type="checkbox" checked={isChosen(s.id)} onChange={() => toggleChosen(s.id)} aria-label={`Use ${s.title} in answers`} title="Use in answers" className="h-3.5 w-3.5 shrink-0 accent-[#7c3aed]" />
                 <Icon size={15} className="shrink-0 text-[#605e5c]" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] text-[#252423]" title={s.title}>{s.title}</p>
@@ -320,7 +402,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
         {tab === 'create' && (
           <div className="grid gap-1.5">
             {OUTPUTS.map((o) => (
-              <button key={o.kind} type="button" disabled={!sources.length} onClick={() => { setTab('chat'); void ask({ type: 'generate', kind: o.kind, label: o.label }); }} className="flex items-center gap-2.5 rounded-lg border border-[#e1dfdd] px-2.5 py-2 text-left hover:border-[#c4b5fd] hover:bg-[#faf5ff] disabled:opacity-40">
+              <button key={o.kind} type="button" disabled={!sources.length || noneChosen} onClick={() => { setTab('chat'); void ask({ type: 'generate', kind: o.kind, label: o.label }); }} className="flex items-center gap-2.5 rounded-lg border border-[#e1dfdd] px-2.5 py-2 text-left hover:border-[#c4b5fd] hover:bg-[#faf5ff] disabled:opacity-40">
                 <o.icon size={16} className="shrink-0 text-[#7c3aed]" />
                 <span className="min-w-0">
                   <span className="block text-[12.5px] font-medium text-[#252423]">{o.label}</span>
@@ -335,8 +417,8 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
         {tab === 'chat' && messages.length === 0 && (
           <div className="space-y-1.5">
             <p className="text-[12px] text-[#605e5c]">Ask anything about your sources. Every answer cites them by number.</p>
-            {STARTERS.map((q) => (
-              <button key={q} type="button" disabled={!sources.length} onClick={() => void ask({ type: 'chat', question: q })} className="block w-full rounded-lg border border-[#e1dfdd] px-2.5 py-1.5 text-left text-[12px] text-[#323130] hover:border-[#c4b5fd] hover:bg-[#faf5ff] disabled:opacity-40">
+            {(visibleSuggestions.length ? visibleSuggestions : STARTERS).map((q) => (
+              <button key={q} type="button" disabled={!sources.length || noneChosen} onClick={() => void ask({ type: 'chat', question: q })} className="block w-full rounded-lg border border-[#e1dfdd] px-2.5 py-1.5 text-left text-[12px] text-[#323130] hover:border-[#c4b5fd] hover:bg-[#faf5ff] disabled:opacity-40">
                 {q}
               </button>
             ))}
@@ -392,8 +474,8 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
 
       {tab === 'chat' && (
         <form onSubmit={submitQuestion} className="flex items-center gap-1.5 border-t border-rule px-2 py-2">
-          <input value={question} onChange={(e) => setQuestion(e.target.value)} disabled={!sources.length} placeholder={sources.length ? 'Ask about your sources…' : 'Add a source to start'} aria-label="Ask about your sources" className="min-w-0 flex-1 rounded-md border border-[#c8c6c4] px-2.5 py-1.5 text-[12.5px] outline-none focus:border-[#7c3aed] disabled:bg-[#faf9f8]" />
-          <button type="submit" disabled={!question.trim() || !sources.length} aria-label="Send" className="rounded-md bg-[#7c3aed] p-2 text-white disabled:opacity-40"><Send size={14} /></button>
+          <input value={question} onChange={(e) => setQuestion(e.target.value)} disabled={!sources.length || noneChosen} placeholder={!sources.length ? 'Add a source to start' : noneChosen ? 'Tick at least one source' : 'Ask about your sources…'} aria-label="Ask about your sources" className="min-w-0 flex-1 rounded-md border border-[#c8c6c4] px-2.5 py-1.5 text-[12.5px] outline-none focus:border-[#7c3aed] disabled:bg-[#faf9f8]" />
+          <button type="submit" disabled={!question.trim() || !sources.length || noneChosen} aria-label="Send" className="rounded-md bg-[#7c3aed] p-2 text-white disabled:opacity-40"><Send size={14} /></button>
         </form>
       )}
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, FileText, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
 import type { WorkspacePanel } from './panels';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
@@ -12,10 +12,11 @@ interface Props {
   onSave: () => void;
   sidePanel: WorkspacePanel | null;
   onTogglePanel: (panel: WorkspacePanel) => void;
+  hasStudyDraft?: boolean;
 }
 
 /** Word-style title bar: quick access toolbar, document name and save state. */
-export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel }) => {
+export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft }) => {
   const navigate = useNavigate();
   const { activeSession } = useWorkspaceStore();
   const history = useEditorState({
@@ -68,6 +69,17 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        {hasStudyDraft && (
+          <button
+            onClick={() => onTogglePanel('draft')}
+            aria-label="Study draft and coach"
+            title="Study draft and coach"
+            aria-pressed={sidePanel === 'draft'}
+            className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'draft' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+          >
+            <FileText size={15} /> <span className="hidden lg:inline">Draft &amp; coach</span>
+          </button>
+        )}
         <button
           onClick={() => onTogglePanel('ai')}
           aria-label="AI Assistant"

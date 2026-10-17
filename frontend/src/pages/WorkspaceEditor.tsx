@@ -32,7 +32,7 @@ export default function WorkspaceEditor() {
   // ?panel=feedback (from the Reviews page or the review-ready SMS) opens that panel.
   const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(() => {
     const p = searchParams.get('panel');
-    return p === 'feedback' || p === 'sources' || p === 'citations' || p === 'ai' ? p : null;
+    return p === 'feedback' || p === 'sources' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
   });
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
@@ -241,6 +241,8 @@ export default function WorkspaceEditor() {
   }
 
   const margins = MARGINS[settings.margins];
+  const hasStudyDraft = Array.isArray(activeSession?.uploaded_materials)
+    && activeSession.uploaded_materials.some((m) => (m as { type?: string })?.type === 'study_draft');
 
   return (
     <div className="h-screen flex flex-col bg-[#f3f2f1] workspace-shell">
@@ -254,6 +256,7 @@ export default function WorkspaceEditor() {
         onSave={handleSave}
         sidePanel={sidePanel}
         onTogglePanel={togglePanel}
+        hasStudyDraft={hasStudyDraft}
       />
 
       {editor && (
@@ -301,7 +304,15 @@ export default function WorkspaceEditor() {
             />
           )}
         </EditorArea>
-        {editor && <InlineAI editor={editor} isPremium={isPremium} docTitle={activeSession?.title} />}
+        {editor && (
+          <InlineAI
+            editor={editor}
+            isPremium={isPremium}
+            docTitle={activeSession?.title}
+            sessionId={id}
+            onOpenCitations={() => setSidePanel('citations')}
+          />
+        )}
         <SidePanel
           editor={editor}
           sidePanel={sidePanel}
@@ -313,6 +324,7 @@ export default function WorkspaceEditor() {
           isPremium={isPremium}
           onRequestReview={() => setReviewOpen(true)}
           reviewRefreshKey={reviewRefreshKey}
+          hasStudyDraft={hasStudyDraft}
         />
         {reviewOpen && editor && (
           <RequestReviewModal
