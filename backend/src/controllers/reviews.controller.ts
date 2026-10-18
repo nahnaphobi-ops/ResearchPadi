@@ -3,6 +3,7 @@ import { CONFIG } from '../config/index.js';
 import { auditLog } from '../lib/audit.js';
 import { childLogger } from '../lib/logger.js';
 import * as reviews from '../services/reviews/review.service.js';
+import { SOURCE_TYPES, SPECIALTIES, type SourceType } from '../services/reviews/review-sources.js';
 
 const log = childLogger('reviews-controller');
 const userOf = (req: Request) => (req as any).user?.id as string;
@@ -28,17 +29,33 @@ export const pricing = (_req: Request, res: Response) => {
     full: reviews.priceFor('full'),
     turnaroundHours: CONFIG.PRICING.REVIEW.TURNAROUND_HOURS,
     rubric: reviews.RUBRIC,
+    specialties: SPECIALTIES,
   });
 };
 
+/** Chapters or sections a student can pick from when reviewing a paper or care study. */
+export const sourceOptions = async (req: Request, res: Response) => {
+  const sourceType = req.query.sourceType as SourceType;
+  const sourceId = typeof req.query.sourceId === 'string' ? req.query.sourceId : '';
+  if (!SOURCE_TYPES.includes(sourceType) || !sourceId) return res.status(400).json({ error: 'Choose a paper or a care study.' });
+  try {
+    res.json(await reviews.sourceOptions(userOf(req), sourceType, sourceId));
+  } catch (err) {
+    handle(res, err, 'Could not load the review options');
+  }
+};
+
 export const create = async (req: Request, res: Response) => {
-  const { sessionId, scope, excerptHtml, notes } = req.body ?? {};
-  if (typeof sessionId !== 'string' || (scope !== 'excerpt' && scope !== 'full')) {
-    return res.status(400).json({ error: 'Choose a document and what to review.' });
+  const { sourceType = 'workspace', sessionId, sourceId, scope, excerptHtml, part, notes } = req.body ?? {};
+  const hasSource = sourceType === 'workspace' ? typeof sessionId === 'string' : typeof sourceId === 'string';
+  if (!SOURCE_TYPES.includes(sourceType) || !hasSource || (scope !== 'excerpt' && scope !== 'full')) {
+    return res.status(400).json({ error: 'Choose what to have reviewed.' });
   }
   try {
-    const request = await reviews.createRequest(userOf(req), { sessionId, scope, excerptHtml, notes });
-    void auditLog({ event: 'REVIEW_REQUESTED', actorId: userOf(req), targetType: 'review', targetId: request.id, metadata: { scope, price: request.price_ghs }, ip: req.ip });
+    const request = await reviews.createRequest(userOf(req), {
+      sourceType, sessionId, sourceId, scope, excerptHtml, part: typeof part === 'string' ? part : undefined, notes,
+    });
+    void auditLog({ event: 'REVIEW_REQUESTED', actorId: userOf(req), targetType: 'review', targetId: request.id, metadata: { scope, sourceType, price: request.price_ghs }, ip: req.ip });
     res.status(201).json({ request });
   } catch (err) {
     handle(res, err, 'Could not request the review');
@@ -162,8 +179,8 @@ export const adminList = async (req: Request, res: Response) => {
 
 export const adminAddReviewer = async (req: Request, res: Response) => {
   try {
-    const { phone, displayName, bio } = req.body ?? {};
-    await reviews.adminAddReviewer(String(phone ?? ''), String(displayName ?? ''), typeof bio === 'string' ? bio : undefined);
+    const { phone, displayName, bio, specialties } = req.body ?? {};
+    await reviews.adminAddReviewer(String(phone ?? ''), String(displayName ?? ''), typeof bio === 'string' ? bio : undefined, userOf(req), specialties);
     void auditLog({ event: 'ADMIN_ACTION', actorId: userOf(req), targetType: 'reviewer', metadata: { action: 'add_reviewer' }, ip: req.ip });
     res.status(201).json({ ok: true });
   } catch (err) {
@@ -174,6 +191,16 @@ export const adminAddReviewer = async (req: Request, res: Response) => {
 export const adminSetReviewerActive = async (req: Request, res: Response) => {
   try {
     await reviews.adminSetReviewerActive(param(req, 'userId'), Boolean(req.body?.active));
+    res.json({ ok: true });
+  } catch (err) {
+    handle(res, err, 'Could not update the reviewer');
+  }
+};
+
+export const adminSetReviewerSpecialties = async (req: Request, res: Response) => {
+  try {
+    await reviews.adminSetReviewerSpecialties(param(req, 'userId'), req.body?.specialties);
+    void auditLog({ event: 'ADMIN_ACTION', actorId: userOf(req), targetType: 'reviewer', targetId: param(req, 'userId'), metadata: { action: 'set_specialties' }, ip: req.ip });
     res.json({ ok: true });
   } catch (err) {
     handle(res, err, 'Could not update the reviewer');

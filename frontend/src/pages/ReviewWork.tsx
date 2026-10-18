@@ -6,7 +6,7 @@ import AppShell from '../components/layout/AppShell';
 import { workspaceExtensions } from '../components/workspace/editorSetup';
 import { locateAnchor, occurrenceAt, showReviewMarks } from '../components/workspace/review/reviewMarks';
 import { apiErrorMessage } from '../utils/apiError';
-import { reviewDeskService, type DeskDetail, type ReviewComment } from '../services/reviewService';
+import { reviewDeskService, SOURCE_LABEL, type DeskDetail, type ReviewComment } from '../services/reviewService';
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
@@ -152,7 +152,7 @@ export default function ReviewWork() {
             <div>
               <h1 className="text-2xl font-bold text-navy">{request.title}</h1>
               <p className="text-sm text-muted">
-                {request.scope === 'full' ? 'Whole document' : 'Selected part'} · {request.word_count.toLocaleString()} words
+                {SOURCE_LABEL[request.source_type]} · {request.scope === 'full' ? 'whole' : 'selected part'} · {request.word_count.toLocaleString()} words
                 {request.programme ? ` · ${request.programme}` : ''}{request.institution_type ? ` (${request.institution_type})` : ''}
               </p>
             </div>
@@ -164,6 +164,12 @@ export default function ReviewWork() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             {/* The work */}
             <div className="min-w-0">
+              {request.source_type === 'care_study' && (
+                <p className="mb-3 rounded-xl border border-rule bg-white p-3 text-sm text-ink">
+                  <span className="font-semibold">Care study. </span>
+                  Each section shows the student's own notes, then her draft. The notes are the only facts about the client. Flag any draft detail the notes do not support, and anything marked [Student to supply: …] that is still missing. Do not add clinical facts yourself.
+                </p>
+              )}
               {request.notes && <p className="mb-3 rounded-xl bg-brand-soft p-3 text-sm text-ink"><span className="font-semibold">Student's note: </span>{request.notes}</p>}
               {editable && (
                 <div className="sticky top-16 z-10 mb-2 flex items-center gap-2 rounded-lg border border-rule bg-white/95 px-3 py-2 text-sm backdrop-blur">

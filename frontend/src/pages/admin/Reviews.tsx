@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { apiErrorMessage } from '../../utils/apiError';
-import { adminReviewService, STATUS_LABEL, type AdminReviewer, type AdminReviewRow } from '../../services/reviewService';
+import ReviewerApplications from '../../components/admin/ReviewerApplications';
+import { reviewService, adminReviewService, SOURCE_LABEL, STATUS_LABEL, type AdminReviewer, type AdminReviewRow, type Specialty } from '../../services/reviewService';
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '—');
 
@@ -11,6 +12,8 @@ export default function AdminReviews() {
   const [requests, setRequests] = useState<AdminReviewRow[]>([]);
   const [reviewers, setReviewers] = useState<AdminReviewer[]>([]);
   const [share, setShare] = useState(0.65);
+  const [specialtyList, setSpecialtyList] = useState<Specialty[]>([]);
+  const [editing, setEditing] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ phone: '', displayName: '', bio: '' });
 
@@ -49,6 +52,25 @@ export default function AdminReviews() {
     }, 'Could not add the reviewer');
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await reviewService.pricing();
+        if (!cancelled) setSpecialtyList(res.data.specialties);
+      } catch {
+        // The roster still works without the labels.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const specialtyName = (key: string) => specialtyList.find((s) => s.key === key)?.label ?? key;
+  const toggleSpecialty = (v: AdminReviewer, key: string) => {
+    const next = v.specialties.includes(key) ? v.specialties.filter((k) => k !== key) : [...v.specialties, key];
+    void act(() => adminReviewService.setSpecialties(v.user_id, next), 'Could not update specialties');
+  };
+
   const nameOf = (id: string | null) => reviewers.find((r) => r.user_id === id)?.display_name ?? '—';
   const earned = (id: string) => requests.filter((r) => r.reviewer_id === id && r.status === 'returned').reduce((sum, r) => sum + Number(r.price_ghs) * share, 0);
 
@@ -58,6 +80,9 @@ export default function AdminReviews() {
       <h1 className="text-2xl font-bold mb-6 text-navy">Expert reviews</h1>
       {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
+      <ReviewerApplications onChanged={() => void load(status)} />
+
+      <h2 className="mb-3 text-xl font-bold text-navy">Requests</h2>
       <div className="mb-3 flex flex-wrap gap-2">
         {['', 'pending', 'in_review', 'returned', 'cancelled'].map((s) => (
           <button key={s || 'all'} type="button" onClick={() => setStatus(s)} className={`rounded-full px-3 py-1.5 text-sm ${status === s ? 'bg-brand text-white' : 'bg-white border border-rule text-ink'}`}>
@@ -77,14 +102,14 @@ export default function AdminReviews() {
               const open = r.status === 'pending' || r.status === 'in_review';
               return (
                 <tr key={r.id} className="border-t border-rule">
-                  <td className="p-3"><p className="font-medium text-ink">{r.title}</p><p className="text-xs text-muted">{r.scope === 'full' ? 'Whole' : 'Part'} · {r.word_count.toLocaleString()} words</p></td>
+                  <td className="p-3"><p className="font-medium text-ink">{r.title}</p><p className="text-xs text-muted">{SOURCE_LABEL[r.source_type]}{r.specialty ? ` · needs ${specialtyName(r.specialty)}` : ''} · {r.scope === 'full' ? 'whole' : 'part'} · {r.word_count.toLocaleString()} words</p></td>
                   <td className="p-3">{STATUS_LABEL[r.status]}</td>
                   <td className="p-3">GHS {Number(r.price_ghs).toFixed(2)}</td>
                   <td className="p-3">
                     {open ? (
                       <select value={r.reviewer_id ?? ''} onChange={(e) => void act(() => adminReviewService.assign(r.id, e.target.value || null), 'Could not assign')} aria-label="Reviewer" className="rounded border border-rule px-2 py-1">
                         <option value="">Unassigned</option>
-                        {reviewers.filter((v) => v.active).map((v) => <option key={v.user_id} value={v.user_id}>{v.display_name}</option>)}
+                        {reviewers.filter((v) => v.active && (!r.specialty || v.specialties.includes(r.specialty))).map((v) => <option key={v.user_id} value={v.user_id}>{v.display_name}</option>)}
                       </select>
                     ) : nameOf(r.reviewer_id)}
                   </td>
@@ -110,14 +135,32 @@ export default function AdminReviews() {
       <div className="overflow-x-auto rounded-2xl border border-rule bg-white">
         <table className="w-full text-sm">
           <thead className="bg-[#faf9f8] text-left text-xs uppercase tracking-wide text-muted">
-            <tr><th className="p-3">Name</th><th className="p-3">Phone</th><th className="p-3">Earned (returned)</th><th className="p-3">Status</th><th className="p-3" /></tr>
+            <tr><th className="p-3">Name</th><th className="p-3">Phone</th><th className="p-3">Areas</th><th className="p-3">Earned (returned)</th><th className="p-3">Status</th><th className="p-3" /></tr>
           </thead>
           <tbody>
-            {reviewers.length === 0 && <tr><td colSpan={5} className="p-4 text-muted">No reviewers yet.</td></tr>}
+            {reviewers.length === 0 && <tr><td colSpan={6} className="p-4 text-muted">No reviewers yet.</td></tr>}
             {reviewers.map((v) => (
               <tr key={v.user_id} className="border-t border-rule">
-                <td className="p-3"><p className="font-medium text-ink">{v.display_name}</p>{v.bio && <p className="text-xs text-muted">{v.bio}</p>}</td>
+                <td className="p-3"><p className="font-medium text-ink">{v.display_name}</p>{v.bio && <p className="text-xs text-muted">{v.bio}</p>}{v.qualification && <p className="text-xs text-muted">{v.qualification}{v.institution ? `, ${v.institution}` : ''}</p>}{v.vetted_at && <p className="text-xs text-muted">Vetted {fmt(v.vetted_at)}{v.vetting_notes ? ` · ${v.vetting_notes}` : ''}</p>}</td>
                 <td className="p-3 text-muted">{v.users?.phone ?? '—'}</td>
+                <td className="p-3">
+                  {editing === v.user_id ? (
+                    <div className="flex max-w-xs flex-wrap gap-1.5">
+                      {specialtyList.map((sp) => (
+                        <label key={sp.key} className={`cursor-pointer rounded-full border px-2.5 py-0.5 text-xs ${v.specialties.includes(sp.key) ? 'border-brand bg-brand-soft font-semibold text-navy' : 'border-rule text-ink'}`}>
+                          <input type="checkbox" className="sr-only" checked={v.specialties.includes(sp.key)} onChange={() => toggleSpecialty(v, sp.key)} />
+                          {sp.label}
+                        </label>
+                      ))}
+                      <button type="button" onClick={() => setEditing(null)} className="text-xs text-brand hover:underline">Done</button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-xs text-ink">{v.specialties.length ? v.specialties.map(specialtyName).join(', ') : 'None (general requests only)'}</span>
+                      <button type="button" onClick={() => setEditing(v.user_id)} className="ml-2 text-xs text-brand hover:underline">Edit</button>
+                    </>
+                  )}
+                </td>
                 <td className="p-3">GHS {earned(v.user_id).toFixed(2)}</td>
                 <td className="p-3">{v.active ? 'Active' : 'Inactive'}</td>
                 <td className="p-3"><button type="button" onClick={() => void act(() => adminReviewService.setReviewerActive(v.user_id, !v.active), 'Could not update')} className="text-sm text-brand hover:underline">{v.active ? 'Deactivate' : 'Activate'}</button></td>

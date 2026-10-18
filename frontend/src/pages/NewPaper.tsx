@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell';
-import { ArrowRight, CheckCircle, FileText, PenLine } from 'lucide-react';
+import { ArrowRight, CheckCircle, FileText, PenLine, Stethoscope } from 'lucide-react';
+import { useAuthStore } from '../store/useAuthStore';
 
 const services = [
   {
@@ -29,8 +30,24 @@ const services = [
   },
 ];
 
+// Nursing and midwifery training college students only.
+const careStudyService = {
+  key: 'care-study',
+  icon: Stethoscope,
+  iconClass: 'bg-gold/20 text-navy',
+  title: 'Care Study',
+  desc: 'Write up your final-year care study from your own client, step by step. We organise, explain and polish — you supply every clinical fact.',
+  points: ['Guided by the nursing process', 'Draft each section once your details are in', 'Supervisor export with your notes beside the draft'],
+  price: 'GHS 250',
+  priceNote: 'per care study, paid from your wallet',
+  cta: 'Start a care study',
+  path: '/care-studies',
+};
+
 export default function NewPaper() {
   const navigate = useNavigate();
+  const isNmtc = useAuthStore((s) => s.user?.institution_type === 'nmtc');
+  const shown = isNmtc ? [...services, careStudyService] : services;
 
   return (
     <AppShell>
@@ -38,8 +55,8 @@ export default function NewPaper() {
       <h1 className="text-3xl font-bold mb-2 text-center text-navy">Choose your service</h1>
       <p className="text-sm text-muted text-center mb-8">Study from a full AI draft, or write your paper yourself with AI beside you.</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {services.map((s) => {
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${shown.length > 2 ? 'xl:grid-cols-3' : ''} gap-6`}>
+        {shown.map((s) => {
           const Icon = s.icon;
           return (
             <button

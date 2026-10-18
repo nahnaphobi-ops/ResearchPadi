@@ -19,8 +19,12 @@ const PaperReview = lazy(() => import('./pages/PaperReview'));
 const Subscribe = lazy(() => import('./pages/Subscribe'));
 const WorkspaceList = lazy(() => import('./pages/WorkspaceList'));
 const WorkspaceEditor = lazy(() => import('./pages/WorkspaceEditor'));
+const CareStudyList = lazy(() => import('./pages/CareStudyList'));
+const CareStudyEditor = lazy(() => import('./pages/CareStudyEditor'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Reviews = lazy(() => import('./pages/Reviews'));
+const ReviewFeedback = lazy(() => import('./pages/ReviewFeedback'));
+const BecomeReviewer = lazy(() => import('./pages/BecomeReviewer'));
 const ReviewDesk = lazy(() => import('./pages/ReviewDesk'));
 const ReviewWork = lazy(() => import('./pages/ReviewWork'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
@@ -74,7 +78,11 @@ function App() {
           <Route path="/subscribe" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
           <Route path="/workspace" element={<ProtectedRoute><WorkspaceList /></ProtectedRoute>} />
           <Route path="/workspace/:id" element={<ProtectedRoute><WorkspaceEditor /></ProtectedRoute>} />
+          <Route path="/care-studies" element={<ProtectedRoute><CareStudyList /></ProtectedRoute>} />
+          <Route path="/care-studies/:id" element={<ProtectedRoute><CareStudyEditor /></ProtectedRoute>} />
           <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+          <Route path="/reviews/:id" element={<ProtectedRoute><ReviewFeedback /></ProtectedRoute>} />
+          <Route path="/become-a-reviewer" element={<ProtectedRoute><BecomeReviewer /></ProtectedRoute>} />
           <Route path="/review-desk" element={<ProtectedRoute><ReviewDesk /></ProtectedRoute>} />
           <Route path="/review-desk/:id" element={<ProtectedRoute><ReviewWork /></ProtectedRoute>} />
           <Route path="/admin/login" element={<Navigate to="/login" replace />} />

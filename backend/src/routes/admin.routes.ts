@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as adminController from '../controllers/admin.controller.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
 import * as reviews from '../controllers/reviews.controller.js';
+import * as reviewerApplications from '../controllers/reviewer-applications.controller.js';
 
 const router = Router();
 
@@ -37,5 +38,9 @@ router.post('/reviews/:id/assign', requireAdmin, reviews.adminAssign);
 router.post('/reviews/:id/cancel', requireAdmin, reviews.adminCancel);
 router.post('/reviewers', requireAdmin, reviews.adminAddReviewer);
 router.patch('/reviewers/:userId', requireAdmin, reviews.adminSetReviewerActive);
+router.patch('/reviewers/:userId/specialties', requireAdmin, reviews.adminSetReviewerSpecialties);
+router.get('/reviewer-applications', requireAdmin, reviewerApplications.adminList);
+router.post('/reviewer-applications/:id/approve', requireAdmin, reviewerApplications.adminApprove);
+router.post('/reviewer-applications/:id/reject', requireAdmin, reviewerApplications.adminReject);
 
 export default router;

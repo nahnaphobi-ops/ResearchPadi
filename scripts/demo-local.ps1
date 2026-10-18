@@ -8,18 +8,22 @@ if (-not $root) { $root = Get-Location }
 
 Write-Host "== ResearchPadi local demo ==" -ForegroundColor Cyan
 
-# Backend env (matches known ResearchPadi Supabase project)
+# Backend env (matches known ResearchPadi Supabase project).
+# Secrets are never stored here: set them in your shell first, e.g.
+#   $env:SUPABASE_SERVICE_ROLE_KEY = "..."; $env:DATABASE_URL = "..."; $env:JWT_SECRET = "..."
 $env:NODE_ENV = "production"
 $env:PORT = "5000"
 $env:ADMIN_MFA = "false"
 $env:SUPABASE_URL = "https://bpmfpxkuknchflpctmbr.supabase.co"
-$env:SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwbWZweGt1a25jaGZscGN0bWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTcxMzY0MSwiZXhwIjoyMDk3Mjg5NjQxfQ.6Ocm3mVytezSVLC78pRwERFChlx1URlniFVQJxdOB2g"
-$env:DATABASE_URL = "postgresql://postgres:%23Bigbo55man88%2F%2F@db.bpmfpxkuknchflpctmbr.supabase.co:5432/postgres"
-$env:JWT_SECRET = "researchpadi-demo-secret-114107571161025654111112521061131195311899"
-$env:ADMIN_EMAIL = "admin@researchpadi.com"
-$env:ADMIN_PASSWORD = "ResearchPadi#Admin2026"
 $env:FRONTEND_URL = "http://localhost:5173"
 $env:SUPABASE_PROJECT_REF = "bpmfpxkuknchflpctmbr"
+
+$missing = @("SUPABASE_SERVICE_ROLE_KEY", "DATABASE_URL", "JWT_SECRET") |
+  Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+if ($missing) {
+  Write-Host "Set these in your shell before running the demo: $($missing -join ', ')" -ForegroundColor Red
+  exit 1
+}
 
 if (-not $env:ANTHROPIC_API_KEY) {
   Write-Host "WARN: ANTHROPIC_API_KEY not set — paper AI will be limited" -ForegroundColor Yellow

@@ -6,7 +6,8 @@ import DownloadDisclosureModal from '../components/papers/DownloadDisclosureModa
 import PaperStatusBadge from '../components/papers/PaperStatusBadge';
 import ReferenceCheck from '../components/papers/ReferenceCheck';
 import WriteOwnVersion from '../components/papers/WriteOwnVersion';
-import { ArrowLeft, BookOpen, Download, FileSearch } from 'lucide-react';
+import ReviewRequestDialog from '../components/reviews/ReviewRequestDialog';
+import { ArrowLeft, BookOpen, Download, FileSearch, GraduationCap } from 'lucide-react';
 import type { Paper } from '../types';
 
 export default function PaperDetails() {
@@ -16,6 +17,7 @@ export default function PaperDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDownload, setShowDownload] = useState(false);
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -136,9 +138,20 @@ export default function PaperDetails() {
             <button onClick={() => setShowDownload(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
               <Download size={16} /> Download .docx
             </button>
+            <button onClick={() => setShowReview(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
+              <GraduationCap size={16} /> Request supervisor review
+            </button>
           </div>
         )}
       </div>
+      {showReview && id && (
+        <ReviewRequestDialog
+          sourceType="paper"
+          sourceId={id}
+          onClose={() => setShowReview(false)}
+          onSubmitted={() => navigate('/reviews')}
+        />
+      )}
       {showDownload && id && (
         <DownloadDisclosureModal
           paperId={id}

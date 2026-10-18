@@ -27,7 +27,10 @@ export type AuditEvent =
   | 'REVIEW_CLAIMED'
   | 'REVIEW_VIEWED'
   | 'REVIEW_RETURNED'
-  | 'REVIEW_CANCELLED';
+  | 'REVIEW_CANCELLED'
+  | 'REVIEWER_APPLIED'
+  | 'REVIEWER_APPROVED'
+  | 'REVIEWER_REJECTED';
 
 interface AuditEntry {
   event: AuditEvent;
