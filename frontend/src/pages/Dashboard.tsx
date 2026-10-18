@@ -154,6 +154,11 @@ export default function Dashboard() {
             <p className="eyebrow mb-1">Paper library</p>
             <h2 className="display text-3xl text-navy">Your research papers</h2>
           </div>
+          {user?.institution_type === 'nmtc' && (
+            <button onClick={() => navigate('/care-studies')} className="text-sm font-semibold text-brand hover:underline inline-flex items-center gap-1">
+              Your care studies <ArrowUpRight size={14} />
+            </button>
+          )}
           {hasPaperInProgress && (
             <span className="text-xs text-muted inline-flex items-center gap-1.5">
               <RefreshCw size={12} className="animate-spin [animation-duration:3s]" /> Updating automatically

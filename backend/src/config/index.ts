@@ -16,14 +16,16 @@ export const CONFIG = {
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
   PRICING: {
     FULL_PAPER_GHS: 250,
+    // Guided care study (NMTC), charged once when the study is started.
+    CARE_STUDY_GHS: 250,
     PLANS: {
       standard: 120,
       premium: 200,
     } as Record<string, number>,
     // Human supervisor review (Premium). Reviewers are paid REVIEWER_SHARE of the fee.
     REVIEW: {
-      EXCERPT_GHS: parseFloat(process.env.REVIEW_PRICE_EXCERPT_GHS || '120'),
-      FULL_GHS: parseFloat(process.env.REVIEW_PRICE_FULL_GHS || '350'),
+      EXCERPT_GHS: parseFloat(process.env.REVIEW_PRICE_EXCERPT_GHS || '75'),
+      FULL_GHS: parseFloat(process.env.REVIEW_PRICE_FULL_GHS || '100'),
       TURNAROUND_HOURS: parseInt(process.env.REVIEW_TURNAROUND_HOURS || '48', 10),
       REVIEWER_SHARE: parseFloat(process.env.REVIEWER_SHARE || '0.65'),
     },

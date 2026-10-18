@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Clock, GraduationCap } from 'lucide-react';
 import AppShell from '../components/layout/AppShell';
 import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
-import { reviewDeskService, type DeskItem } from '../services/reviewService';
+import { reviewDeskService, SOURCE_LABEL, type DeskItem } from '../services/reviewService';
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
@@ -49,7 +49,7 @@ export default function ReviewDesk() {
     return (
       <AppShell>
         <h1 className="text-2xl font-bold text-navy">Review desk</h1>
-        <p className="mt-2 text-muted">The review desk is for approved reviewers. If you'd like to review for ResearchPadi, contact the team.</p>
+        <p className="mt-2 text-muted">The review desk is for approved reviewers. If you'd like to review for ResearchPadi, <Link to="/become-a-reviewer" className="font-semibold text-brand hover:underline">apply to become a reviewer</Link>.</p>
       </AppShell>
     );
   }
@@ -76,7 +76,7 @@ export default function ReviewDesk() {
                     <div className="min-w-0">
                       <p className="font-semibold text-ink">{r.title}</p>
                       <p className="text-sm text-muted">
-                        {r.scope === 'full' ? 'Whole document' : 'Selected part'} · {r.word_count.toLocaleString()} words
+                        {SOURCE_LABEL[r.source_type]} · {r.scope === 'full' ? 'whole' : 'selected part'} · {r.word_count.toLocaleString()} words
                         {r.programme ? ` · ${r.programme}` : ''}{r.institution_type ? ` (${r.institution_type})` : ''}
                       </p>
                       <p className="text-xs text-muted">Requested {fmt(r.created_at)}</p>

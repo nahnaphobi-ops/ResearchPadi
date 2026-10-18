@@ -1,0 +1,925 @@
+{
+  "id": "midwifery-family-centred",
+  "name": "Client/Family Centred Maternity Care Study (Midwifery)",
+  "description": "One client followed through pregnancy, labour and puerperium, with home visits and a nursing care plan for each period.",
+  "notice": "Starter template based on the structure of a past maternity care study from one Ghanaian nursing and midwifery training college. It is not an official format. Check every heading against your own college's guide and your supervisor.",
+  "focus_label": "Obstetric summary",
+  "focus_hint": "Short summary of the pregnancy, e.g. \"G3P2 at 37 weeks, normal pregnancy\" or \"G1P0 with anaemia in pregnancy\". Used to search for sources.",
+  "search_terms": "midwifery care pregnancy labour puerperium",
+  "review_specialty": "midwifery",
+  "stages": [
+    {
+      "key": "front",
+      "label": "Front pages",
+      "nursing_process": false
+    },
+    {
+      "key": "assessment",
+      "label": "Assessment"
+    },
+    {
+      "key": "diagnosis",
+      "label": "Nursing diagnoses / problems"
+    },
+    {
+      "key": "planning",
+      "label": "Planning (care plans)"
+    },
+    {
+      "key": "implementation",
+      "label": "Implementation (care given)"
+    },
+    {
+      "key": "evaluation",
+      "label": "Evaluation"
+    }
+  ],
+  "sections": [
+    {
+      "key": "preface",
+      "title": "Preface",
+      "part": "PREFACE",
+      "stage": "front",
+      "why": "The preface explains what a care study is and why you wrote one. It is general, so it needs none of your client's details, but your supervisor may want something specific mentioned.",
+      "guidance": "About one page, no sub-headings. What a client/family centred maternity care study is, that it follows the nursing process (assessment, nursing diagnosis, planning, implementation and evaluation), that it lets the student midwife apply the knowledge and skills learnt in training to one client and the family, that it builds the student midwife's ability to educate the client and family, and that it is an academic exercise of the training. Do not mention the client or any clinical detail. Do not claim it is required, approved or recognised by any college or council unless the student's note says so.",
+      "word_target": 350,
+      "fields": [
+        {
+          "key": "requirements",
+          "label": "Anything your college wants said here",
+          "hint": "For example the name of the council or college requirement this study meets, exactly as your college words it. Leave blank to keep the preface general.",
+          "type": "textarea",
+          "blank_ok": true
+        }
+      ]
+    },
+    {
+      "key": "acknowledgement",
+      "title": "Acknowledgement",
+      "part": "ACKNOWLEDGEMENT",
+      "stage": "front",
+      "why": "This is where you thank the people who helped you. It is written by you, in the first person, so every name must come from you.",
+      "guidance": "About half a page, no sub-headings. Written in the first person as the student midwife (\"I would like to thank ...\"); this is the one section where the first person is correct. Thank only the people the student lists, in the order: supervisor, then facility staff, then anyone else the student names. Thank the client and her family by the pseudonym only if the student ticks that in the notes; never add a name. Do not invent roles, titles or names.",
+      "word_target": 250,
+      "fields": [
+        {
+          "key": "supervisor",
+          "label": "Your supervisor",
+          "hint": "Their name and title as you want it written, e.g. Ms. A. Mensah, tutor.",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "facility_staff",
+          "label": "Staff at the facility who helped you",
+          "hint": "Names and roles, e.g. the midwife in charge at the antenatal clinic and the ward staff, with the name of the facility.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "others",
+          "label": "Anyone else you want to thank",
+          "hint": "For example the principal, tutors, your family or friends, in your own words. You may include a thank-you to God if you wish.",
+          "type": "textarea",
+          "blank_ok": true
+        },
+        {
+          "key": "thank_client",
+          "label": "Thank your client and her family? (write yes or no)",
+          "hint": "If yes, they are thanked by the pseudonym only.",
+          "type": "text",
+          "blank_ok": true
+        }
+      ]
+    },
+    {
+      "key": "introduction",
+      "title": "Introduction",
+      "part": "INTRODUCTION",
+      "stage": "assessment",
+      "why": "The introduction tells the reader who the client is, how you met her and why you chose her. A supervisor uses it to see that this is a real client you followed yourself.",
+      "guidance": "One to two pages. Who the client is (pseudonym, age, gravida/para), where and when she was met and at what gestation, why she was selected, how long she was cared for, and that consent was obtained. Then one short paragraph saying what each later part of the study covers, and that information came from the client, her family, her records and textbooks.",
+      "fields": [
+        {
+          "key": "where_met",
+          "label": "Where and when you first met her",
+          "hint": "The facility and unit, the date, and her gestation that day. Example: ANC clinic, 28/10/21, 37+2 weeks, her 5th visit.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "why_selected",
+          "label": "Why you chose her",
+          "hint": "What made her a good client for your study, in your own words. Example: she had complained of vaginal discharge earlier in the pregnancy.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "period_of_care",
+          "label": "How long you cared for her",
+          "hint": "From when to when, and which periods you covered: pregnancy, labour, puerperium.",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "literature_review",
+      "title": "Literature review",
+      "part": "LITERATURE REVIEW",
+      "stage": "assessment",
+      "why": "The literature review shows you understand the normal physiology and standard care behind what you did. It is the only part based on books and articles instead of your client.",
+      "guidance": "Three sub-headings: PREGNANCY, LABOUR, PUERPERIUM. Explain the physiology and standard care of each in simple, correct language, citing only the retrieved sources. Link to the student's chosen topics where she listed them. Do not mention the client. Develop each sub-heading fully, in connected paragraphs rather than lists. Every substantive statement must carry a citation from the list; where the sources do not cover a point, write [Student to supply: a source for this statement] instead of writing it uncited.",
+      "requires_sources": true,
+      "fields": [
+        {
+          "key": "topics",
+          "label": "Topics you want covered",
+          "hint": "Anything your supervisor asked you to include, or conditions your client had, e.g. vaginal discharge in pregnancy, partograph, AMTSL.",
+          "type": "textarea",
+          "blank_ok": true
+        }
+      ],
+      "word_target": 3000
+    },
+    {
+      "key": "client_particulars",
+      "title": "Client's particulars and history",
+      "part": "CHAPTER ONE: CLIENT'S PARTICULARS",
+      "stage": "assessment",
+      "why": "Assessment is the first step of the nursing process. Every problem you identify later should trace back to something you found here.",
+      "guidance": "Sub-headings in this order: 1.0 INTRODUCTION (one sentence on what the chapter covers), 1.1 SOCIAL HISTORY, 1.2 FAMILY HISTORY, 1.3 MEDICAL HISTORY, 1.4 SURGICAL HISTORY, 1.5 MENSTRUAL HISTORY, 1.6 CLIENT'S LIFESTYLE AND HOBBIES. Narrative, past tense, reported speech where the client told the student something (\"She said that ...\"). No care plan in this chapter.",
+      "fields": [
+        {
+          "key": "age",
+          "label": "Age",
+          "hint": "In years.",
+          "type": "number",
+          "required": true
+        },
+        {
+          "key": "gravida_para",
+          "label": "Gravida / para",
+          "hint": "Example: G3P2, two children alive.",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "social_history",
+          "label": "Social history",
+          "hint": "Hometown and the community she lives in (no house address), marriage and partner, children, occupation, education, religion, languages, who supports her, where she plans to deliver.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "family_history",
+          "label": "Family history",
+          "hint": "Her parents and siblings, and any illness that runs in the family (sickle cell, hypertension, diabetes, twins, birth defects). Write \"none known\" if she said none.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "medical_history",
+          "label": "Medical history",
+          "hint": "Past illnesses, admissions, allergies, long-term medicines. Write \"none\" if there were none.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "surgical_history",
+          "label": "Surgical history",
+          "hint": "Any operations, including caesarean section. Write \"none\" if there were none.",
+          "type": "textarea"
+        },
+        {
+          "key": "menstrual_history",
+          "label": "Menstrual history",
+          "hint": "Age at first period, cycle length, days of flow, pain.",
+          "type": "textarea"
+        },
+        {
+          "key": "lifestyle",
+          "label": "Lifestyle and hobbies",
+          "hint": "Diet, rest, alcohol or smoking, exercise, what she enjoys doing.",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "key": "obstetric_history",
+      "title": "Past and present obstetric history",
+      "part": "CHAPTER ONE: CLIENT'S PARTICULARS",
+      "stage": "assessment",
+      "why": "Her previous pregnancies and the course of this one tell you what risks to watch for in labour and after delivery.",
+      "guidance": "Sub-headings 1.7 PAST OBSTETRICAL HISTORY and 1.8 PRESENT OBSTETRICAL HISTORY. Use a pipe table for previous pregnancies if there were several (year, place, gestation, mode of delivery, outcome, sex and weight of baby, complications).",
+      "fields": [
+        {
+          "key": "past_pregnancies",
+          "label": "Previous pregnancies",
+          "hint": "For each one: year, place of delivery, gestation, how she delivered, the baby's sex and weight, and any problem. Write \"first pregnancy\" if this is her first.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "lmp",
+          "label": "Last menstrual period (LMP)",
+          "hint": "Date from her card.",
+          "type": "date"
+        },
+        {
+          "key": "edd",
+          "label": "Expected date of delivery (EDD)",
+          "hint": "Date from her card.",
+          "type": "date"
+        },
+        {
+          "key": "booking",
+          "label": "Booking and ANC so far",
+          "hint": "Gestation at booking, number of ANC visits before you met her, any problems so far, quickening.",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "antenatal_visits",
+      "title": "Antenatal visits and home visits",
+      "part": "CHAPTER TWO: MANAGEMENT OF PREGNANCY",
+      "stage": "implementation",
+      "why": "This shows the antenatal care you actually gave, visit by visit. Supervisors compare these entries with her antenatal card.",
+      "guidance": "Start with 2.0 INTRODUCTION. Then one sub-heading per visit in date order (e.g. 2.1 FIRST CONTACT WITH THE CLIENT, 2.2 FIRST ANTENATAL HOME VISIT, 2.3 SUBSEQUENT VISIT TO THE HOSPITAL). For each: what was found, the care given and the education given. Where the student's actions are standard practice, a sentence of rationale may follow (why that care is given), citing retrieved sources only. Weight and fundal height are also plotted by the app as a chart after this section; do not draw, describe or invent a chart, and mention the chart only as \"the chart that follows\".",
+      "repeat": {
+        "label": "Visit",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of this visit.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "type",
+            "label": "Clinic or home visit",
+            "hint": "Example: first contact at ANC clinic, first home visit, second home visit.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "gestation",
+            "label": "Gestation",
+            "hint": "Weeks + days on that date, e.g. 37+2.",
+            "type": "text"
+          },
+          {
+            "key": "weight_kg",
+            "label": "Weight (kg)",
+            "hint": "Her weight at this visit, from the card. Leave blank if it was not taken.",
+            "type": "number",
+            "min": 30,
+            "max": 200,
+            "blank_ok": true
+          },
+          {
+            "key": "fundal_height_cm",
+            "label": "Fundal height (cm)",
+            "hint": "Measured from the symphysis pubis to the top of the womb, from the card. Leave blank if it was not measured.",
+            "type": "number",
+            "min": 5,
+            "max": 45,
+            "blank_ok": true
+          },
+          {
+            "key": "findings",
+            "label": "What you found",
+            "hint": "History taken and examination findings with the actual numbers: BP, temperature, pulse, weight, fundal height, lie, presentation, fetal heart rate, urine test. For a home visit: the home, family and surroundings.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "care_given",
+            "label": "Care you gave",
+            "hint": "What you did, including drugs given with doses (from her card).",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "education",
+            "label": "Health education given",
+            "hint": "What you taught her and her family, e.g. danger signs, diet, birth preparedness.",
+            "type": "textarea"
+          }
+        ]
+      },
+      "charts": [
+        {
+          "key": "antenatal_trends",
+          "title": "Weight and fundal height across the antenatal visits",
+          "time_field": "date",
+          "note": "Plotted by ResearchPadi from the readings you entered. It is not a clinical record.",
+          "series": [
+            {
+              "field": "weight_kg",
+              "label": "Weight (kg)",
+              "min": 40,
+              "max": 100,
+              "step": 10
+            },
+            {
+              "field": "fundal_height_cm",
+              "label": "Fundal height (cm)",
+              "min": 10,
+              "max": 40,
+              "step": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "antenatal_care_plan",
+      "title": "Antenatal problems and care plan",
+      "part": "CHAPTER TWO: MANAGEMENT OF PREGNANCY",
+      "stage": "planning",
+      "why": "The care plan shows the nursing process in action: a problem you identified, what you aimed for, what you planned, what you did and whether it worked.",
+      "guidance": "Sub-heading 2.5 NURSING CARE PLAN DURING ANTENATAL CARE. First list PROBLEMS IDENTIFIED (with dates), SHORT TERM OBJECTIVES and LONG TERM OBJECTIVE. Then, for each problem, a caption \"TABLE n: ANTENATAL CARE PLAN\" and a pipe table with columns DATE/TIME | NURSING DIAGNOSIS | NURSING OBJECTIVES/OUTCOME CRITERIA | NURSING ORDERS | NURSING INTERVENTIONS | DATE/TIME | EVALUATION | SIGN. Nursing orders are the planned actions, numbered; interventions repeat the same numbers in past tense and may add a short rationale. SIGN is [Student to supply: initials].",
+      "repeat": {
+        "label": "Problem",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date and time identified",
+            "hint": "When you identified the problem.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "problem",
+            "label": "Problem",
+            "hint": "What was wrong, in plain words, e.g. waist pain.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "cause",
+            "label": "Related to (cause)",
+            "hint": "What you think caused it, e.g. descent of the fetal head pressing on the sacral nerves.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "evidence",
+            "label": "As evidenced by",
+            "hint": "What showed you the problem: what she said or what you saw.",
+            "type": "text"
+          },
+          {
+            "key": "objective",
+            "label": "Objective",
+            "hint": "What you aimed to achieve and by when, e.g. pain reduced within 48 hours.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "orders",
+            "label": "What you planned to do",
+            "hint": "Your nursing orders, one per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "interventions",
+            "label": "What you actually did",
+            "hint": "The care you gave, one per line, including any drug and dose.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "evaluation_date",
+            "label": "Date and time evaluated",
+            "hint": "When you checked whether the objective was met.",
+            "type": "text"
+          },
+          {
+            "key": "evaluation",
+            "label": "Outcome",
+            "hint": "Was the goal met, partly met or not met, and how you knew.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "labour",
+      "title": "Labour and delivery",
+      "part": "CHAPTER THREE: MANAGEMENT OF LABOUR",
+      "stage": "implementation",
+      "why": "Labour is where things can change fastest. Your entries show you monitored her properly and acted on what you found, as recorded on the partograph.",
+      "guidance": "Sub-headings: 3.0 INTRODUCTION, 3.1 ADMISSION AND MANAGEMENT OF FIRST STAGE OF LABOUR (using the partograph entries in time order), 3.2 MANAGEMENT OF SECOND STAGE OF LABOUR, 3.3 IMMEDIATE CARE OF THE BABY, 3.4 MANAGEMENT OF THIRD STAGE OF LABOUR, 3.5 EXAMINATION OF THE PLACENTA AND MEMBRANES, 3.6 MANAGEMENT OF FOURTH STAGE, 3.7 SUMMARY OF LABOUR (a pipe table of the values the student entered). Short rationale for standard actions is allowed, cited to retrieved sources only. The partograph readings are also plotted by the app as a chart after this section; do not draw, describe or invent a chart, and mention it only as \"the chart that follows\".",
+      "fields": [
+        {
+          "key": "admission",
+          "label": "Admission in labour",
+          "hint": "Date and time, her complaints, and your examination and vaginal examination findings.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "second_stage",
+          "label": "Second stage and delivery",
+          "hint": "Time of full dilatation, time of birth, how the baby was delivered.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "baby",
+          "label": "The baby at birth",
+          "hint": "Sex, weight, APGAR at 1 and 5 minutes, and the immediate care you gave.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "third_stage",
+          "label": "Third stage",
+          "hint": "Drug given (e.g. oxytocin and dose), time the placenta was delivered, estimated blood loss.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "placenta",
+          "label": "Examination of placenta and membranes",
+          "hint": "Complete or not, weight, cord length and vessels, any abnormality.",
+          "type": "textarea"
+        },
+        {
+          "key": "fourth_stage",
+          "label": "Fourth stage",
+          "hint": "Monitoring in the first hours: BP, pulse, uterus, bleeding, bladder.",
+          "type": "textarea"
+        }
+      ],
+      "repeat": {
+        "label": "Partograph entry",
+        "min": 1,
+        "fields": [
+          {
+            "key": "time",
+            "label": "Date and time",
+            "hint": "When this observation was made.",
+            "type": "datetime",
+            "required": true
+          },
+          {
+            "key": "dilatation_cm",
+            "label": "Cervical dilatation (cm)",
+            "hint": "From the vaginal examination, 0 to 10. Leave blank if none was done at this time.",
+            "type": "number",
+            "min": 0,
+            "max": 10,
+            "blank_ok": true
+          },
+          {
+            "key": "descent",
+            "label": "Descent of the head (fifths palpable)",
+            "hint": "Fifths of the head felt above the pelvic brim, 0 to 5. Leave blank if not assessed.",
+            "type": "number",
+            "min": 0,
+            "max": 5,
+            "blank_ok": true
+          },
+          {
+            "key": "fhr",
+            "label": "Fetal heart rate",
+            "hint": "Beats per minute, as recorded. Leave blank if not taken.",
+            "type": "number",
+            "min": 60,
+            "max": 220,
+            "blank_ok": true
+          },
+          {
+            "key": "contractions",
+            "label": "Contractions in 10 minutes",
+            "hint": "How many contractions you counted in 10 minutes. Leave blank if not counted.",
+            "type": "number",
+            "min": 0,
+            "max": 10,
+            "blank_ok": true
+          },
+          {
+            "key": "findings",
+            "label": "Observations",
+            "hint": "Anything else you recorded: liquor, moulding, maternal BP, pulse, temperature, urine output, with the actual numbers.",
+            "type": "textarea",
+            "required": false,
+            "blank_ok": true
+          },
+          {
+            "key": "care_given",
+            "label": "Care given",
+            "hint": "What you did at this point, e.g. encouraged walking, gave fluids, informed the midwife in charge.",
+            "type": "textarea",
+            "blank_ok": true
+          }
+        ]
+      },
+      "charts": [
+        {
+          "key": "partograph",
+          "title": "Partograph readings",
+          "time_field": "time",
+          "note": "Plotted by ResearchPadi from the readings you entered. Attach the original partograph from the client's folder as well; it is the official record.",
+          "series": [
+            {
+              "field": "dilatation_cm",
+              "label": "Cervical dilatation (cm)",
+              "min": 0,
+              "max": 10,
+              "step": 2
+            },
+            {
+              "field": "descent",
+              "label": "Descent of the head (fifths palpable)",
+              "min": 0,
+              "max": 5,
+              "step": 1
+            },
+            {
+              "field": "fhr",
+              "label": "Fetal heart rate (beats per minute)",
+              "min": 100,
+              "max": 180,
+              "step": 20
+            },
+            {
+              "field": "contractions",
+              "label": "Contractions in 10 minutes",
+              "min": 0,
+              "max": 6,
+              "step": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "labour_care_plan",
+      "title": "Labour problems and care plan",
+      "part": "CHAPTER THREE: MANAGEMENT OF LABOUR",
+      "stage": "planning",
+      "why": "Problems in labour need clear goals and quick evaluation. This care plan shows how you managed each one.",
+      "guidance": "Sub-heading 3.8 CARE PLAN DURING LABOUR. Same format as the antenatal care plan: PROBLEMS IDENTIFIED, SHORT TERM OBJECTIVES, LONG TERM OBJECTIVE, then one captioned pipe table per problem with the eight columns DATE/TIME | NURSING DIAGNOSIS | NURSING OBJECTIVES/OUTCOME CRITERIA | NURSING ORDERS | NURSING INTERVENTIONS | DATE/TIME | EVALUATION | SIGN.",
+      "repeat": {
+        "label": "Problem",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date and time identified",
+            "hint": "When you identified the problem.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "problem",
+            "label": "Problem",
+            "hint": "e.g. labour pains, anxiety, risk of bleeding.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "cause",
+            "label": "Related to (cause)",
+            "hint": "What caused it.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "evidence",
+            "label": "As evidenced by",
+            "hint": "What showed you the problem.",
+            "type": "text"
+          },
+          {
+            "key": "objective",
+            "label": "Objective",
+            "hint": "What you aimed for and by when.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "orders",
+            "label": "What you planned to do",
+            "hint": "One per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "interventions",
+            "label": "What you actually did",
+            "hint": "One per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "evaluation_date",
+            "label": "Date and time evaluated",
+            "hint": "When you checked.",
+            "type": "text"
+          },
+          {
+            "key": "evaluation",
+            "label": "Outcome",
+            "hint": "Met, partly met or not met, and how you knew.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "puerperium",
+      "title": "Puerperium and postnatal visits",
+      "part": "CHAPTER FOUR: MANAGEMENT OF PUERPERIUM",
+      "stage": "implementation",
+      "why": "The puerperium is when many maternal and newborn deaths happen. Your visit entries show how you checked mother and baby and what you taught the family.",
+      "guidance": "Sub-headings: 4.0 INTRODUCTION, 4.1 DAY OF DELIVERY, then one sub-heading per visit in date order (e.g. FIRST DAY POST DELIVERY (DAY OF DISCHARGE), THIRD DAY POSTNATAL HOME VISIT, FIRST POSTNATAL VISIT TO THE CLINIC). For each: mother's findings, baby's findings, care and education given.",
+      "fields": [
+        {
+          "key": "delivery_day",
+          "label": "Day of delivery",
+          "hint": "Care of mother and baby on the day of delivery, with the observations you recorded.",
+          "type": "textarea",
+          "required": true
+        }
+      ],
+      "repeat": {
+        "label": "Visit",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of the visit.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "type",
+            "label": "Which visit",
+            "hint": "e.g. day of discharge, third day home visit, postnatal clinic.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "mother",
+            "label": "Mother's findings",
+            "hint": "Vital signs, uterus (involution), lochia, perineum, breasts, bladder and bowel, mood.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "baby",
+            "label": "Baby's findings",
+            "hint": "Temperature, feeding, cord, eyes, skin, weight, immunisation given.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "care_given",
+            "label": "Care and education given",
+            "hint": "What you did and taught, including family planning counselling.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "puerperium_care_plan",
+      "title": "Puerperium problems and care plan",
+      "part": "CHAPTER FOUR: MANAGEMENT OF PUERPERIUM",
+      "stage": "planning",
+      "why": "After delivery new problems appear for mother and baby. This care plan shows how you identified and managed them.",
+      "guidance": "Sub-heading CARE PLAN DURING PUERPERIUM. Same format as the other care plans: PROBLEMS IDENTIFIED, SHORT TERM OBJECTIVES, LONG TERM OBJECTIVE, then one captioned pipe table per problem with the eight columns.",
+      "repeat": {
+        "label": "Problem",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date and time identified",
+            "hint": "When you identified the problem.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "problem",
+            "label": "Problem",
+            "hint": "e.g. after pains, insomnia, skin rashes on baby.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "cause",
+            "label": "Related to (cause)",
+            "hint": "What caused it.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "evidence",
+            "label": "As evidenced by",
+            "hint": "What showed you the problem.",
+            "type": "text"
+          },
+          {
+            "key": "objective",
+            "label": "Objective",
+            "hint": "What you aimed for and by when.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "orders",
+            "label": "What you planned to do",
+            "hint": "One per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "interventions",
+            "label": "What you actually did",
+            "hint": "One per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "evaluation_date",
+            "label": "Date and time evaluated",
+            "hint": "When you checked.",
+            "type": "text"
+          },
+          {
+            "key": "evaluation",
+            "label": "Outcome",
+            "hint": "Met, partly met or not met, and how you knew.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "termination",
+      "title": "Termination of care",
+      "part": "CHAPTER FOUR: MANAGEMENT OF PUERPERIUM",
+      "stage": "evaluation",
+      "why": "Ending care properly means the family knows where to go next. It also closes the nursing process: did your care achieve its goals?",
+      "guidance": "Sub-heading TERMINATION OF CARE. When the client and family were told care would end, the final visit, the handover for continuity of care, and the overall outcome.",
+      "fields": [
+        {
+          "key": "final_visit",
+          "label": "Final visit",
+          "hint": "Date and what happened at the last visit.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "handover",
+          "label": "Handover",
+          "hint": "Who you handed mother and baby over to, e.g. the public health nurse, and what they were told to do if there is a problem.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "outcome",
+          "label": "Overall outcome",
+          "hint": "How mother, baby and family were doing when care ended.",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "summary",
+      "title": "Summary and conclusion",
+      "part": "SUMMARY AND CONCLUSION",
+      "stage": "evaluation",
+      "why": "The summary pulls the whole study together and shows what you learned as a future midwife.",
+      "guidance": "One page, no sub-headings. Who the client was, when and where she was met, the outcome of pregnancy, labour and puerperium, the home visits, and what the student learned and will apply. Use only facts the student entered in this or earlier sections.",
+      "fields": [
+        {
+          "key": "outcome",
+          "label": "Outcome in one paragraph",
+          "hint": "Date and mode of delivery, the baby, and how mother and baby did.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "learning",
+          "label": "What you learned",
+          "hint": "In your own words: what this care study taught you.",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "drugs",
+      "title": "Appendix: pharmacology of drugs",
+      "part": "APPENDIX 1: PHARMACOLOGY OF DRUGS",
+      "stage": "implementation",
+      "why": "Knowing the action and side effects of every drug you gave is part of safe practice. Supervisors check the doses against the client's records.",
+      "guidance": "A pipe table with columns NAME OF DRUG | CLASSIFICATION | DOSAGE | ROUTE | USE AND ACTION | ACTUAL EFFECT | SIDE EFFECTS | SIDE EFFECTS EXPERIENCED. Name, dosage, route, actual effect and side effects experienced come only from the student's entries. Classification, use and action, and possible side effects are general drug knowledge and may be written from the retrieved sources.",
+      "repeat": {
+        "label": "Drug",
+        "min": 1,
+        "fields": [
+          {
+            "key": "name",
+            "label": "Drug",
+            "hint": "Name and form, e.g. Tablet folic acid.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "dose",
+            "label": "Dose and frequency",
+            "hint": "Exactly as on her card, e.g. 5mg once daily.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "route",
+            "label": "Route",
+            "hint": "e.g. orally, intramuscular.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "effect",
+            "label": "Effect you saw",
+            "hint": "What happened after she took it.",
+            "type": "text"
+          },
+          {
+            "key": "side_effects_seen",
+            "label": "Side effects she had",
+            "hint": "Write \"none\" if none.",
+            "type": "text"
+          }
+        ]
+      }
+    },
+    {
+      "key": "investigations",
+      "title": "Appendix: diagnostic investigations",
+      "part": "APPENDIX 2: COMPLETE DIAGNOSTIC INVESTIGATIONS",
+      "stage": "assessment",
+      "why": "Investigation results support your findings and care plans. Every result must match her records exactly.",
+      "guidance": "A pipe table with columns DATE | SPECIMEN | INVESTIGATION | NORMAL VALUES | FINDINGS | REMARKS. Date, specimen, investigation and findings come only from the student's entries. Normal values may be filled from the retrieved sources; otherwise use a placeholder.",
+      "repeat": {
+        "label": "Investigation",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of the test.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "specimen",
+            "label": "Specimen",
+            "hint": "Blood, urine, stool...",
+            "type": "text"
+          },
+          {
+            "key": "test",
+            "label": "Investigation",
+            "hint": "e.g. Haemoglobin, urine protein, sickling, HIV.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "result",
+            "label": "Result",
+            "hint": "Exactly as on the report, with units.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "remarks",
+            "label": "Remarks",
+            "hint": "Normal or abnormal, and any action taken.",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

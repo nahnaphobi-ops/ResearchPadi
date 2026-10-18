@@ -9,6 +9,7 @@ import { CONFIG } from '../../config/index.js';
 import { searchOpenAlex } from './openalex.service.js';
 import { searchSemanticScholar } from './semantic.service.js';
 import { normaliseDoi, sourceKey, type Source, type SourceOrigin, type SourceType } from './source.types.js';
+import { isOfflineMode, offlineSources } from '../ai/offline.service.js';
 
 const log = childLogger('sources');
 
@@ -103,6 +104,7 @@ export async function findSources(query: string, opts: FindSourcesOptions = {}):
   if (!q) return [];
   const want = (o: SourceOrigin) => !opts.origins?.length || opts.origins.includes(o);
   const limit = Math.min(Math.max(opts.limit ?? 20, 1), 40);
+  if (isOfflineMode()) return offlineSources(limit);
   const ghanaFirst = opts.ghanaFirst ?? true;
 
   const [kb, live, oaGhana, oaGlobal, s2] = await Promise.all([

@@ -1,0 +1,632 @@
+{
+  "id": "general-nursing-patient-family",
+  "name": "Patient/Family Centred Care Study (General Nursing)",
+  "description": "One patient cared for from admission to discharge and follow-up, organised by the nursing process.",
+  "notice": "Starter template following the nursing process. It is not an official format. Check every heading against your own college's guide and your supervisor.",
+  "focus_label": "Medical diagnosis",
+  "focus_hint": "The patient's diagnosis as written in the folder, e.g. \"typhoid fever\" or \"diabetes mellitus type 2\". Used to search for sources.",
+  "search_terms": "nursing management",
+  "review_specialty": "general_nursing",
+  "stages": [
+    {
+      "key": "front",
+      "label": "Front pages",
+      "nursing_process": false
+    },
+    {
+      "key": "assessment",
+      "label": "Assessment"
+    },
+    {
+      "key": "diagnosis",
+      "label": "Nursing diagnoses / problems"
+    },
+    {
+      "key": "planning",
+      "label": "Planning (care plan)"
+    },
+    {
+      "key": "implementation",
+      "label": "Implementation (care given)"
+    },
+    {
+      "key": "evaluation",
+      "label": "Evaluation"
+    }
+  ],
+  "sections": [
+    {
+      "key": "preface",
+      "title": "Preface",
+      "part": "PREFACE",
+      "stage": "front",
+      "why": "The preface explains what a care study is and why you wrote one. It is general, so it needs none of your client's details, but your supervisor may want something specific mentioned.",
+      "guidance": "About one page, no sub-headings. What a patient/family centred care study is, that it follows the nursing process (assessment, nursing diagnosis, planning, implementation and evaluation), that it lets the student nurse apply the knowledge and skills learnt in training to one patient and the family, that it builds the student nurse's ability to educate the patient and family, and that it is an academic exercise of the training. Do not mention the patient or any clinical detail. Do not claim it is required, approved or recognised by any college or council unless the student's note says so.",
+      "word_target": 350,
+      "fields": [
+        {
+          "key": "requirements",
+          "label": "Anything your college wants said here",
+          "hint": "For example the name of the council or college requirement this study meets, exactly as your college words it. Leave blank to keep the preface general.",
+          "type": "textarea",
+          "blank_ok": true
+        }
+      ]
+    },
+    {
+      "key": "acknowledgement",
+      "title": "Acknowledgement",
+      "part": "ACKNOWLEDGEMENT",
+      "stage": "front",
+      "why": "This is where you thank the people who helped you. It is written by you, in the first person, so every name must come from you.",
+      "guidance": "About half a page, no sub-headings. Written in the first person as the student nurse (\"I would like to thank ...\"); this is the one section where the first person is correct. Thank only the people the student lists, in the order: supervisor, then facility staff, then anyone else the student names. Thank the patient and her family by the pseudonym only if the student ticks that in the notes; never add a name. Do not invent roles, titles or names.",
+      "word_target": 250,
+      "fields": [
+        {
+          "key": "supervisor",
+          "label": "Your supervisor",
+          "hint": "Their name and title as you want it written, e.g. Ms. A. Mensah, tutor.",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "facility_staff",
+          "label": "Staff at the facility who helped you",
+          "hint": "Names and roles, e.g. the midwife in charge at the antenatal clinic and the ward staff, with the name of the facility.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "others",
+          "label": "Anyone else you want to thank",
+          "hint": "For example the principal, tutors, your family or friends, in your own words. You may include a thank-you to God if you wish.",
+          "type": "textarea",
+          "blank_ok": true
+        },
+        {
+          "key": "thank_client",
+          "label": "Thank your patient and her family? (write yes or no)",
+          "hint": "If yes, they are thanked by the pseudonym only.",
+          "type": "text",
+          "blank_ok": true
+        }
+      ]
+    },
+    {
+      "key": "introduction",
+      "title": "Introduction",
+      "part": "INTRODUCTION",
+      "stage": "assessment",
+      "why": "The introduction tells the reader who the patient is, how you met them and why you chose them. A supervisor uses it to see that this is a real patient you cared for yourself.",
+      "guidance": "One to two pages. Who the patient is (pseudonym, age, diagnosis), where and when they were met, why they were selected, how long they were cared for, and that consent was obtained. Then one short paragraph saying what each later part covers, and that information came from the patient, family, folder and textbooks.",
+      "fields": [
+        {
+          "key": "where_met",
+          "label": "Where and when you first met the patient",
+          "hint": "Ward, hospital and date. Example: Female Medical Ward, 12/03/24, day 2 on admission.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "why_selected",
+          "label": "Why you chose this patient",
+          "hint": "In your own words.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "period_of_care",
+          "label": "How long you cared for them",
+          "hint": "From when to when, including follow-up visits.",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "patient_particulars",
+      "title": "Patient's particulars and history",
+      "part": "CHAPTER ONE: ASSESSMENT OF PATIENT AND FAMILY",
+      "stage": "assessment",
+      "why": "Assessment is the first step of the nursing process. Every nursing diagnosis you make later should trace back to something you found here.",
+      "guidance": "Sub-headings: 1.0 INTRODUCTION, 1.1 PATIENT'S PARTICULARS, 1.2 SOCIAL HISTORY, 1.3 FAMILY HISTORY, 1.4 PAST MEDICAL AND SURGICAL HISTORY, 1.5 LIFESTYLE AND HOBBIES. Narrative, past tense, reported speech for what the patient said.",
+      "fields": [
+        {
+          "key": "age",
+          "label": "Age",
+          "hint": "In years.",
+          "type": "number",
+          "required": true
+        },
+        {
+          "key": "sex",
+          "label": "Sex",
+          "hint": "Male or female.",
+          "type": "text",
+          "required": true
+        },
+        {
+          "key": "social_history",
+          "label": "Social history",
+          "hint": "Community they live in (no house address), occupation, education, religion, marriage, children, who supports them.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "family_history",
+          "label": "Family history",
+          "hint": "Parents and siblings, and any illness that runs in the family. Write \"none known\" if none.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "past_history",
+          "label": "Past medical and surgical history",
+          "hint": "Past illnesses, admissions, operations, allergies. Write \"none\" if none.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "lifestyle",
+          "label": "Lifestyle and hobbies",
+          "hint": "Diet, alcohol or smoking, exercise, what they enjoy.",
+          "type": "textarea"
+        }
+      ]
+    },
+    {
+      "key": "admission",
+      "title": "Present illness and admission",
+      "part": "CHAPTER ONE: ASSESSMENT OF PATIENT AND FAMILY",
+      "stage": "assessment",
+      "why": "How the illness started and what was found on admission explains the diagnosis and the care that followed.",
+      "guidance": "Sub-headings: 1.6 PRESENT MEDICAL HISTORY and 1.7 ADMISSION OF PATIENT. The complaint and its history, then the admission: date and time, how they arrived, observations, immediate care given.",
+      "fields": [
+        {
+          "key": "present_illness",
+          "label": "Present illness",
+          "hint": "What the patient complained of, when it started and what they did before coming to hospital.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "admission",
+          "label": "Admission",
+          "hint": "Date and time, ward, how they arrived, vital signs on admission (the actual numbers), immediate care given.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "doctor_diagnosis",
+          "label": "Diagnosis made",
+          "hint": "As written in the folder, and who made it.",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "literature_review",
+      "title": "Literature review on the condition",
+      "part": "CHAPTER ONE: ASSESSMENT OF PATIENT AND FAMILY",
+      "stage": "assessment",
+      "why": "Understanding the condition — its causes, signs and treatment — is what lets you plan safe care. This is the only part based on books and articles instead of your patient.",
+      "guidance": "Sub-heading 1.8 LITERATURE REVIEW ON THE CONDITION: definition, causes, pathophysiology, signs and symptoms, diagnosis, medical and nursing management, complications. Cite only the retrieved sources. Do not mention the patient here. Develop each sub-heading fully, in connected paragraphs rather than lists. Every substantive statement must carry a citation from the list; where the sources do not cover a point, write [Student to supply: a source for this statement] instead of writing it uncited.",
+      "requires_sources": true,
+      "fields": [
+        {
+          "key": "topics",
+          "label": "Topics you want covered",
+          "hint": "Anything your supervisor asked you to include.",
+          "type": "textarea",
+          "blank_ok": true
+        }
+      ],
+      "word_target": 2500
+    },
+    {
+      "key": "comparison",
+      "title": "Your patient compared with the literature",
+      "part": "CHAPTER TWO: ANALYSIS OF DATA",
+      "stage": "diagnosis",
+      "why": "Comparing what you saw with what the books say shows you can think clinically, not just record.",
+      "guidance": "Sub-headings: 2.0 INTRODUCTION, 2.1 COMPARISON OF PATIENT'S CONDITION WITH LITERATURE, 2.2 PATIENT'S AND FAMILY'S STRENGTHS. Use the student's own observations of what matched and what differed; explain the theory behind each point from the retrieved sources.",
+      "fields": [
+        {
+          "key": "features_seen",
+          "label": "Signs and symptoms your patient had",
+          "hint": "List what you actually saw or the patient reported.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "differences",
+          "label": "What was different from the textbook",
+          "hint": "Anything expected that your patient did not have, or anything unusual. Write \"none\" if it matched.",
+          "type": "textarea"
+        },
+        {
+          "key": "strengths",
+          "label": "Patient's and family's strengths",
+          "hint": "What helped recovery: family support, willingness to learn, health insurance...",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "care_plan",
+      "title": "Nursing diagnoses and care plan",
+      "part": "CHAPTER THREE: PLANNING FOR PATIENT AND FAMILY CARE",
+      "stage": "planning",
+      "why": "The care plan is the heart of the nursing process: a problem you identified, what you aimed for, what you planned, what you did and whether it worked.",
+      "guidance": "Sub-headings: 3.0 INTRODUCTION and 3.1 NURSING CARE PLAN. First list PROBLEMS IDENTIFIED (with dates), SHORT TERM OBJECTIVES and LONG TERM OBJECTIVE. Then, for each problem, a caption \"TABLE n: NURSING CARE PLAN\" and a pipe table with columns DATE/TIME | NURSING DIAGNOSIS | NURSING OBJECTIVES/OUTCOME CRITERIA | NURSING ORDERS | NURSING INTERVENTIONS | DATE/TIME | EVALUATION | SIGN. Diagnosis written as \"<problem> related to <cause> as evidenced by <evidence>\". SIGN is [Student to supply: initials].",
+      "repeat": {
+        "label": "Problem",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date and time identified",
+            "hint": "When you identified the problem.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "problem",
+            "label": "Problem",
+            "hint": "What was wrong, in plain words, e.g. fever, pain, anxiety.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "cause",
+            "label": "Related to (cause)",
+            "hint": "What caused it.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "evidence",
+            "label": "As evidenced by",
+            "hint": "What showed you the problem: what the patient said or what you saw, with readings.",
+            "type": "text"
+          },
+          {
+            "key": "objective",
+            "label": "Objective",
+            "hint": "What you aimed to achieve and by when.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "orders",
+            "label": "What you planned to do",
+            "hint": "Your nursing orders, one per line.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "interventions",
+            "label": "What you actually did",
+            "hint": "The care you gave, one per line, including any drug and dose.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "evaluation_date",
+            "label": "Date and time evaluated",
+            "hint": "When you checked.",
+            "type": "text"
+          },
+          {
+            "key": "evaluation",
+            "label": "Outcome",
+            "hint": "Met, partly met or not met, and how you knew.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "implementation",
+      "title": "Day-by-day care",
+      "part": "CHAPTER FOUR: IMPLEMENTATION OF PATIENT AND FAMILY CARE",
+      "stage": "implementation",
+      "why": "This shows the care you actually gave each day and how the patient responded. Supervisors compare it with the nurses' notes in the folder.",
+      "guidance": "Sub-heading 4.0 INTRODUCTION, then one sub-heading per day in date order (e.g. DAY OF ADMISSION, SECOND DAY ON ADMISSION). Observations, medicines given, comfort, nutrition, hygiene, emotional support, family involvement, education. Short rationale for standard actions is allowed, cited to retrieved sources only. Temperature, pulse and respiration are also plotted by the app as a chart after this section; do not draw, describe or invent a chart, and mention it only as \"the chart that follows\".",
+      "repeat": {
+        "label": "Day",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of this day of care.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "temperature",
+            "label": "Temperature (°C)",
+            "hint": "The patient's temperature that day, as recorded. Leave blank if not taken.",
+            "type": "number",
+            "min": 34,
+            "max": 42,
+            "blank_ok": true
+          },
+          {
+            "key": "pulse",
+            "label": "Pulse (beats per minute)",
+            "hint": "As recorded. Leave blank if not taken.",
+            "type": "number",
+            "min": 30,
+            "max": 220,
+            "blank_ok": true
+          },
+          {
+            "key": "respiration",
+            "label": "Respiration (breaths per minute)",
+            "hint": "As recorded. Leave blank if not taken.",
+            "type": "number",
+            "min": 6,
+            "max": 70,
+            "blank_ok": true
+          },
+          {
+            "key": "findings",
+            "label": "Observations",
+            "hint": "Anything else you observed, with the actual numbers (blood pressure, oxygen saturation, intake and output, pain score).",
+            "type": "textarea",
+            "required": false,
+            "blank_ok": true
+          },
+          {
+            "key": "care_given",
+            "label": "Care you gave",
+            "hint": "What you did, including medicines given with doses.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "response",
+            "label": "Patient's response",
+            "hint": "How the patient was afterwards.",
+            "type": "textarea"
+          },
+          {
+            "key": "education",
+            "label": "Education given",
+            "hint": "What you taught the patient and family.",
+            "type": "textarea"
+          }
+        ]
+      },
+      "charts": [
+        {
+          "key": "vitals",
+          "title": "Temperature, pulse and respiration during care",
+          "time_field": "date",
+          "note": "Plotted by ResearchPadi from the readings you entered. It is not a clinical record.",
+          "series": [
+            {
+              "field": "temperature",
+              "label": "Temperature (°C)",
+              "min": 35,
+              "max": 40,
+              "step": 1
+            },
+            {
+              "field": "pulse",
+              "label": "Pulse (beats per minute)",
+              "min": 60,
+              "max": 120,
+              "step": 20
+            },
+            {
+              "field": "respiration",
+              "label": "Respiration (breaths per minute)",
+              "min": 10,
+              "max": 40,
+              "step": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "discharge",
+      "title": "Evaluation and discharge",
+      "part": "CHAPTER FIVE: EVALUATION, DISCHARGE AND FOLLOW-UP",
+      "stage": "evaluation",
+      "why": "Evaluation closes the nursing process: did your care achieve its goals, and is the patient ready to go home safely?",
+      "guidance": "Sub-headings: 5.0 INTRODUCTION, 5.1 EVALUATION OF CARE, 5.2 PREPARATION OF PATIENT AND FAMILY FOR DISCHARGE, 5.3 DISCHARGE.",
+      "fields": [
+        {
+          "key": "evaluation",
+          "label": "Were your objectives met?",
+          "hint": "For each problem in your care plan: met, partly met or not met.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "preparation",
+          "label": "Preparation for discharge",
+          "hint": "What you taught and arranged before discharge.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "discharge",
+          "label": "Discharge",
+          "hint": "Date, condition on discharge, medicines given home, review date.",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "follow_up",
+      "title": "Follow-up and home visits",
+      "part": "CHAPTER FIVE: EVALUATION, DISCHARGE AND FOLLOW-UP",
+      "stage": "evaluation",
+      "why": "Home visits show how the patient copes outside hospital and whether your teaching worked.",
+      "guidance": "Sub-heading 5.4 FOLLOW-UP AND HOME VISITS with one paragraph per visit, then 5.5 TERMINATION OF CARE.",
+      "fields": [
+        {
+          "key": "termination",
+          "label": "Termination of care",
+          "hint": "When and how care ended, and who you handed over to.",
+          "type": "textarea",
+          "required": true
+        }
+      ],
+      "repeat": {
+        "label": "Visit",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of the visit.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "findings",
+            "label": "What you found",
+            "hint": "How the patient was, the home, adherence to medicines.",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "care_given",
+            "label": "Care and education given",
+            "hint": "What you did and taught.",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "key": "summary",
+      "title": "Summary and conclusion",
+      "part": "SUMMARY AND CONCLUSION",
+      "stage": "evaluation",
+      "why": "The summary pulls the whole study together and shows what you learned as a future nurse.",
+      "guidance": "One page, no sub-headings. Who the patient was, when and where they were met, the diagnosis, the course of care and the outcome, and what the student learned. Use only facts the student entered.",
+      "fields": [
+        {
+          "key": "outcome",
+          "label": "Outcome in one paragraph",
+          "hint": "How the patient was at the end of your care.",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "key": "learning",
+          "label": "What you learned",
+          "hint": "In your own words.",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "drugs",
+      "title": "Appendix: pharmacology of drugs",
+      "part": "APPENDIX 1: PHARMACOLOGY OF DRUGS",
+      "stage": "implementation",
+      "why": "Knowing the action and side effects of every drug you gave is part of safe practice. Supervisors check the doses against the treatment sheet.",
+      "guidance": "A pipe table with columns NAME OF DRUG | CLASSIFICATION | DOSAGE | ROUTE | USE AND ACTION | ACTUAL EFFECT | SIDE EFFECTS | SIDE EFFECTS EXPERIENCED. Name, dosage, route, actual effect and side effects experienced come only from the student's entries. Classification, use and action, and possible side effects are general drug knowledge from the retrieved sources.",
+      "repeat": {
+        "label": "Drug",
+        "min": 1,
+        "fields": [
+          {
+            "key": "name",
+            "label": "Drug",
+            "hint": "Name and form, e.g. Tablet paracetamol.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "dose",
+            "label": "Dose and frequency",
+            "hint": "Exactly as on the treatment sheet.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "route",
+            "label": "Route",
+            "hint": "e.g. orally, intravenous.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "effect",
+            "label": "Effect you saw",
+            "hint": "What happened after it was given.",
+            "type": "text"
+          },
+          {
+            "key": "side_effects_seen",
+            "label": "Side effects the patient had",
+            "hint": "Write \"none\" if none.",
+            "type": "text"
+          }
+        ]
+      }
+    },
+    {
+      "key": "investigations",
+      "title": "Appendix: diagnostic investigations",
+      "part": "APPENDIX 2: COMPLETE DIAGNOSTIC INVESTIGATIONS",
+      "stage": "assessment",
+      "why": "Investigation results support the diagnosis and your care plan. Every result must match the folder exactly.",
+      "guidance": "A pipe table with columns DATE | SPECIMEN | INVESTIGATION | NORMAL VALUES | FINDINGS | REMARKS. Date, specimen, investigation and findings come only from the student's entries. Normal values may be filled from the retrieved sources; otherwise use a placeholder.",
+      "repeat": {
+        "label": "Investigation",
+        "min": 1,
+        "fields": [
+          {
+            "key": "date",
+            "label": "Date",
+            "hint": "Date of the test.",
+            "type": "date",
+            "required": true
+          },
+          {
+            "key": "specimen",
+            "label": "Specimen",
+            "hint": "Blood, urine, stool...",
+            "type": "text"
+          },
+          {
+            "key": "test",
+            "label": "Investigation",
+            "hint": "e.g. Widal test, full blood count.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "result",
+            "label": "Result",
+            "hint": "Exactly as on the report, with units.",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "remarks",
+            "label": "Remarks",
+            "hint": "Normal or abnormal, and any action taken.",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

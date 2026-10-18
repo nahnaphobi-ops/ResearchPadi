@@ -6,6 +6,7 @@ import { getReadyRedis } from '../../lib/redis.js';
 import { aiCircuitBreaker } from '../../lib/circuit-breaker.js';
 import { assertBudget, recordSpend, getBudget } from '../../lib/ai-budget.js';
 import { callPerplexityAgent, type AgentSource } from './perplexity-agent.js';
+import { isOfflineMode, offlineResponse } from './offline.service.js';
 import {
   MODELS,
   FAILOVER_CHAINS,
@@ -133,6 +134,7 @@ export interface GatewayResponse {
  */
 export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
   const { tier, userId, prompt, context, systemPrompt, maxTokens, cachePrompt, meta } = req;
+  if (isOfflineMode()) return offlineResponse(req);
 
   // Per-user daily spend cap (throws AiBudgetError → 429)
   await assertBudget(userId);
@@ -226,6 +228,11 @@ export async function aiStream(
   onDelta: (text: string) => void,
 ): Promise<GatewayResponse> {
   const { tier, userId, prompt, systemPrompt, maxTokens, cachePrompt, meta, signal } = req;
+  if (isOfflineMode()) {
+    const result = offlineResponse(req);
+    onDelta(result.text);
+    return result;
+  }
   await assertBudget(userId);
 
   const chain = FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
