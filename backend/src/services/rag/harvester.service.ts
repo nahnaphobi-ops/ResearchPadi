@@ -1,19 +1,24 @@
-import { supabase } from '../../db/supabase.js';
+import { supabase, getWritePool } from '../../db/supabase.js';
 import { chunkText } from './chunker.service.js';
-import { generateEmbeddings } from './embedder.service.js';
+import { embeddingProblem, generateEmbeddings } from './embedder.service.js';
 import { CONFIG } from '../../config/index.js';
 import { parseAuthors, serializeAuthors } from '../../lib/authors.js';
 import { childLogger } from '../../lib/logger.js';
-import { harvestMetadata, identifyRepository, listSets, type OaiRecord, type RepositoryConfig } from './oai-harvester.service.js';
-import { OPENALEX_GHANA, harvestOpenAlexGhana } from './openalex-harvester.service.js';
+import { checkRepository, harvestMetadata, listSets, type OaiRecord, type RepositoryConfig } from './oai-harvester.service.js';
+import { OPENALEX_GHANA, harvestOpenAlexGhana, type KnowledgeRow } from './openalex-harvester.service.js';
 import { DSPACE_REPOSITORIES, listRecentItems, thesisGenre, type DSpaceItem, type DSpaceRepo } from './dspace.service.js';
 import { GHANA_REPOSITORIES } from './repositories.js';
+import { FirewallChallengeError, describeError } from './harvest-http.js';
+import {
+  RESUME, StorageLimitError, databaseLimitMb, embeddingNote, harvestSets, joinNotes, parseResume,
+  skippedSetsNote, stopsSource, storageLimitMessage,
+} from './harvest-policy.js';
 
 const log = childLogger('harvester');
 
-const PAGE_DELAY_MS = 1000; // be gentle with university servers
+// Requests to each host are paced (and retried) by harvestGet in harvest-http.ts.
 const INCREMENTAL_MAX_PAGES = 20; // weekly top-up: ~2,000 records per repository
-const BACKFILL_MAX_PAGES = 200; // first harvest of a repository: ~20,000 records
+const BACKFILL_MAX_PAGES = 300; // first harvest of a repository: ~30,000 records (UGSpace has ~28,000)
 
 interface StoredRow {
   source_name: string;
@@ -33,7 +38,16 @@ interface StoredRow {
   embedding: number[] | null;
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Running totals for one source, so a run that fails part-way still logs what it saved. */
+interface Progress {
+  fetched: number;
+  added: number;
+  /** Chunks inserted without a vector because embedding failed. */
+  unembedded: number;
+  notes: (string | null)[];
+}
+
+const newProgress = (): Progress => ({ fetched: 0, added: 0, unembedded: 0, notes: [] });
 
 function pickUrl(record: OaiRecord): string | null {
   const http = record.links.find((l) => /^https?:\/\//i.test(l) && !/doi\.org/i.test(l));
@@ -103,18 +117,68 @@ async function logHarvest(source: string, fetched: number, added: number, status
   await supabase.from('harvest_logs').insert({ source, records_fetched: fetched, records_added: added, status, error_message: errorMessage ?? null });
 }
 
+/** Notes for the log row, including chunks that went in without vectors. */
+function progressNotes(progress: Progress, ...extra: (string | null | undefined)[]): string | undefined {
+  return joinNotes(...extra, ...progress.notes, embeddingNote(progress.unembedded, embeddingProblem()));
+}
+
+function warnIfUnembedded(source: string, progress: Progress) {
+  if (progress.unembedded) {
+    log.error({ source, unembedded: progress.unembedded, problem: embeddingProblem() }, 'Chunks saved without vectors; fix OPENAI_API_KEY and run embed-knowledge');
+  }
+}
+
+// ── Database size guard ──────────────────────────────────────────────────────
+
+/** Row + 1536-d vector + its index, for when pg_database_size can't be read. */
+const CHUNK_BYTES_ESTIMATE = 14 * 1024;
+const BASELINE_MB = 60;
+let sizeCache: { at: number; mb: number; estimated: boolean } | null = null;
+
+async function databaseSizeMb(): Promise<{ mb: number; estimated: boolean } | null> {
+  if (sizeCache && Date.now() - sizeCache.at < 60_000) return sizeCache;
+  try {
+    const { rows } = await getWritePool().query('select pg_database_size(current_database())::bigint as bytes');
+    sizeCache = { at: Date.now(), mb: Number(rows[0].bytes) / 1_048_576, estimated: false };
+  } catch (err) {
+    // No direct database connection (e.g. DATABASE_URL unset): estimate from the library's row count.
+    const { count, error } = await supabase.from('knowledge_chunks').select('id', { count: 'exact', head: true });
+    if (error || count == null) {
+      log.warn({ err: (err as Error).message, countErr: error?.message }, 'Could not measure the database size; the size limit is not enforced');
+      return null;
+    }
+    sizeCache = { at: Date.now(), mb: BASELINE_MB + (count * CHUNK_BYTES_ESTIMATE) / 1_048_576, estimated: true };
+  }
+  return sizeCache;
+}
+
+/** Throws StorageLimitError once the database reaches HARVEST_DB_LIMIT_MB (default 400, for Supabase Free). */
+async function assertDatabaseRoom() {
+  const limit = databaseLimitMb();
+  if (!limit) return;
+  const size = await databaseSizeMb();
+  const message = size && storageLimitMessage(size.mb, limit, size.estimated);
+  if (message) throw new StorageLimitError(message);
+}
+
 /** Insert rows whose source_url isn't in the knowledge base yet. Returns works added. */
-async function insertFresh(rows: Omit<StoredRow, 'embedding'>[]): Promise<number> {
+async function insertFresh(rows: Omit<StoredRow, 'embedding'>[], progress: Progress): Promise<number> {
   const urls = [...new Set(rows.map((r) => r.source_url))];
   if (!urls.length) return 0;
-  const { data: existing } = await supabase.from('knowledge_chunks').select('source_url').in('source_url', urls);
+  const { data: existing, error: lookupError } = await supabase.from('knowledge_chunks').select('source_url').in('source_url', urls);
+  // Without the lookup every row would look new and be inserted twice.
+  if (lookupError) throw new Error(`Checking existing chunks failed: ${lookupError.message}`);
   const known = new Set((existing ?? []).map((e: { source_url: string }) => e.source_url));
   const fresh = rows.filter((r) => !known.has(r.source_url));
   if (!fresh.length) return 0;
+  await assertDatabaseRoom();
   const vectors = await generateEmbeddings(fresh.map((r) => `${r.document_title}. ${r.chunk_text}`));
   const { error } = await supabase.from('knowledge_chunks').insert(fresh.map((r, i) => ({ ...r, embedding: vectors[i] ?? null })));
   if (error) throw new Error(error.message);
-  return new Set(fresh.map((r) => r.source_url)).size;
+  progress.unembedded += fresh.filter((_, i) => !vectors[i]).length;
+  const added = new Set(fresh.map((r) => r.source_url)).size;
+  progress.added += added;
+  return added;
 }
 
 function dspaceItemToRows(item: DSpaceItem): Omit<StoredRow, 'embedding'>[] {
@@ -136,85 +200,109 @@ function dspaceItemToRows(item: DSpaceItem): Omit<StoredRow, 'embedding'>[] {
   }));
 }
 
-/** DSpace 7: page through items newest-first until we reach the last run. */
-async function harvestViaRest(repo: DSpaceRepo, since: string | undefined, maxPages: number) {
-  let fetched = 0;
-  let added = 0;
-  let exhausted = false;
+/** DSpace 7: page through items newest-first until we reach the last run. Returns true when complete. */
+async function harvestViaRest(repo: DSpaceRepo, since: string | undefined, maxPages: number, progress: Progress) {
   for (let page = 0; page < maxPages; page++) {
     const { items, totalPages } = await listRecentItems(repo, page, 100);
     const fresh = since ? items.filter((it) => !it.accessioned || it.accessioned.slice(0, 10) >= since) : items;
-    fetched += fresh.length;
-    added += await insertFresh(fresh.flatMap(dspaceItemToRows));
+    progress.fetched += fresh.length;
+    await insertFresh(fresh.flatMap(dspaceItemToRows), progress);
     const reachedLastRun = since && fresh.length < items.length;
-    if (reachedLastRun || page + 1 >= totalPages || !items.length) { exhausted = true; break; }
-    await sleep(PAGE_DELAY_MS);
+    if (reachedLastRun || page + 1 >= totalPages || !items.length) return true;
   }
-  return { fetched, added, exhausted };
+  return false;
 }
 
-/** OAI-PMH; falls back to harvesting collection by collection when the repository needs a set. */
-async function harvestViaOai(repo: RepositoryConfig, since: string | undefined, maxPages: number) {
-  let fetched = 0;
-  let added = 0;
+/**
+ * OAI-PMH; falls back to harvesting collection by collection when the repository needs a set.
+ * Returns true when complete; a collection that keeps failing is skipped and noted.
+ */
+async function harvestViaOai(repo: RepositoryConfig, since: string | undefined, maxPages: number, progress: Progress) {
   let pagesUsed = 0;
 
   const runSet = async (set?: string) => {
     let cursor: string | undefined;
     while (pagesUsed < maxPages) {
       const result = await harvestMetadata(repo, cursor ? undefined : since, undefined, cursor, 100, cursor ? undefined : set);
-      pagesUsed++;
-      fetched += result.records.length;
-      added += await insertFresh(result.records.flatMap((r) => recordToRows(r, repo)));
-      if (!result.hasMore || !result.cursor) return true;
+      // An empty collection costs one request but no page budget (UEW has 195 collections).
+      if (result.records.length || result.cursor) pagesUsed++;
+      progress.fetched += result.records.length;
+      await insertFresh(result.records.flatMap((r) => recordToRows(r, repo)), progress);
+      if (!result.cursor) return true;
       cursor = result.cursor;
-      await sleep(PAGE_DELAY_MS);
     }
     return false;
   };
 
   let exhausted = await runSet();
-  if (fetched === 0) {
+  if (progress.fetched === 0) {
     const collections = (await listSets(repo)).filter((s) => s.startsWith('col_'));
-    exhausted = true;
-    for (const set of collections) {
-      if (!(await runSet(set))) { exhausted = false; break; }
-    }
+    const result = await harvestSets(collections, runSet);
+    exhausted = result.exhausted;
+    progress.notes.push(skippedSetsNote(result.failed));
   }
-  return { fetched, added, exhausted };
+  return exhausted;
 }
 
-/** Harvest one repository incrementally (since its last successful run). */
-export async function harvestRepository(repo: RepositoryConfig, opts: { maxPages?: number; from?: string } = {}) {
+export interface HarvestResult {
+  repo: string;
+  fetched: number;
+  added: number;
+  complete: boolean;
+  /** The database size limit was reached; the run stops here. */
+  stopped?: boolean;
+}
+
+/**
+ * Harvest one repository incrementally (since its last successful run). `blockedHosts`
+ * collects hosts whose firewall challenged us, so the run skips their other journals.
+ */
+export async function harvestRepository(repo: RepositoryConfig, opts: { maxPages?: number; from?: string; blockedHosts?: Set<string> } = {}): Promise<HarvestResult> {
+  const dspace = DSPACE_REPOSITORIES.find((d) => d.sourceName === repo.name);
+  const host = new URL(dspace?.baseUrl ?? repo.oaiBaseUrl).host;
+  if (opts.blockedHosts?.has(host)) {
+    await logHarvest(repo.name, 0, 0, 'error', `Skipped: ${host}'s firewall challenged an earlier request in this run`);
+    return { repo: repo.name, fetched: 0, added: 0, complete: false };
+  }
+
   const from = opts.from ?? (await lastSuccessfulHarvest(repo.name));
   const maxPages = opts.maxPages ?? (from ? INCREMENTAL_MAX_PAGES : BACKFILL_MAX_PAGES);
-  const dspace = DSPACE_REPOSITORIES.find((d) => d.sourceName === repo.name);
+  const progress = newProgress();
 
   try {
-    if (!dspace && !(await identifyRepository(repo))) {
-      await logHarvest(repo.name, 0, 0, 'error', 'Unreachable: the OAI-PMH Identify request failed');
-      log.warn({ repo: repo.name }, 'Repository unreachable; skipped');
-      return { repo: repo.name, fetched: 0, added: 0, complete: false };
+    if (!dspace) {
+      const check = await checkRepository(repo);
+      if (!check.ok) {
+        if (check.blocked) opts.blockedHosts?.add(host);
+        await logHarvest(repo.name, 0, 0, 'error', `Unreachable: the OAI-PMH Identify request failed (${check.reason})`);
+        log.warn({ repo: repo.name, reason: check.reason }, 'Repository unreachable; skipped');
+        return { repo: repo.name, fetched: 0, added: 0, complete: false };
+      }
     }
-    const { fetched, added, exhausted } = dspace
-      ? await harvestViaRest(dspace, from, maxPages)
-      : await harvestViaOai(repo, from, maxPages);
+    const exhausted = dspace
+      ? await harvestViaRest(dspace, from, maxPages, progress)
+      : await harvestViaOai(repo, from, maxPages, progress);
     // Only a complete pass counts as "success" (the next run's starting point).
-    await logHarvest(repo.name, fetched, added, exhausted ? 'success' : 'partial');
-    log.info({ repo: repo.name, via: dspace ? 'rest' : 'oai', since: from ?? 'beginning', fetched, added, complete: exhausted }, 'Repository harvested');
-    return { repo: repo.name, fetched, added, complete: exhausted };
+    await logHarvest(repo.name, progress.fetched, progress.added, exhausted ? 'success' : 'partial', progressNotes(progress));
+    log.info({ repo: repo.name, via: dspace ? 'rest' : 'oai', since: from ?? 'beginning', fetched: progress.fetched, added: progress.added, complete: exhausted }, 'Repository harvested');
+    warnIfUnembedded(repo.name, progress);
+    return { repo: repo.name, fetched: progress.fetched, added: progress.added, complete: exhausted };
   } catch (err) {
-    const message = (err as Error).message;
-    await logHarvest(repo.name, 0, 0, 'error', message);
-    log.error({ repo: repo.name, err: message }, 'Repository harvest failed');
-    return { repo: repo.name, fetched: 0, added: 0, complete: false };
+    if (err instanceof FirewallChallengeError) opts.blockedHosts?.add(err.host);
+    // Reaching the size limit isn't a failure: what was saved stands and the next run carries on.
+    const stopped = err instanceof StorageLimitError;
+    const message = describeError(err);
+    await logHarvest(repo.name, progress.fetched, progress.added, stopped ? 'partial' : 'error', progressNotes(progress, message));
+    if (stopped) log.warn({ repo: repo.name, fetched: progress.fetched, added: progress.added }, message);
+    else log.error({ repo: repo.name, err: message, fetched: progress.fetched, added: progress.added }, 'Repository harvest failed');
+    warnIfUnembedded(repo.name, progress);
+    return { repo: repo.name, fetched: progress.fetched, added: progress.added, complete: false, stopped };
   }
 }
 
 // ── OpenAlex: research by authors at Ghanaian institutions ───────────────────
 
 const OPENALEX_FIRST_YEAR = 2010;
-const RESUME = 'resume:';
 
 async function latestLog(source: string) {
   const { data } = await supabase
@@ -227,27 +315,38 @@ async function latestLog(source: string) {
   return data as { status: string; error_message: string | null } | null;
 }
 
-/** Harvest one OpenAlex date range; a partial run records its cursor so the next run carries on. */
-async function harvestOpenAlexRange(source: string, range: { from: string; to?: string }, maxPages: number) {
+/** Harvest one OpenAlex date range; a partial run records its position so the next run carries on. */
+async function harvestOpenAlexRange(source: string, range: { from: string; to?: string }, maxPages: number): Promise<HarvestResult> {
   const last = await latestLog(source);
-  const resume = last?.status === 'partial' && last.error_message?.startsWith(RESUME) ? last.error_message.slice(RESUME.length) : undefined;
+  const resume = last?.status === 'partial' ? parseResume(last.error_message) : undefined;
+  const progress = newProgress();
+  const save = (rows: KnowledgeRow[], works: number) => {
+    progress.fetched += works;
+    return insertFresh(rows, progress);
+  };
   try {
     let result;
     try {
-      result = await harvestOpenAlexGhana(range, maxPages, insertFresh, resume);
+      result = await harvestOpenAlexGhana(range, maxPages, save, resume);
     } catch (err) {
-      if (!resume) throw err;
-      log.warn({ source, err: (err as Error).message }, 'Saved OpenAlex cursor no longer works; starting the range again');
-      result = await harvestOpenAlexGhana(range, maxPages, insertFresh);
+      if (!resume || stopsSource(err)) throw err;
+      log.warn({ source, err: describeError(err) }, 'Saved OpenAlex position no longer works; starting the range again');
+      result = await harvestOpenAlexGhana(range, maxPages, save);
     }
-    await logHarvest(source, result.fetched, result.added, result.complete ? 'success' : 'partial', result.complete ? undefined : `${RESUME}${result.nextCursor}`);
-    log.info({ source, ...range, fetched: result.fetched, added: result.added, complete: result.complete }, 'OpenAlex range harvested');
-    return { repo: source, fetched: result.fetched, added: result.added, complete: result.complete };
+    // The resume position must come first in the message (see parseResume).
+    const message = progressNotes(progress, result.complete ? undefined : `${RESUME}${result.nextCursor}`, result.note);
+    await logHarvest(source, progress.fetched, progress.added, result.complete ? 'success' : 'partial', message);
+    log.info({ source, ...range, fetched: progress.fetched, added: progress.added, complete: result.complete }, 'OpenAlex range harvested');
+    warnIfUnembedded(source, progress);
+    return { repo: source, fetched: progress.fetched, added: progress.added, complete: result.complete };
   } catch (err) {
-    const message = (err as Error).message;
-    await logHarvest(source, 0, 0, 'error', message);
-    log.error({ source, err: message }, 'OpenAlex harvest failed');
-    return { repo: source, fetched: 0, added: 0, complete: false };
+    const stopped = err instanceof StorageLimitError;
+    const message = describeError(err);
+    await logHarvest(source, progress.fetched, progress.added, stopped ? 'partial' : 'error', progressNotes(progress, message));
+    if (stopped) log.warn({ source }, message);
+    else log.error({ source, err: message }, 'OpenAlex harvest failed');
+    warnIfUnembedded(source, progress);
+    return { repo: source, fetched: progress.fetched, added: progress.added, complete: false, stopped };
   }
 }
 
@@ -268,6 +367,7 @@ async function nextBackfillYear(): Promise<number | null> {
 export async function harvestOpenAlex(opts: { maxPages?: number } = {}) {
   const since = (await lastSuccessfulHarvest(OPENALEX_GHANA)) ?? new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
   const results = [await harvestOpenAlexRange(OPENALEX_GHANA, { from: since }, opts.maxPages ?? 10)];
+  if (results[0].stopped) return results;
   const year = await nextBackfillYear();
   if (year) results.push(await harvestOpenAlexRange(`${OPENALEX_GHANA} ${year}`, { from: `${year}-01-01`, to: `${year}-12-31` }, opts.maxPages ?? 50));
   return results;
@@ -276,12 +376,17 @@ export async function harvestOpenAlex(opts: { maxPages?: number } = {}) {
 /**
  * Weekly job: every Ghanaian repository and journal in turn, then OpenAlex.
  * `repos` limits the repositories (an empty list means none); OpenAlex runs
- * by default only when no repositories were named.
+ * by default only when no repositories were named. Stops early at the database size limit.
  */
 export async function runFullHarvest(opts: { maxPages?: number; repos?: string[]; openAlex?: boolean } = {}) {
   const repos = opts.repos ? GHANA_REPOSITORIES.filter((r) => opts.repos!.includes(r.name)) : GHANA_REPOSITORIES;
-  const results = [];
-  for (const repo of repos) results.push(await harvestRepository(repo, { maxPages: opts.maxPages }));
+  const results: HarvestResult[] = [];
+  const blockedHosts = new Set<string>();
+  for (const repo of repos) {
+    const result = await harvestRepository(repo, { maxPages: opts.maxPages, blockedHosts });
+    results.push(result);
+    if (result.stopped) return results;
+  }
   if (opts.openAlex ?? !opts.repos) results.push(...(await harvestOpenAlex({ maxPages: opts.maxPages })));
   return results;
 }

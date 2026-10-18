@@ -7,8 +7,18 @@ import { normaliseDoi, type Source, type SourceType } from './source.types.js';
 const log = childLogger('openalex');
 
 const OPENALEX_URL = 'https://api.openalex.org/works';
-// OpenAlex's "polite pool" is faster and more reliable when requests carry a contact email.
-const CONTACT = process.env.OPENALEX_EMAIL || 'hello@researchpadi.com';
+
+/**
+ * Identify ourselves to OpenAlex. Without OPENALEX_API_KEY every request shares one small
+ * daily budget with everyone on the server's IP (Render's IPs are shared), and cursor
+ * paging past the first page is refused with HTTP 401. A free key comes from
+ * https://openalex.org/settings/api.
+ */
+export function openAlexAuthParams(): Record<string, string> {
+  const key = process.env.OPENALEX_API_KEY?.trim();
+  const contact = process.env.OPENALEX_EMAIL || 'hello@researchpadi.com';
+  return key ? { api_key: key, mailto: contact } : { mailto: contact };
+}
 
 const SELECT = [
   'id', 'doi', 'display_name', 'publication_year', 'type', 'authorships', 'primary_location',
@@ -109,7 +119,7 @@ export async function searchOpenAlex(query: string, opts: OpenAlexOptions = {}):
     async () => {
       try {
         const { data } = await axios.get(OPENALEX_URL, {
-          params: { search: q, filter: filters.join(','), 'per-page': perPage, select: SELECT, mailto: CONTACT },
+          params: { search: q, filter: filters.join(','), 'per-page': perPage, select: SELECT, ...openAlexAuthParams() },
           timeout: 12_000,
         });
         return ((data?.results ?? []) as OpenAlexWork[])

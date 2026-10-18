@@ -13,10 +13,11 @@ export const GHANA_REPOSITORIES: RepositoryConfig[] = [
   { name: 'Ashesi_AIR', oaiBaseUrl: 'https://air.ashesi.edu.gh/server/oai/request', oaiSet: '', institution: 'Ashesi University', institutionType: 'university', dspaceVersion: 7 },
   { name: 'HF_NMTC_Berekum', oaiBaseUrl: 'https://ir.nmtcberekum.edu.gh/server/oai/request', oaiSet: '', institution: 'Holy Family Nursing and Midwifery Training College, Berekum', institutionType: 'nmtc', dspaceVersion: 7 },
 
-  // Ghanaian journals on African Journals Online (OJS, one OAI-PMH endpoint per journal).
-  // Addresses follow AJOL's standard /index.php/<journal>/oai pattern but were NOT reachable
-  // from the build machine to confirm; each harvest first sends an Identify request and
-  // skips (and logs) any journal that doesn't answer. Run `npm run rag:verify` to check.
+  // Ghanaian journals on African Journals Online (OJS, one OAI-PMH endpoint per journal, 20
+  // records a page). Verified 2026-10-18. robots.txt allows /oai, but AJOL's AWS firewall
+  // challenges clients that send more than about ten requests in quick succession
+  // (HTTP 202, empty body), so these are paced at one request every 20 s, and a challenge
+  // makes the run wait, then skip the rest of AJOL until next week.
   ...([
     ['AJOL_GMJ', 'gmj', 'Ghana Medical Journal'],
     ['AJOL_JUST', 'just', 'Journal of Science and Technology (Ghana)'],
@@ -32,5 +33,6 @@ export const GHANA_REPOSITORIES: RepositoryConfig[] = [
     institutionType: 'university',
     dspaceVersion: 7,
     platform: 'ojs',
+    requestIntervalMs: 20_000,
   })),
 ];
