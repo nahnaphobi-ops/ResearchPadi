@@ -5,6 +5,7 @@ import { useIdleLogout } from './hooks/useIdleLogout';
 import { authService } from './services/apiService';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute';
+import { dismissSplash } from './utils/splash';
 
 // Lazy-loaded pages for code splitting
 const Landing = lazy(() => import('./pages/Landing'));
@@ -46,6 +47,12 @@ function LoadingSpinner() {
   );
 }
 
+/** Sits inside Suspense beside the routes, so it mounts only once the first page has loaded. */
+function SplashDismiss() {
+  useEffect(() => dismissSplash(), []);
+  return null;
+}
+
 /** Refresh the signed-in user once per load so admin/reviewer roles granted later show up without signing out. */
 function useRoleSync() {
   const userId = useAuthStore((state) => state.user?.id);
@@ -62,6 +69,7 @@ function App() {
   return (
     <Router>
       <Suspense fallback={<LoadingSpinner />}>
+        <SplashDismiss />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
