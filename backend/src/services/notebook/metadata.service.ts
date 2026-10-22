@@ -44,7 +44,8 @@ export async function detectSourceDetails(text: string, userId: string): Promise
   const opening = text.slice(0, 2_500).trim();
   if (opening.length < 80) return {};
   try {
-    const result = await aiCall({ prompt: DETAILS_PROMPT + opening, tier: 'light', maxTokens: 300, userId, meta: { action: 'notebook:details' } });
+    // Copies the title and authors out verbatim, so the originality rule does not apply.
+    const result = await aiCall({ prompt: DETAILS_PROMPT + opening, tier: 'light', maxTokens: 300, userId, originality: false, meta: { action: 'notebook:details' } });
     return parseSourceDetails(result.text);
   } catch (err) {
     log.warn({ err: (err as Error).message }, 'Could not detect source details');

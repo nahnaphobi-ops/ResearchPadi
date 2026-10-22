@@ -7,6 +7,7 @@ import { aiCircuitBreaker } from '../../lib/circuit-breaker.js';
 import { assertBudget, recordSpend, getBudget } from '../../lib/ai-budget.js';
 import { callPerplexityAgent, type AgentSource } from './perplexity-agent.js';
 import { isOfflineMode, offlineResponse } from './offline.service.js';
+import { withOriginalityRule } from './originality.js';
 import {
   MODELS,
   FAILOVER_CHAINS,
@@ -106,8 +107,19 @@ export interface GatewayRequest {
   systemPrompt?: string;
   /** Cache systemPrompt with Anthropic (only worth it when the same system prompt repeats). */
   cachePrompt?: boolean;
+  /**
+   * The originality rule is added to every call's system prompt. Set false only
+   * for a call that copies text out verbatim and writes nothing for the student
+   * (parsing a reference list, reading a document's title).
+   */
+  originality?: boolean;
   /** Metadata for logging */
   meta?: Record<string, any>;
+}
+
+/** The system prompt as sent to the model: the caller's own, plus the originality rule. */
+export function systemPromptFor(req: Pick<GatewayRequest, 'systemPrompt' | 'originality'>): string | undefined {
+  return req.originality === false ? req.systemPrompt : withOriginalityRule(req.systemPrompt);
 }
 
 export interface GatewayResponse {
@@ -133,8 +145,9 @@ export interface GatewayResponse {
  * Uses Redis for distributed state + circuit breaker for resilience.
  */
 export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
-  const { tier, userId, prompt, context, systemPrompt, maxTokens, cachePrompt, meta } = req;
+  const { tier, userId, prompt, context, maxTokens, cachePrompt, meta } = req;
   if (isOfflineMode()) return offlineResponse(req);
+  const systemPrompt = systemPromptFor(req);
 
   // Per-user daily spend cap (throws AiBudgetError → 429)
   await assertBudget(userId);
@@ -227,13 +240,14 @@ export async function aiStream(
   req: GatewayRequest & { signal?: AbortSignal },
   onDelta: (text: string) => void,
 ): Promise<GatewayResponse> {
-  const { tier, userId, prompt, systemPrompt, maxTokens, cachePrompt, meta, signal } = req;
+  const { tier, userId, prompt, maxTokens, cachePrompt, meta, signal } = req;
   if (isOfflineMode()) {
     const result = offlineResponse(req);
     onDelta(result.text);
     return result;
   }
   await assertBudget(userId);
+  const systemPrompt = systemPromptFor(req);
 
   const chain = FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
   let lastError: Error | null = null;

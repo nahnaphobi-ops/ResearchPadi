@@ -223,6 +223,8 @@ ${rawEntries.map((e, i) => `${i + 1}. ${e}`).join('\n')}`;
       prompt,
       // Mechanical parsing into JSON: the light tier is plenty.
       tier: 'light',
+      // Titles must come back exactly as written; this writes nothing for the student.
+      originality: false,
       meta: { action: 'citation_extract' },
     });
 
