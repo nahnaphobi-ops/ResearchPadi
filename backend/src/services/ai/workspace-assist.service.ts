@@ -26,13 +26,17 @@ const INSTRUCTIONS: Record<string, string> = {
   rewrite: 'Rewrite the selected text to improve clarity, flow, and academic quality. Keep the same meaning.',
   grammar: 'Fix all grammar, punctuation, and spelling errors. Also improve sentence structure where needed.',
   tone: 'Change the tone of the selected text to be more formal and academic while keeping the same content.',
+  simplify: 'Rewrite the selected text in simpler, clearer language without losing accuracy.',
   outline: 'Generate a detailed outline for a research paper on this topic. Include chapter titles, section headings, and brief descriptions of what each section should cover.',
   abstract: 'Generate a structured abstract (250-350 words) based on the provided content. Include: Background, Methods, Findings, Conclusion.',
 };
 
 // Edits of a selection the student already wrote: the light tier handles these
 // well at a fraction of the cost. Anything that writes new material uses drafting.
-const LIGHT_ACTIONS = new Set(['shorten', 'rewrite', 'grammar', 'tone']);
+const LIGHT_ACTIONS = new Set(['shorten', 'rewrite', 'grammar', 'tone', 'simplify']);
+
+/** A quick edit of the student's own text (light tier): the AI help the Free plan includes. */
+export const isQuickEdit = (instruction: unknown) => typeof instruction === 'string' && LIGHT_ACTIONS.has(instruction);
 
 export const assistWithText = async (
   selectedText: string,

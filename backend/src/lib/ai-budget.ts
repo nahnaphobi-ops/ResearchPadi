@@ -2,6 +2,7 @@ import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from './logger.js';
 import { getReadyRedis } from './redis.js';
+import { devPlan } from './workspace-plans.js';
 
 const log = childLogger('ai-budget');
 
@@ -33,8 +34,9 @@ export function dailyLimitUsd(plan: BudgetPlan): number {
 }
 
 export async function planFor(userId: string): Promise<BudgetPlan> {
-  // Local development treats everyone as premium, like the subscription middleware.
-  if (CONFIG.NODE_ENV !== 'production') return 'premium';
+  // Local development: everyone is premium unless DEV_PLAN says otherwise, like the subscription middleware.
+  const dev = devPlan();
+  if (dev) return dev;
 
   const cached = planCache.get(userId);
   if (cached && cached.expires > Date.now()) return cached.plan;

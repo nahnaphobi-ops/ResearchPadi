@@ -1,6 +1,10 @@
 import api from './api';
 import type { Source } from '../components/workspace/citations/types';
 import { postSse } from '../utils/sse';
+import type { NotebookCitation } from './notebookService';
+
+/** Words to insert at the cursor, then a citation of the source they rely on (if any), then the closing punctuation. */
+export interface AutocompleteSuggestion { text: string; tail: string; citation: NotebookCitation | null }
 
 export interface StudyDraftSection { heading: string; number: string; text: string }
 export interface StudyDraft { paperId: string; title: string; documentType: 'research' | 'care_study'; sections: StudyDraftSection[]; fullText: string }
@@ -24,6 +28,9 @@ export const workspaceService = {
   },
   assist: (data: { selectedText?: string; instruction: string; context?: string; sessionId?: string }) =>
     api.post('/workspace/assist', data),
+  /** The next sentence after the cursor; `remaining` is today's Free allowance left (null when unlimited). */
+  autocomplete: (data: { sessionId?: string; before: string; after?: string }, signal?: AbortSignal) =>
+    api.post<{ suggestion: AutocompleteSuggestion | null; remaining: number | null }>('/workspace/autocomplete', data, { signal }),
   searchCitations: (data: { topic: string; query?: string; format?: string }) =>
     api.post('/workspace/citations', data),
 

@@ -13,11 +13,14 @@ import {
   notebookService, type NotebookCitation, type NotebookOutput, type NotebookSource, type NotebookSourceKind,
 } from '../../../services/notebookService';
 import { answerToChipHtml, answerToDocumentHtml, toCitationSource } from './citeHtml';
+import type { WorkspacePlan } from '../../../services/subscriptionService';
 
 interface Props {
   editor: Editor | null;
   sessionId: string;
-  isPremium: boolean;
+  plan: WorkspacePlan;
+  /** Sources this document can hold on the plan (null: the most any plan allows). */
+  maxSources: number | null;
 }
 
 interface Message {
@@ -47,13 +50,20 @@ const OUTPUTS: { kind: NotebookOutput; label: string; hint: string; icon: typeof
 
 const STARTERS = ['What are the main findings across my sources?', 'Where do the sources disagree?', 'What gaps do they leave for my study?'];
 
+/** A source in the list as a citation for the document. */
+const sourceCitation = (s: NotebookSource) =>
+  toCitationSource({ n: 0, sourceId: s.id, title: s.title, authors: s.authors, year: s.year, url: s.url, kind: s.kind, snippet: '' });
+
 /**
- * NotebookLM-style panel (Premium): the student's own sources for this document,
- * chat answered only from them with numbered citations, and one-click outputs.
- * Answers go into the document with real citations and reference-list entries.
+ * NotebookLM-style panel: the student's own sources for this document, up to
+ * their plan's limit, each citable in one click and used by autocomplete.
+ * Premium adds chat answered only from them with numbered citations, and
+ * one-click outputs, which go into the document with real citations.
  */
-export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
+export default function NotebookPanel({ editor, sessionId, plan, maxSources }: Props) {
   const navigate = useNavigate();
+  const isPremium = plan === 'premium';
+  const sourceLimit = maxSources ?? MAX_SOURCES;
   const [sources, setSources] = useState<NotebookSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<'menu' | 'link' | 'text' | 'library' | null>(null);
@@ -78,7 +88,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!isPremium || !sessionId) return;
+    if (!sessionId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -91,7 +101,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
       }
     })();
     return () => { cancelled = true; abortRef.current?.abort(); };
-  }, [sessionId, isPremium]);
+  }, [sessionId]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -259,23 +269,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
     setActiveCite((cur) => (cur && cur.index === index && cur.n === n ? null : { index, n }));
   };
 
-  // ── Not Premium ─────────────────────────────────────────────────────────
-  if (!isPremium) {
-    return (
-      <div className="p-5">
-        <p className="flex items-center gap-2 text-[14px] font-semibold text-[#252423]"><Sparkles size={16} className="text-[#7c3aed]" /> Your sources, with AI that cites them</p>
-        <p className="mt-2 text-[12.5px] leading-relaxed text-[#605e5c]">
-          Add your lecture notes, PDFs, Word files and links, then ask questions answered only from them, with every claim numbered back to its source.
-          Create a literature matrix, summary or research questions in one click and insert them with real citations.
-        </p>
-        <button type="button" onClick={() => navigate('/subscribe?plan=premium')} className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-[#7c3aed] px-3 py-2 text-[12.5px] font-semibold text-white hover:bg-[#6d28d9]">
-          <Lock size={13} /> Unlock with Premium
-        </button>
-      </div>
-    );
-  }
-
-  const full = sources.length >= MAX_SOURCES;
+  const full = sources.length >= sourceLimit;
   const noneChosen = chosen !== null && chosen.size === 0;
 
   return (
@@ -283,7 +277,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
       {/* Sources */}
       <div className="border-b border-rule px-3 py-2.5">
         <div className="flex items-center justify-between">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#605e5c]">Your sources <span className="font-normal normal-case text-[#8a8886]">({chosen ? `using ${chosen.size} of ${sources.length}` : `${sources.length}/${MAX_SOURCES}`})</span></p>
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#605e5c]">Your sources <span className="font-normal normal-case text-[#8a8886]">({chosen && isPremium ? `using ${chosen.size} of ${sources.length}` : `${sources.length}/${sourceLimit}`})</span></p>
           <button
             type="button"
             disabled={full || Boolean(busy)}
@@ -345,13 +339,21 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
         )}
 
         {busy && <p className="mt-2 flex items-center gap-1.5 text-[12px] text-[#605e5c]"><Loader2 size={13} className="animate-spin" /> {busy}</p>}
+        {full && !isPremium && (
+          <p className="mt-2 text-[12px] leading-relaxed text-[#605e5c]">
+            Your plan holds {sourceLimit} sources per document.{' '}
+            <button type="button" onClick={() => navigate('/subscribe')} className="font-semibold text-[#6d28d9] hover:underline">See plans</button>
+          </p>
+        )}
         {error && <p role="alert" className="mt-2 text-[12px] text-[#a4262c]">{error}</p>}
 
         <div className="mt-2 max-h-[30vh] space-y-1 overflow-y-auto">
           {loading && <p className="text-[12px] text-[#8a8886]">Loading…</p>}
           {!loading && sources.length === 0 && !busy && (
             <p className="rounded-md bg-[#faf5ff] px-2.5 py-2 text-[12px] leading-relaxed text-[#5b21b6]">
-              Add lecture notes, PDFs, Word files or links. Answers here come only from what you add.
+              {isPremium
+                ? 'Add lecture notes, PDFs, Word files or links. Answers here come only from what you add.'
+                : 'Add lecture notes, PDFs, Word files or links. Cite them in one click, and autocomplete draws on them as you write.'}
             </p>
           )}
           {sources.map((s) => {
@@ -373,7 +375,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
             }
             return (
               <div key={s.id} className="group flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-[#f3f2f1]">
-                <input type="checkbox" checked={isChosen(s.id)} onChange={() => toggleChosen(s.id)} aria-label={`Use ${s.title} in answers`} title="Use in answers" className="h-3.5 w-3.5 shrink-0 accent-[#7c3aed]" />
+                {isPremium && <input type="checkbox" checked={isChosen(s.id)} onChange={() => toggleChosen(s.id)} aria-label={`Use ${s.title} in answers`} title="Use in answers" className="h-3.5 w-3.5 shrink-0 accent-[#7c3aed]" />}
                 <Icon size={15} className="shrink-0 text-[#605e5c]" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[12.5px] text-[#252423]" title={s.title}>{s.title}</p>
@@ -381,6 +383,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
                     {[s.authors?.split(';')[0]?.split(',')[0], s.year].filter(Boolean).join(', ') || 'Add author & year to cite'} · {s.chunk_count} {s.chunk_count === 1 ? 'passage' : 'passages'}
                   </p>
                 </div>
+                <button type="button" disabled={!editor} onClick={() => editor?.chain().focus().insertCitation([sourceCitation(s)]).run()} aria-label={`Cite ${s.title} at the cursor`} title="Cite at the cursor" className="rounded p-1 text-[#6d28d9] opacity-0 hover:bg-white group-hover:opacity-100 focus:opacity-100 disabled:opacity-0"><Quote size={13} /></button>
                 <button type="button" onClick={() => setEditing({ id: s.id, title: s.title, authors: s.authors ?? '', year: s.year ? String(s.year) : '' })} aria-label={`Edit details of ${s.title}`} title="Edit details" className="rounded p-1 text-[#605e5c] opacity-0 hover:bg-white group-hover:opacity-100 focus:opacity-100"><Pencil size={13} /></button>
                 <button type="button" onClick={() => void removeSource(s)} aria-label={`Remove ${s.title}`} title="Remove" className="rounded p-1 text-[#a4262c] opacity-0 hover:bg-white group-hover:opacity-100 focus:opacity-100"><Trash2 size={13} /></button>
               </div>
@@ -389,7 +392,21 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
         </div>
       </div>
 
+      {!isPremium && (
+        <div className="p-4">
+          <p className="flex items-center gap-2 text-[13px] font-semibold text-[#252423]"><Sparkles size={15} className="text-[#7c3aed]" /> Ask questions of your sources</p>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-[#605e5c]">
+            With Premium, ask questions answered only from your sources, with every claim numbered back to its source, and create a literature
+            matrix, summary or research questions in one click, inserted with real citations.
+          </p>
+          <button type="button" onClick={() => navigate('/subscribe?plan=premium')} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-[#7c3aed] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#6d28d9]">
+            <Lock size={13} /> Unlock with Premium
+          </button>
+        </div>
+      )}
+
       {/* Chat / Create */}
+      {isPremium && (<>
       <div className="flex border-b border-rule text-[12px]" role="tablist">
         {(['chat', 'create'] as const).map((t) => (
           <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={`flex-1 py-2 font-semibold ${tab === t ? 'border-b-2 border-[#7c3aed] text-[#6d28d9]' : 'text-[#605e5c] hover:text-[#252423]'}`}>
@@ -478,6 +495,7 @@ export default function NotebookPanel({ editor, sessionId, isPremium }: Props) {
           <button type="submit" disabled={!question.trim() || !sources.length || noneChosen} aria-label="Send" className="rounded-md bg-[#7c3aed] p-2 text-white disabled:opacity-40"><Send size={14} /></button>
         </form>
       )}
+      </>)}
     </div>
   );
 }

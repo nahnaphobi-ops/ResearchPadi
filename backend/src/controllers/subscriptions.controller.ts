@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { supabase } from '../db/supabase.js';
 import { CONFIG } from '../config/index.js';
 import { debitWallet, creditWallet } from '../lib/wallet.js';
+import { asPlan, devPlan, limitsJson } from '../lib/workspace-plans.js';
 
 // Plans are sold as "30 days" on the pricing page, so add exactly that (a calendar month is 28–31).
 const PLAN_DAYS = 30;
@@ -83,16 +84,24 @@ export const subscribe = async (req: Request, res: Response) => {
   res.json({ subscription: sub, message: `Subscribed to ${plan} plan` });
 };
 
+/**
+ * The user's paid subscription (if any), plus their Workspace plan and its
+ * limits (null = unlimited), so the app can show what the Free plan includes.
+ */
 export const getActiveSubscription = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   if (!userId) return res.status(401).json({ error: 'Not authenticated' });
 
-  // DEV OVERRIDE: skip subscription check
-  if (process.env.NODE_ENV !== 'production') {
+  // Development: everyone is Premium unless DEV_PLAN says otherwise.
+  const dev = devPlan();
+  if (dev) {
+    const subscription = dev === 'free' ? null : { plan: dev, status: 'active', expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() };
     return res.json({
-      subscription: { plan: 'premium', status: 'active', expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
-      plan: PLANS.premium,
-      isActive: true,
+      subscription,
+      plan: subscription ? PLANS[dev] : null,
+      isActive: !!subscription,
+      workspacePlan: dev,
+      limits: limitsJson(dev),
     });
   }
 
@@ -109,11 +118,14 @@ export const getActiveSubscription = async (req: Request, res: Response) => {
   if (error && error.code !== 'PGRST116') return res.status(500).json({ error: error.message });
 
   const planInfo = data ? PLANS[data.plan] : null;
+  const workspacePlan = data ? asPlan(data.plan) : 'free';
 
   res.json({
     subscription: data || null,
     plan: planInfo || null,
     isActive: !!data,
+    workspacePlan,
+    limits: limitsJson(workspacePlan),
   });
 };
 

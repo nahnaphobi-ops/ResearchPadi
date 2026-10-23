@@ -8,6 +8,7 @@ import {
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
+  WandSparkles,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -578,6 +579,12 @@ export default function Ribbon(props: RibbonProps) {
             label={settings.spellcheck ? 'Spelling: On' : 'Spelling: Off'}
             active={settings.spellcheck}
             onClick={() => onSettingsChange({ spellcheck: !settings.spellcheck })}
+          />
+          <LargeButton
+            icon={<WandSparkles />}
+            label={settings.autocomplete ? 'Autocomplete: On' : 'Autocomplete: Off'}
+            active={settings.autocomplete}
+            onClick={() => onSettingsChange({ autocomplete: !settings.autocomplete })}
           />
           <WordCountButton editor={editor} pageCount={props.pageCount} />
         </RibbonGroup>

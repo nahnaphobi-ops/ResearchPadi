@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiErrorMessage } from '../utils/apiError';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { subscriptionService } from '../services/subscriptionService';
 import { paymentService } from '../services/paymentService';
 import AppShell from '../components/layout/AppShell';
@@ -101,6 +101,10 @@ export default function Subscribe() {
       <h1 className="text-3xl font-bold text-center mb-2 text-navy">Choose your plan</h1>
       <p className="text-center text-muted mb-6">
         Get AI-powered writing assistance for your research papers
+      </p>
+      <p className="text-center text-sm text-muted -mt-3 mb-6">
+        Not ready yet? The <Link to="/workspace" className="font-semibold text-brand hover:underline">Free plan</Link> gives you
+        2 documents, quick AI edits and 10 autocompletes a day.
       </p>
 
       <div className="mx-auto mb-8 max-w-md flex items-center justify-between gap-3 rounded-[14px] border border-rule bg-white px-5 py-3">

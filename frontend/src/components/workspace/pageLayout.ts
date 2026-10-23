@@ -29,6 +29,8 @@ export interface PageSettings {
   showRuler: boolean;
   showMarks: boolean;
   spellcheck: boolean;
+  /** Suggest the next sentence as grey text while writing. */
+  autocomplete: boolean;
   view: ViewMode;
 }
 
@@ -40,6 +42,7 @@ export const DEFAULT_PAGE_SETTINGS: PageSettings = {
   showRuler: true,
   showMarks: false,
   spellcheck: true,
+  autocomplete: true,
   view: 'print',
 };
 

@@ -10,6 +10,7 @@ import { COACH_SYSTEM_PROMPT } from '../../workspace/study-draft.service.js';
 import { NOTEBOOK_SYSTEM_PROMPT } from '../../notebook/notebook-ai.js';
 import { CARE_STUDY_RULES, CARE_STUDY_SYSTEM_PROMPT as GUIDED_CARE_STUDY_PROMPT } from '../../care-study/prompts.js';
 import { CARE_STUDY_SYSTEM_PROMPT as MODEL_CARE_STUDY_PROMPT } from '../../pipeline/care-study.service.js';
+import { AUTOCOMPLETE_SYSTEM_PROMPT } from '../../workspace/autocomplete.service.js';
 
 test('the rule covers every accuracy requirement', () => {
   // The person is treated as at least as capable as the model.
@@ -49,6 +50,7 @@ const FEATURES: [feature: string, systemPrompt: string | undefined, ownRule: Reg
   ['coach', COACH_SYSTEM_PROMPT, /Never write sentences or paragraphs the student could paste/],
   ['notebook', NOTEBOOK_SYSTEM_PROMPT, /Use only information that is in the excerpts/],
   ['paper supervision', buildSupervisionSystemPrompt('Malaria in Ghana', 'Nursing', 'university', 8000, []), /only these may be cited/],
+  ['autocomplete', AUTOCOMPLETE_SYSTEM_PROMPT, /Never add a figure, date, name, finding or claim that neither contains/],
   ['paper chapters and other single-prompt calls', undefined, null],
 ];
 

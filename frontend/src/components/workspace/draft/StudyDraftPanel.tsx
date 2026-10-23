@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type MouseEvent } from 'react';
 import type { Editor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
-import { BookOpen, ClipboardCheck, Lightbulb, Loader2, MessageSquareText, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, ClipboardCheck, Lightbulb, Loader2, Lock, MessageSquareText, Search } from 'lucide-react';
 import { workspaceService, type CoachMode, type StudyDraft } from '../../../services/workspaceService';
+import type { WorkspacePlan } from '../../../services/subscriptionService';
 import { apiErrorMessage } from '../../../utils/apiError';
 import { markdownToHtml } from '../inlineAI/markdown';
 import { draftOverlap, type OverlapResult } from '../../../utils/overlap';
@@ -10,6 +12,8 @@ import { draftOverlap, type OverlapResult } from '../../../utils/overlap';
 interface Props {
   editor: Editor | null;
   sessionId: string;
+  /** The coach is part of Standard and Premium; reading the draft and the own-words check are free. */
+  plan: WorkspacePlan;
 }
 
 /** Text the student wrote under a heading ("2.3 …" matched by number), up to the next heading of the same or higher level. */
@@ -38,7 +42,7 @@ const block = (e: ClipboardEvent | MouseEvent) => e.preventDefault();
  * section (copying is switched off), get a plan or feedback from the coach,
  * and check how much of their wording repeats the draft.
  */
-export default function StudyDraftPanel({ editor, sessionId }: Props) {
+export default function StudyDraftPanel({ editor, sessionId, plan }: Props) {
   const [draft, setDraft] = useState<StudyDraft | null>(null);
   const [error, setError] = useState('');
   const [section, setSection] = useState('');
@@ -147,6 +151,12 @@ export default function StudyDraftPanel({ editor, sessionId }: Props) {
 
         <div className="px-3 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-[#605e5c]">Coach</p>
+          {plan === 'free' ? (
+            <p className="mt-1.5 rounded-md bg-brand-soft px-2.5 py-2 text-[12px] leading-relaxed text-ink">
+              <Lock size={12} className="inline -mt-0.5 mr-1" />The coach plans each section with you and gives feedback on yours. It's part of Standard and Premium.{' '}
+              <Link to="/subscribe" className="font-semibold text-brand hover:underline">See plans</Link>
+            </p>
+          ) : (
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             <button type="button" disabled={coachBusy} onClick={() => void runCoach('guide')} className="flex items-center justify-center gap-1.5 rounded-md border border-[#e1dfdd] px-2 py-2 text-[12px] hover:border-brand hover:bg-brand-soft disabled:opacity-50">
               <Lightbulb size={14} className="text-brand" /> Plan this section
@@ -155,6 +165,7 @@ export default function StudyDraftPanel({ editor, sessionId }: Props) {
               <MessageSquareText size={14} className="text-brand" /> Feedback on mine
             </button>
           </div>
+          )}
           {coachMode && (
             <div className="mt-2 rounded-md border border-[#c7e0f4] bg-[#f3f9fd] p-2.5" aria-live="polite">
               {coachBusy && !coachText && <p className="flex items-center gap-1.5 text-[12px] text-[#605e5c]"><Loader2 size={13} className="animate-spin" /> {coachMode === 'guide' ? 'Planning…' : 'Reading your section…'}</p>}
