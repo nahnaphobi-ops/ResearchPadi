@@ -8,6 +8,7 @@ import { assertBudget, recordSpend, getBudget } from '../../lib/ai-budget.js';
 import { callPerplexityAgent, type AgentSource } from './perplexity-agent.js';
 import { isOfflineMode, offlineResponse } from './offline.service.js';
 import { withOriginalityRule } from './originality.js';
+import { withAccuracyRule } from './accuracy.js';
 import {
   MODELS,
   FAILOVER_CHAINS,
@@ -110,16 +111,18 @@ export interface GatewayRequest {
   /**
    * The originality rule is added to every call's system prompt. Set false only
    * for a call that copies text out verbatim and writes nothing for the student
-   * (parsing a reference list, reading a document's title).
+   * (parsing a reference list, reading a document's title). The accuracy rule
+   * is added to every call regardless.
    */
   originality?: boolean;
   /** Metadata for logging */
   meta?: Record<string, any>;
 }
 
-/** The system prompt as sent to the model: the caller's own, plus the originality rule. */
-export function systemPromptFor(req: Pick<GatewayRequest, 'systemPrompt' | 'originality'>): string | undefined {
-  return req.originality === false ? req.systemPrompt : withOriginalityRule(req.systemPrompt);
+/** The system prompt as sent to the model: the caller's own, then the originality and accuracy rules. */
+export function systemPromptFor(req: Pick<GatewayRequest, 'systemPrompt' | 'originality'>): string {
+  const own = req.originality === false ? req.systemPrompt : withOriginalityRule(req.systemPrompt);
+  return withAccuracyRule(own);
 }
 
 export interface GatewayResponse {

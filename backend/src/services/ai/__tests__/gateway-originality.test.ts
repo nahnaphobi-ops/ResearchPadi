@@ -1,6 +1,7 @@
 import { before, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ORIGINALITY_RULE } from '../originality.js';
+import { ACCURACY_RULE } from '../accuracy.js';
 
 // A fake Anthropic and Perplexity, set up before anything loads the gateway, so
 // these tests reach no real model, database or Redis whatever the local .env holds.
@@ -61,6 +62,7 @@ beforeEach(() => {
 function assertRuleSent(feature: string, own?: string) {
   assert.equal(sent.length, 1, `${feature} made ${sent.length} model calls`);
   assert.ok(sent[0].includes(ORIGINALITY_RULE), `${feature} reached the model without the originality rule`);
+  assert.ok(sent[0].includes(ACCURACY_RULE), `${feature} reached the model without the accuracy rule`);
   if (own) assert.ok(sent[0].startsWith(own.trim()), `${feature}'s own system prompt did not reach the model intact`);
 }
 
@@ -115,7 +117,7 @@ test('web research carries the rule', async () => {
   assertRuleSent('Research');
 });
 
-test('a verbatim parsing call that opts out is sent without the rule', async () => {
+test('a verbatim parsing call that opts out is sent without the rule, but still with the accuracy rule', async () => {
   await ai.aiCall({ prompt: 'Parse this reference.', tier: 'light', maxTokens: 300, originality: false });
-  assert.deepEqual(sent, ['']);
+  assert.deepEqual(sent, [ACCURACY_RULE]);
 });

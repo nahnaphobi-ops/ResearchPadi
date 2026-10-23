@@ -44,7 +44,9 @@ WRITING QUALITY RULES — FOLLOW EVERY ONE:
    Ghana Health Service, GES, NaCCA, KNUST, UG, UCC,
    Komfo Anokye Teaching Hospital, Korle-Bu,
    Accra, Kumasi, Ashanti Region, Greater Accra,
-   specific Ghanaian policies, statistics, and institutions.
+   specific Ghanaian policies and institutions, and statistics
+   only where a listed source, the plan or the research context
+   gives them.
    The paper must be unmistakably grounded in Ghana —
    not generic enough to have come from anywhere in the world.
 
@@ -64,6 +66,11 @@ WRITING QUALITY RULES — FOLLOW EVERY ONE:
    policy or programme (for example the National Health Insurance
    Scheme) without a citation, but give no statistics for it unless
    a listed source or the research context supplies them.
+   When a figure or fact you need is not supplied by a listed
+   source, the plan or the research context, make the point
+   without it. Where the study cannot do without it (such as a
+   population size), write [Confirm: what is needed] so the
+   student fills it in. Never estimate one.
 
 7. PARAGRAPH NATURALNESS
    Vary paragraph lengths throughout each chapter.
@@ -232,7 +239,7 @@ ${CORE_WRITING_RULES}
 
 ${INSTITUTION_RULES[institutionType] || ''}
 
-RESEARCH CONTEXT (all verified sources):
+RESEARCH CONTEXT (a summary of the retrieved sources, not a source in itself; use a figure from it only where it says which source the figure comes from):
 ${researchContext}
 
 PREVIOUS CHAPTERS WRITTEN (maintain continuity):
@@ -265,7 +272,8 @@ const buildChapterInstructions = (chapterNumber: number): string => {
 CHAPTER 1 — INTRODUCTION INSTRUCTIONS:
 1.1 Background: Open with a compelling statement about the topic's
     importance in the Ghanaian/African context. Provide context
-    with statistics and citations. Work from broad (global) to
+    with statistics from the listed sources or research context,
+    each cited; never a figure from memory. Work from broad (global) to
     narrow (Ghana-specific). Minimum 3 Ghanaian/African citations.
 
 1.2 Statement of the Problem: State clearly what problem exists,
@@ -324,7 +332,9 @@ Write in past tense throughout ("Data were collected...")
 
 3.3 Study Area and Population: Name the specific location
     (hospital, school, district, region). Give context.
-    State total population size with source.
+    State the total population size only if the plan, a listed
+    source or the research context gives it; otherwise write
+    [Confirm: total population, from the study site's records].
 
 3.4 Sampling: State technique (purposive/random/stratified).
     State the planned sample size and how it was calculated.
@@ -448,6 +458,12 @@ PASS 2 — CITATION AND ACCURACY REVIEW
   (Surname et al., Year)
 □ Only the verified sources below are cited — remove or replace
   any citation that is not on the list
+□ Outside Chapter 4's labelled illustrative results, every
+  statistic is cited to a listed source or comes from the paper
+  plan — otherwise remove the figure and keep the point in
+  general terms. Never add a figure, date or named fact that
+  neither supplies
+□ Every [Confirm: …] marker stays exactly where it is
 □ Ghana-specific sources appear where relevant
 
 PASS 3 — HUMAN VOICE EDIT (Most Important Pass)
@@ -465,7 +481,8 @@ Read every paragraph. Find and rewrite:
    leverage, embark on, robust, groundbreaking, cutting-edge
    → Replace every single instance
 □ Any section that could have been written about any country
-   → Add a specific Ghana reference or data point
+   → Add a specific Ghana reference from the paper plan or the
+     listed sources (never a figure that neither supplies)
 □ Any place in Chapter 4 where a finding is reported but not
    interpreted → Add the researcher's own analysis of what it
    means in this Ghanaian setting, in fresh wording
