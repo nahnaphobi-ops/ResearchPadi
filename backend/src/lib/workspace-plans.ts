@@ -22,6 +22,13 @@ export const PLAN_LIMITS: Record<WorkspacePlan, PlanLimits> = {
 
 export const PLAN_NAMES: Record<WorkspacePlan, string> = { free: 'Free', standard: 'Standard', premium: 'Premium' };
 
+/**
+ * Coach answers a day. The coach only works on a study draft the student
+ * bought, so it is prepaid on every plan (not counted toward the AI allowance);
+ * this cap stops runaway use.
+ */
+export const COACH_ANSWERS_PER_DAY = 40;
+
 /** Advanced checks open to the Free plan: they run without an AI model or search. */
 export const FREE_CHECKS = new Set(['grammar', 'ai-detect', 'suggest-citations']);
 

@@ -1,5 +1,5 @@
 import { aiCall, type GatewayRequest, type GatewayResponse } from '../ai/gateway.service.js';
-import { getReadyRedis } from '../../lib/redis.js';
+import { countToday, usedToday } from '../../lib/daily-count.js';
 import { citationList, type SourceExcerpt } from '../notebook/notebook.service.js';
 
 /**
@@ -113,41 +113,8 @@ export async function suggestContinuation(
 
 // ── The Free plan's daily count ───────────────────────────────────────────
 
-const today = () => new Date().toISOString().slice(0, 10);
-const countKey = (userId: string) => `autocomplete:${userId}:${today()}`;
-// Without Redis (single instance): today's count per user.
-const memoryCounts = new Map<string, number>();
-
 /** Suggestions shown to this user today (resets at midnight GMT). */
-export async function autocompletesUsed(userId: string): Promise<number> {
-  const redis = getReadyRedis();
-  if (redis) {
-    try {
-      return parseInt((await redis.get(countKey(userId))) || '0', 10);
-    } catch {
-      // fall through to memory
-    }
-  }
-  return memoryCounts.get(countKey(userId)) ?? 0;
-}
+export const autocompletesUsed = (userId: string) => usedToday('autocomplete', userId);
 
 /** Counts one more suggestion shown today; returns the new total. */
-export async function countAutocomplete(userId: string): Promise<number> {
-  const key = countKey(userId);
-  const redis = getReadyRedis();
-  if (redis) {
-    try {
-      const [[, count]] = (await redis.pipeline().incr(key).pexpire(key, 2 * 86_400_000).exec()) as [[unknown, number]];
-      return Number(count);
-    } catch {
-      // fall through to memory
-    }
-  }
-  const next = (memoryCounts.get(key) ?? 0) + 1;
-  memoryCounts.set(key, next);
-  if (memoryCounts.size > 10_000) {
-    const suffix = `:${today()}`;
-    for (const k of memoryCounts.keys()) if (!k.endsWith(suffix)) memoryCounts.delete(k);
-  }
-  return next;
-}
+export const countAutocomplete = (userId: string) => countToday('autocomplete', userId);

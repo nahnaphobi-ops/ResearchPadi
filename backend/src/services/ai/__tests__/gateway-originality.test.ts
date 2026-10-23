@@ -117,6 +117,15 @@ test('web research carries the rule', async () => {
   assertRuleSent('Research');
 });
 
+test('a prepaid call (the coach on a bought study draft) is not blocked by a used-up daily allowance', async () => {
+  const { recordSpend } = await import('../../../lib/ai-budget.js');
+  const userId = `prepaid-${Date.now()}`;
+  await recordSpend(userId, 100);
+  await assert.rejects(ai.aiCall({ prompt: 'Help me.', tier: 'light', userId }), (err: any) => err.status === 429);
+  const res = await ai.aiCall({ prompt: 'Help me.', tier: 'light', userId, prepaid: true });
+  assert.equal(res.text, 'Original text.');
+});
+
 test('a verbatim parsing call that opts out is sent without the rule, but still with the accuracy rule', async () => {
   await ai.aiCall({ prompt: 'Parse this reference.', tier: 'light', maxTokens: 300, originality: false });
   assert.deepEqual(sent, [ACCURACY_RULE]);

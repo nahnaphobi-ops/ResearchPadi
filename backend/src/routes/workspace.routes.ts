@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import * as notebook from '../controllers/notebook.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { attachPlan, enforceSessionLimit, requirePaidPlan, requirePremium } from '../middleware/subscription.middleware.js';
+import { attachPlan, enforceSessionLimit, requirePremium } from '../middleware/subscription.middleware.js';
 
 const router = Router();
 
@@ -19,7 +19,8 @@ router.get('/sessions/:id', workspaceController.getSession);
 router.put('/sessions/:id', workspaceController.updateSession);
 router.delete('/sessions/:id', workspaceController.deleteSession);
 router.get('/sessions/:id/study-draft', workspaceController.getStudyDraft);
-router.post('/sessions/:id/coach', requirePaidPlan, workspaceController.coach);
+// Every plan: the coach only works on a study draft the student bought (prepaid).
+router.post('/sessions/:id/coach', workspaceController.coach);
 
 router.post('/assist', workspaceController.assist);
 router.post('/assist-advanced', workspaceController.assistAdvanced);

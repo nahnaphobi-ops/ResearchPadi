@@ -93,7 +93,7 @@ export const SidePanel: React.FC<Props> = ({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} plan={plan} />}
+        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'ai' && (
           <AIAssistantPanel
             sessionId={sessionId}
