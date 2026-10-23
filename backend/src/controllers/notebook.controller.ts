@@ -5,9 +5,11 @@ import { lazySse } from '../lib/sse.js';
 import { aiStream } from '../services/ai/gateway.service.js';
 import { ExtractError, extractDocx, extractPdf, extractUrl } from '../services/notebook/extract.service.js';
 import {
-  NotebookError, addSource, deleteSource, listSources, ownSession, searchSources, sourceDigest, updateSource,
+  NotebookError, addSource, assertSourceRoom, citationList, deleteSource, listSources, ownSession, searchSources, sourceDigest, updateSource,
   type SourceExcerpt, type SourceKind,
 } from '../services/notebook/notebook.service.js';
+import { PLAN_LIMITS } from '../lib/workspace-plans.js';
+import { planOf } from '../middleware/subscription.middleware.js';
 import { NOTEBOOK_SYSTEM_PROMPT, SUGGESTIONS_PROMPT, buildChatPrompt, buildOutputPrompt, isNotebookOutput } from '../services/notebook/notebook-ai.js';
 import { detectSourceDetails, parseSuggestions } from '../services/notebook/metadata.service.js';
 import { aiCall } from '../services/ai/gateway.service.js';
@@ -84,8 +86,11 @@ export const list = async (req: Request, res: Response) => {
 
 export const add = async (req: Request, res: Response) => {
   const sessionId = req.params.id as string;
+  const maxSources = PLAN_LIMITS[planOf(req)].sourcesPerDocument;
   try {
     await ownSession(sessionId, userOf(req));
+    // Before reading the file or asking the AI for its details.
+    await assertSourceRoom(sessionId, maxSources);
     const body = req.body ?? {};
     let source;
 
@@ -98,18 +103,18 @@ export const add = async (req: Request, res: Response) => {
       // Fill in title, authors and year from the first page so the source can be cited straight away.
       const details = kind === 'txt' ? {} : await detectSourceDetails(text, userOf(req));
       const title = (typeof body.title === 'string' && body.title.trim()) || details.title || req.file.originalname.replace(/\.[^.]+$/, '');
-      source = await addSource(sessionId, userOf(req), { kind, title, text, authors: details.authors, year: details.year });
+      source = await addSource(sessionId, userOf(req), { kind, title, text, authors: details.authors, year: details.year }, maxSources);
     } else if (body.library && typeof body.library === 'object') {
       const entry = libraryEntry(body.library);
       if (!entry) return res.status(400).json({ error: 'That library entry has no title.' });
-      source = await addSource(sessionId, userOf(req), { kind: entry.url ? 'url' : 'text', ...entry });
+      source = await addSource(sessionId, userOf(req), { kind: entry.url ? 'url' : 'text', ...entry }, maxSources);
     } else if (typeof body.url === 'string' && body.url.trim()) {
       const page = await extractUrl(body.url.trim());
       const details = await detectSourceDetails(page.text, userOf(req));
-      source = await addSource(sessionId, userOf(req), { kind: page.kind, title: page.title || details.title || body.url.trim(), text: page.text, url: body.url.trim(), authors: details.authors, year: details.year });
+      source = await addSource(sessionId, userOf(req), { kind: page.kind, title: page.title || details.title || body.url.trim(), text: page.text, url: body.url.trim(), authors: details.authors, year: details.year }, maxSources);
     } else if (typeof body.text === 'string' && body.text.trim()) {
       const title = (typeof body.title === 'string' && body.title.trim()) || body.text.trim().split('\n')[0].slice(0, 80);
-      source = await addSource(sessionId, userOf(req), { kind: 'text', title, text: body.text });
+      source = await addSource(sessionId, userOf(req), { kind: 'text', title, text: body.text }, maxSources);
     } else {
       return res.status(400).json({ error: 'Add a file, a link or some text.' });
     }
@@ -137,20 +142,6 @@ export const remove = async (req: Request, res: Response) => {
     handleError(res, err, 'Could not remove the source');
   }
 };
-
-/** What the client needs to show and insert a citation for each numbered source. */
-function citationList(excerpts: SourceExcerpt[]) {
-  return excerpts.map((e) => ({
-    n: e.n,
-    sourceId: e.source.id,
-    title: e.source.title,
-    authors: e.source.authors,
-    year: e.source.year,
-    url: e.source.url,
-    kind: e.source.kind,
-    snippet: e.passages[0]?.slice(0, 280) ?? '',
-  }));
-}
 
 async function streamAnswer(
   req: Request,

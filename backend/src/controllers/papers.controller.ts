@@ -5,6 +5,7 @@ import { formatPlan } from '../services/pipeline/plan.service.js';
 import { routeDrafting } from '../services/ai/router.service.js';
 import { buildResearchQuestionsPrompt, buildTopicRefinementPrompt } from '../services/ai/prompts.js';
 import { generateDocx } from '../services/documents/docx.service.js';
+import { generateStudyDraftPdf } from '../services/documents/study-draft-pdf.service.js';
 import { paperQueue } from '../lib/queue.js';
 import { childLogger } from '../lib/logger.js';
 import { CONFIG } from '../config/index.js';
@@ -19,7 +20,7 @@ const log = childLogger('papers-controller');
 const MIN_WORDS = 3000;
 const MAX_WORDS = 25000;
 // Bump when the study-draft wording on the order form or in the Terms changes.
-const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-17';
+const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-23';
 
 // Columns added by later migrations. Until one is applied, PostgREST rejects the
 // insert ("could not find the column", PGRST204); retry without them instead of
@@ -214,7 +215,11 @@ export const getPaperDetails = async (req: Request, res: Response) => {
   res.json(data);
 };
 
-/** The .docx always carries the study-draft notice (top box, page header, closing statement). */
+/**
+ * The study draft as Word (default) or PDF (?file=pdf). Both always carry the
+ * study-draft notice (top box, page header, closing statement) and the AI
+ * provenance in the file's details.
+ */
 export const downloadPaper = async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = (req as any).user?.id;
@@ -230,18 +235,22 @@ export const downloadPaper = async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Paper not found or not completed' });
   }
 
-  const docxBuffer = await generateDocx(paper.topic, paper.final_content, {
+  const provenance = {
     paperId: paper.id,
     generatedAt: new Date().toISOString(),
     toolName: 'ResearchPadi',
     toolVersion: '1.0',
-  });
+  };
+  const pdf = req.query.file === 'pdf';
+  const buffer = pdf
+    ? await generateStudyDraftPdf(paper.topic, paper.final_content, provenance)
+    : await generateDocx(paper.topic, paper.final_content, provenance);
 
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.setHeader('Content-Disposition', attachmentDisposition(`${paper.topic} - study draft`, '.docx'));
+  res.setHeader('Content-Type', pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', attachmentDisposition(`${paper.topic} - study draft`, pdf ? '.pdf' : '.docx'));
   res.setHeader('X-AI-Generated', 'true');
   res.setHeader('X-EU-AI-Act-Article', '50');
-  res.send(docxBuffer);
+  res.send(buffer);
 };
 
 export const superviseCompletedPaper = async (req: Request, res: Response) => {

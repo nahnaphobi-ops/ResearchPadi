@@ -9,6 +9,7 @@ import {
   checkWork, defaultGenerate, draftSection, help, retrieveSources, type StudyContext, type StudySection,
 } from '../services/care-study/care-study.service.js';
 import { buildCareStudyDocx, buildCleanCareStudyDocx } from '../services/care-study/export.service.js';
+import { buildCareStudyPdf, buildCleanCareStudyPdf } from '../services/care-study/export-pdf.service.js';
 import type { CareSource } from '../services/care-study/guards.js';
 
 const log = childLogger('care-study');
@@ -326,18 +327,21 @@ export const askHelp = async (req: Request, res: Response) => {
   }
 };
 
+/** The care study as Word (default) or PDF (?file=pdf). */
 export const exportDocx = async (req: Request, res: Response) => {
   const loaded = await loadStudy(req, res);
   if (!loaded) return;
   const { study, template, sections } = loaded;
   // "clean" is the document to submit; the default keeps the student's notes beside the draft for a supervisor.
   const clean = req.query.format === 'clean';
-  const buffer = clean
-    ? await buildCleanCareStudyDocx(study, template, sections)
-    : await buildCareStudyDocx(study, template, sections);
+  const pdf = req.query.file === 'pdf';
+  const build = pdf
+    ? (clean ? buildCleanCareStudyPdf : buildCareStudyPdf)
+    : (clean ? buildCleanCareStudyDocx : buildCareStudyDocx);
+  const buffer = await build(study, template, sections);
   const safe = String(study.pseudonym).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'client';
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.setHeader('Content-Disposition', `attachment; filename="Care_study_${safe}${clean ? '' : '_supervisor_copy'}.docx"`);
+  res.setHeader('Content-Type', pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  res.setHeader('Content-Disposition', `attachment; filename="Care_study_${safe}${clean ? '' : '_supervisor_copy'}.${pdf ? 'pdf' : 'docx'}"`);
   res.setHeader('X-AI-Generated', 'true');
   res.send(buffer);
 };

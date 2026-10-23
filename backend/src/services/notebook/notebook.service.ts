@@ -3,10 +3,12 @@ import { childLogger } from '../../lib/logger.js';
 import { chunkText } from '../rag/chunker.service.js';
 import { generateEmbedding, generateEmbeddings } from '../rag/embedder.service.js';
 import { MAX_SOURCE_CHARS } from './extract.service.js';
+import { PLAN_LIMITS } from '../../lib/workspace-plans.js';
 
 const log = childLogger('notebook');
 
-export const MAX_SOURCES_PER_SESSION = 20;
+// The most any plan allows; addSource takes the student's own plan limit.
+export const MAX_SOURCES_PER_SESSION = PLAN_LIMITS.premium.sourcesPerDocument;
 const MAX_CHUNKS_PER_SESSION = 4_000;
 // ~220 words per chunk: small enough that a citation points at a specific passage.
 const CHUNK_WORDS = 220;
@@ -57,21 +59,28 @@ export async function listSources(sessionId: string): Promise<NotebookSource[]> 
   return (data ?? []) as NotebookSource[];
 }
 
+/** Throws unless the document has room for another source under this limit (403 below the most any plan allows). */
+export async function assertSourceRoom(sessionId: string, maxSources = MAX_SOURCES_PER_SESSION): Promise<void> {
+  const { count } = await supabase.from('notebook_sources').select('id', { count: 'exact', head: true }).eq('session_id', sessionId);
+  if ((count ?? 0) < maxSources) return;
+  throw maxSources < MAX_SOURCES_PER_SESSION
+    ? new NotebookError(`Your plan holds up to ${maxSources} sources per document. Remove one, or upgrade for more.`, 403)
+    : new NotebookError(`A document can have up to ${maxSources} sources. Remove one to add another.`);
+}
+
 export async function addSource(
   sessionId: string,
   userId: string,
   input: { kind: SourceKind; title: string; text: string; url?: string | null; authors?: string | null; year?: number | null },
+  maxSources = MAX_SOURCES_PER_SESSION,
 ): Promise<NotebookSource> {
   const text = input.text.slice(0, MAX_SOURCE_CHARS).trim();
   if (text.length < 40) throw new NotebookError("That source doesn't contain enough text to use.");
 
-  const [{ count: sourceCount }, { count: chunkCount }] = await Promise.all([
-    supabase.from('notebook_sources').select('id', { count: 'exact', head: true }).eq('session_id', sessionId),
+  const [, { count: chunkCount }] = await Promise.all([
+    assertSourceRoom(sessionId, maxSources),
     supabase.from('notebook_chunks').select('id', { count: 'exact', head: true }).eq('session_id', sessionId),
   ]);
-  if ((sourceCount ?? 0) >= MAX_SOURCES_PER_SESSION) {
-    throw new NotebookError(`A document can have up to ${MAX_SOURCES_PER_SESSION} sources. Remove one to add another.`);
-  }
 
   const chunks = chunkText(text, CHUNK_WORDS, CHUNK_OVERLAP);
   if ((chunkCount ?? 0) + chunks.length > MAX_CHUNKS_PER_SESSION) {
@@ -154,6 +163,20 @@ export interface SourceExcerpt {
   /** 1-based number the model cites as [n]. */
   n: number;
   passages: string[];
+}
+
+/** What the client needs to show and insert a citation for each numbered source. */
+export function citationList(excerpts: SourceExcerpt[]) {
+  return excerpts.map((e) => ({
+    n: e.n,
+    sourceId: e.source.id,
+    title: e.source.title,
+    authors: e.source.authors,
+    year: e.source.year,
+    url: e.source.url,
+    kind: e.source.kind,
+    snippet: e.passages[0]?.slice(0, 280) ?? '',
+  }));
 }
 
 /**

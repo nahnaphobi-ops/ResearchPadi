@@ -7,6 +7,7 @@ import NotebookPanel from './notebook/NotebookPanel';
 import FeedbackPanel from './review/FeedbackPanel';
 import StudyDraftPanel from './draft/StudyDraftPanel';
 import type { WorkspacePanel } from './panels';
+import type { WorkspacePlan } from '../../services/subscriptionService';
 
 interface Props {
   editor: Editor | null;
@@ -16,7 +17,9 @@ interface Props {
   aiSelectedText: string;
   fullDocText: string;
   onInsertAIContent: (text: string) => void;
-  isPremium: boolean;
+  plan: WorkspacePlan;
+  /** Sources a document can hold on this plan (null: the most any plan allows). */
+  maxSources: number | null;
   onRequestReview: () => void;
   reviewRefreshKey: number;
   hasStudyDraft: boolean;
@@ -42,7 +45,8 @@ export const SidePanel: React.FC<Props> = ({
   aiSelectedText,
   fullDocText,
   onInsertAIContent,
-  isPremium,
+  plan,
+  maxSources,
   onRequestReview,
   reviewRefreshKey,
   hasStudyDraft,
@@ -89,10 +93,11 @@ export const SidePanel: React.FC<Props> = ({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} />}
+        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} plan={plan} />}
         {sidePanel === 'ai' && (
           <AIAssistantPanel
             sessionId={sessionId}
+            plan={plan}
             selectedText={aiSelectedText}
             fullDocument={fullDocText}
             onInsert={onInsertAIContent}
@@ -100,7 +105,7 @@ export const SidePanel: React.FC<Props> = ({
           />
         )}
         {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} />}
-        {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} isPremium={isPremium} />}
+        {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} plan={plan} maxSources={maxSources} />}
         {sidePanel === 'feedback' && <FeedbackPanel editor={editor} sessionId={sessionId} onRequestReview={onRequestReview} refreshKey={reviewRefreshKey} />}
       </div>
     </aside>

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
-import { useNavigate } from 'react-router-dom';
+import { apiErrorMessage } from '../utils/apiError';
+import { Link, useNavigate } from 'react-router-dom';
 import { workspaceService } from '../services/workspaceService';
-import { subscriptionService } from '../services/subscriptionService';
+import { useWorkspacePlan } from '../hooks/useWorkspacePlan';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
-import { FilePenLine, Plus, Trash2 } from 'lucide-react';
+import { FilePenLine, Plus, Sparkles, Trash2 } from 'lucide-react';
 
 /** Workspace content is editor HTML; show a short plain-text preview. */
 function previewText(html: string): string {
@@ -23,31 +23,25 @@ export default function WorkspaceList() {
   const [newCourse, setNewCourse] = useState('');
   const [showForm, setShowForm] = useState(false);
 
+  const { plan, limits } = useWorkspacePlan();
+  const documentLimit = limits.documents;
+  const atLimit = documentLimit !== null && sessions.length >= documentLimit;
+
+  // Everyone can use the Workspace: without a subscription it's the Free plan.
   useEffect(() => {
-    const checkAndLoad = async () => {
+    const load = async () => {
       try {
         setLoading(true);
-        const [subRes, sessionsRes] = await Promise.all([
-          subscriptionService.getActive(),
-          workspaceService.listSessions(),
-        ]);
-        if (!subRes.data.isActive) {
-          navigate('/subscribe');
-          return;
-        }
-        setSessions(sessionsRes.data);
+        const res = await workspaceService.listSessions();
+        setSessions(res.data);
       } catch (err) {
-        if (apiErrorStatus(err) === 403) {
-          navigate('/subscribe');
-        } else {
-          setError(apiErrorMessage(err, 'Failed to load sessions'));
-        }
+        setError(apiErrorMessage(err, 'Failed to load sessions'));
       } finally {
         setLoading(false);
       }
     };
-    checkAndLoad();
-  }, [navigate, setSessions, setLoading]);
+    load();
+  }, [setSessions, setLoading]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,11 +99,25 @@ export default function WorkspaceList() {
             </div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2"
+              disabled={atLimit && !showForm}
+              title={atLimit ? `Your plan holds ${documentLimit} documents` : undefined}
+              className="btn-primary px-5 py-3 text-sm inline-flex items-center gap-2 disabled:opacity-50"
             >
               {showForm ? 'Cancel' : <><Plus size={17} /> New session</>}
             </button>
           </div>
+
+          {plan === 'free' && (
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 rounded-[14px] border border-rule bg-brand-soft px-4 py-3 text-sm text-ink">
+              <Sparkles size={18} className="text-brand shrink-0" />
+              <p className="flex-1 leading-relaxed">
+                <strong>You're on the Free plan:</strong> {documentLimit} documents, quick AI edits, grammar and citation tools,{' '}
+                {limits.sourcesPerDocument} sources per document and {limits.autocompletesPerDay} autocompletes a day.
+                {atLimit && ' Delete a document to start another, or upgrade for more.'}
+              </p>
+              <Link to="/subscribe" className="btn-primary px-4 py-2 text-xs whitespace-nowrap self-start sm:self-auto">See plans</Link>
+            </div>
+          )}
 
           {error && (
             <div role="alert" className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-[10px]">{error}</div>

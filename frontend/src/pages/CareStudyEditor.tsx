@@ -91,6 +91,7 @@ export default function CareStudyEditor() {
   const [draftText, setDraftText] = useState('');
   const [draftDirty, setDraftDirty] = useState(false);
   const [busy, setBusy] = useState<'' | 'save' | 'draft' | 'edit' | 'check' | 'help' | 'export'>('');
+  const [fileType, setFileType] = useState<'docx' | 'pdf'>('docx');
   const [error, setError] = useState('');
   const [privacy, setPrivacy] = useState<PrivacyIssue[]>([]);
   const [draftNotice, setDraftNotice] = useState<{ flagged: string[]; removed: string[] } | null>(null);
@@ -267,7 +268,7 @@ export default function CareStudyEditor() {
     }
   };
 
-  const exportDocx = async (format: 'clean' | 'supervisor') => {
+  const exportStudy = async (format: 'clean' | 'supervisor') => {
     if (!study || !template) return;
     if (!(await saveAll())) return;
     if (format === 'clean') {
@@ -279,7 +280,7 @@ export default function CareStudyEditor() {
     }
     setBusy('export');
     try {
-      await careStudyService.exportDocx(id, study.pseudonym, format);
+      await careStudyService.exportStudy(id, study.pseudonym, format, fileType);
     } catch (err) {
       setError(apiErrorMessage(err, 'Export failed'));
     } finally {
@@ -327,8 +328,17 @@ export default function CareStudyEditor() {
           <button onClick={() => setHelpOpen((o) => !o)} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5"><MessageCircleQuestion size={15} /> Ask for help</button>
           <button onClick={runCheck} disabled={busy === 'check'} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50"><ClipboardCheck size={15} /> {busy === 'check' ? 'Checking...' : 'Check my work'}</button>
           <button onClick={() => setReviewOpen(true)} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5"><GraduationCap size={15} /> Request supervisor review</button>
-          <button onClick={() => void exportDocx('supervisor')} disabled={busy === 'export'} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="Your notes beside the draft, so a supervisor can see what is yours"><Download size={15} /> Supervisor copy</button>
-          <button onClick={() => void exportDocx('clean')} disabled={busy === 'export'} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="The care study as a document to submit"><Download size={15} /> {busy === 'export' ? 'Exporting...' : 'Download study'}</button>
+          <select
+            aria-label="Download as"
+            value={fileType}
+            onChange={(e) => setFileType(e.target.value as 'docx' | 'pdf')}
+            className="px-3 py-2 text-sm border border-rule rounded-[10px] bg-white text-ink"
+          >
+            <option value="docx">Word (.docx)</option>
+            <option value="pdf">PDF</option>
+          </select>
+          <button onClick={() => void exportStudy('supervisor')} disabled={busy === 'export'} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="Your notes beside the draft, so a supervisor can see what is yours"><Download size={15} /> Supervisor copy</button>
+          <button onClick={() => void exportStudy('clean')} disabled={busy === 'export'} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="The care study as a document to submit"><Download size={15} /> {busy === 'export' ? 'Exporting...' : 'Download study'}</button>
         </div>
       </div>
 

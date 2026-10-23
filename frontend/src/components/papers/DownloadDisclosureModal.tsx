@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, Shield, X } from 'lucide-react';
+import { FileDown, FileText, Shield, X } from 'lucide-react';
 import { paperService } from '../../services/apiService';
 
 interface DownloadDisclosureModalProps {
@@ -9,12 +9,12 @@ interface DownloadDisclosureModalProps {
 }
 
 /**
- * Download a study draft. The file always says it was written by AI (a notice
- * at the top, a label on every page and in the file's metadata), so there is
- * nothing to choose here, only an explanation of what the student is getting.
+ * Download a study draft as Word or PDF. Either file always says it was written
+ * by AI (a notice at the top, a label on every page and in the file's
+ * metadata), so the only choice is the format.
  */
 export default function DownloadDisclosureModal({ paperId, topic, onClose }: DownloadDisclosureModalProps) {
-  const [downloading, setDownloading] = useState(false);
+  const [downloading, setDownloading] = useState<'docx' | 'pdf' | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -23,16 +23,16 @@ export default function DownloadDisclosureModal({ paperId, topic, onClose }: Dow
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const handleDownload = async () => {
-    setDownloading(true);
+  const handleDownload = async (file: 'docx' | 'pdf') => {
+    setDownloading(file);
     setError('');
     try {
-      await paperService.downloadDocx(paperId, topic);
+      await paperService.downloadDraft(paperId, topic, file);
       onClose();
     } catch {
       setError('Download failed. Please try again.');
     } finally {
-      setDownloading(false);
+      setDownloading(null);
     }
   };
 
@@ -61,15 +61,15 @@ export default function DownloadDisclosureModal({ paperId, topic, onClose }: Dow
           {error && <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">{error}</div>}
 
           <p className="text-sm text-ink leading-relaxed">
-            This Word file is clearly marked as written by AI: a notice at the top, a label on every page, and a note in
-            the file's details.
+            Download it as a Word file or a PDF. Both are clearly marked as written by AI: a notice at the top, a label on
+            every page, and a note in the file's details.
           </p>
 
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
             <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 mb-2">How to use it</p>
             <ul className="text-sm text-ink leading-relaxed list-disc pl-5 space-y-1">
               <li>Study it to understand your topic and how the chapters fit together.</li>
-              <li>Follow up the sources, and check every reference before you use it.</li>
+              <li>Follow up the sources. AI can be wrong or guess, so check every fact, figure and reference before you use it.</li>
               <li>Write your own paper in your own words. Don't submit this draft, or parts of it, as your work.</li>
             </ul>
           </div>
@@ -79,14 +79,21 @@ export default function DownloadDisclosureModal({ paperId, topic, onClose }: Dow
           <p className="text-[11px] text-muted inline-flex items-center gap-1.5">
             <Shield size={12} className="text-gold" /> Marked as AI-generated
           </p>
-          <div className="flex gap-2 justify-end">
+          <div className="flex flex-wrap gap-2 justify-end">
             <button onClick={onClose} className="btn-ghost px-4 py-2 text-sm">Cancel</button>
             <button
-              onClick={handleDownload}
-              disabled={downloading}
+              onClick={() => void handleDownload('pdf')}
+              disabled={downloading !== null}
+              className="btn-ghost px-4 py-2 text-sm disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              <FileDown size={14} /> {downloading === 'pdf' ? 'Preparing…' : 'PDF'}
+            </button>
+            <button
+              onClick={() => void handleDownload('docx')}
+              disabled={downloading !== null}
               className="btn-primary px-4 py-2 text-sm disabled:opacity-50 inline-flex items-center gap-1.5"
             >
-              <FileText size={14} /> {downloading ? 'Preparing…' : 'Download study draft'}
+              <FileText size={14} /> {downloading === 'docx' ? 'Preparing…' : 'Word'}
             </button>
           </div>
         </div>

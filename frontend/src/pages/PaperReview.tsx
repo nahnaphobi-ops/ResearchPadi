@@ -134,7 +134,7 @@ export default function PaperReview() {
                 onClick={() => setShowDownload(true)}
                 className="px-4 py-2 bg-white text-navy rounded-[10px] font-bold text-xs hover:bg-brand-soft transition inline-flex items-center gap-1.5"
               >
-                <Download size={13} /> Download .docx
+                <Download size={13} /> Download
               </button>
             )}
           </div>
@@ -197,7 +197,7 @@ export default function PaperReview() {
             </p>
             <ol className="text-xs text-ink leading-relaxed list-decimal pl-4 space-y-1.5">
               <li>Read it to understand the topic and how each chapter builds on the last.</li>
-              <li>Follow up the sources it uses, and check every reference before you rely on it.</li>
+              <li>Follow up the sources it uses. AI can be wrong or guess, so check every fact, figure and reference before you rely on it.</li>
               <li>Write your paper in your own words: "Write your own version" opens it in the Workspace with this draft and a coach beside you.</li>
             </ol>
             <p className="text-[11px] text-muted leading-relaxed mt-3">

@@ -18,12 +18,12 @@ export const paperService = {
   getPaperDetails: (id: string) => api.get(`/papers/${id}`),
   supervisePaper: (id: string) => api.post(`/papers/${id}/supervise`),
   acceptSupervision: (id: string, supervised: string) => api.post(`/papers/${id}/accept-review`, { supervised }),
-  downloadDocx: (id: string, topic: string) =>
-    api.get(`/papers/${id}/download`, { responseType: 'blob' }).then(response => {
+  downloadDraft: (id: string, topic: string, file: 'docx' | 'pdf' = 'docx') =>
+    api.get(`/papers/${id}/download`, { responseType: 'blob', params: { file } }).then(response => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${topic.trim().replace(/\s+/g, '_')}_study_draft.docx`);
+      link.setAttribute('download', `${topic.trim().replace(/\s+/g, '_')}_study_draft.${file}`);
       document.body.appendChild(link);
       link.click();
       link.remove();

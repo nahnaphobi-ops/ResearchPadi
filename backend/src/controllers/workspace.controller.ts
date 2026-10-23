@@ -12,14 +12,14 @@ import { childLogger } from '../lib/logger.js';
 import { aiStream } from '../services/ai/gateway.service.js';
 import { lazySse } from '../lib/sse.js';
 import { INLINE_SYSTEM_PROMPT, buildInlinePrompt, isInlineAction } from '../services/ai/inline-ai.service.js';
-import { CONFIG } from '../config/index.js';
+import { FREE_CHECKS, PLAN_LIMITS } from '../lib/workspace-plans.js';
+import { ownSession, searchSources, type SourceExcerpt } from '../services/notebook/notebook.service.js';
+import { autocompletesUsed, countAutocomplete, suggestContinuation } from '../services/workspace/autocomplete.service.js';
+import { documentLimitError, paidPlanRequired, planOf } from '../middleware/subscription.middleware.js';
 import { formatPlan } from '../services/pipeline/plan.service.js';
 import {
   COACH_SYSTEM_PROMPT, buildCoachPrompt, draftOutline, draftSections, findDraftSection, outlineToHtml, type CoachMode,
 } from '../services/workspace/study-draft.service.js';
-
-// Mirrors subscription.middleware: session limits only apply in production.
-const sessionLimitsApply = () => CONFIG.NODE_ENV === 'production';
 
 const log = childLogger('workspace');
 
@@ -127,6 +127,8 @@ export const assist = async (req: Request, res: Response) => {
   const subscription = (req as any).subscription;
 
   if (!instruction) return res.status(400).json({ error: 'Instruction is required' });
+  // Free: the quick edits of the student's own text only.
+  if (planOf(req) === 'free' && !workspaceAssist.isQuickEdit(instruction)) return paidPlanRequired(res);
 
   // Build context from session if provided
   let fullContext = context || '';
@@ -154,6 +156,50 @@ export const assist = async (req: Request, res: Response) => {
   res.json(result);
 };
 
+/**
+ * Autocomplete as you type: the next sentence after the cursor, from the
+ * student's text and the document's own sources. Free plans get a few a day;
+ * every plan stays within its daily AI allowance.
+ */
+export const autocomplete = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string;
+  const { sessionId } = req.body ?? {};
+  const before = typeof req.body?.before === 'string' ? req.body.before.slice(-2000) : '';
+  const after = typeof req.body?.after === 'string' ? req.body.after.slice(0, 300) : '';
+  if (before.trim().length < 20) return res.json({ suggestion: null, remaining: null });
+
+  const limit = PLAN_LIMITS[planOf(req)].autocompletesPerDay;
+  const limited = Number.isFinite(limit);
+  if (limited && (await autocompletesUsed(userId)) >= limit) {
+    return res.status(429).json({
+      error: `You've used today's ${limit} free autocompletes. They come back at midnight (GMT), or upgrade for unlimited.`,
+      code: 'AUTOCOMPLETE_LIMIT',
+    });
+  }
+
+  // The document's title and the passages of its sources nearest the cursor (only for the owner's document).
+  let title = '';
+  let excerpts: SourceExcerpt[] = [];
+  if (typeof sessionId === 'string' && sessionId) {
+    try {
+      ({ title } = await ownSession(sessionId, userId));
+      excerpts = await searchSources(sessionId, before.slice(-600), 3);
+    } catch {
+      excerpts = [];
+    }
+  }
+
+  try {
+    const suggestion = await suggestContinuation({ before, after, title, excerpts, userId });
+    const remaining = suggestion && limited ? Math.max(0, limit - (await countAutocomplete(userId))) : null;
+    res.json({ suggestion, remaining });
+  } catch (err: any) {
+    if (err.status === 429) return res.status(429).json({ error: err.message, code: 'AI_LIMIT' });
+    log.warn({ err: err.message }, 'Autocomplete failed');
+    res.status(502).json({ error: 'No suggestion right now.' });
+  }
+};
+
 // Search citations
 export const searchCitations = async (req: Request, res: Response) => {
   const { topic, query, format } = req.body;
@@ -168,6 +214,7 @@ export const assistAdvanced = async (req: Request, res: Response) => {
   const { action, text, fullDocument, sessionId } = req.body;
 
   if (!action) return res.status(400).json({ error: 'Action is required' });
+  if (planOf(req) === 'free' && !FREE_CHECKS.has(action)) return paidPlanRequired(res);
   if (!text && !fullDocument) return res.status(400).json({ error: 'Text or fullDocument is required' });
 
   const content = text || fullDocument || '';
@@ -367,8 +414,6 @@ export const inlineAi = async (req: Request, res: Response) => {
 
 // ── Write your own version of a study draft ─────────────────────────────────
 
-const STANDARD_SESSION_LIMIT = 5;
-
 interface StudyDraftLink { type: 'study_draft'; paperId: string }
 
 function studyDraftLink(materials: unknown): StudyDraftLink | undefined {
@@ -406,11 +451,11 @@ export const createFromDraft = async (req: Request, res: Response) => {
     .maybeSingle();
   if (existing) return res.json({ id: existing.id, existing: true });
 
-  if ((req as any).subscription?.plan !== 'premium' && sessionLimitsApply()) {
-    const { count } = await supabase.from('workspace_sessions').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-    if ((count ?? 0) >= STANDARD_SESSION_LIMIT) {
-      return res.status(403).json({ error: `Standard plan limit reached (${STANDARD_SESSION_LIMIT} documents). Delete one or upgrade to Premium.` });
-    }
+  try {
+    const limited = await documentLimitError(userId, planOf(req));
+    if (limited) return res.status(403).json({ error: limited, code: 'PLAN_LIMIT' });
+  } catch {
+    return res.status(500).json({ error: 'Could not open your document' });
   }
 
   const title = `${String(paper.topic).slice(0, 180)} — my version`;

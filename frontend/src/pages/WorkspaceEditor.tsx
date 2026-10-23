@@ -16,7 +16,9 @@ import { MARGINS, PAGE_SIZES, loadPageSettings, pageDimensions, savePageSettings
 import InlineAI from '../components/workspace/inlineAI/InlineAI';
 import RequestReviewModal from '../components/workspace/review/RequestReviewModal';
 import type { WorkspacePanel } from '../components/workspace/panels';
-import { subscriptionService } from '../services/subscriptionService';
+import { Autocomplete, dismissSuggestion } from '../components/workspace/autocomplete/Autocomplete';
+import { useWorkspacePlan } from '../hooks/useWorkspacePlan';
+import { apiErrorCode } from '../utils/apiError';
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
@@ -47,7 +49,9 @@ export default function WorkspaceEditor() {
   });
   const [pageMetrics, setPageMetrics] = useState({ pageCount: 1, currentPage: 1 });
   const [find, setFind] = useState<'find' | 'replace' | null>(null);
-  const [isPremium, setIsPremium] = useState(false);
+  // The plan decides which tools are open; the API checks again on every call.
+  const { plan, limits } = useWorkspacePlan();
+  const isPremium = plan === 'premium';
   const scrollRef = useRef<HTMLDivElement>(null);
   const savedHtmlRef = useRef<string | null>(null);
 
@@ -66,8 +70,28 @@ export default function WorkspaceEditor() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
+  // Set when today's autocomplete allowance runs out; it stays off until the page is reloaded.
+  const [autocompleteStopped, setAutocompleteStopped] = useState(false);
+  const fetchSuggestion = useCallback(async ({ before, after }: { before: string; after: string }, signal: AbortSignal) => {
+    try {
+      const { data } = await workspaceService.autocomplete({ sessionId: id, before, after }, signal);
+      if (data.remaining === 0) {
+        setAutocompleteStopped(true);
+        notify("That was today's last free autocomplete. More at midnight (GMT), or upgrade for unlimited.");
+      }
+      return data.suggestion;
+    } catch (err) {
+      const code = apiErrorCode(err);
+      if (code === 'AUTOCOMPLETE_LIMIT' || code === 'AI_LIMIT') {
+        setAutocompleteStopped(true);
+        notify(apiErrorMessage(err, "You've reached today's autocomplete limit."));
+      }
+      return null;
+    }
+  }, [id, notify]);
+
   const editor = useEditor({
-    extensions: workspaceExtensions(),
+    extensions: [...workspaceExtensions(), Autocomplete],
     content: activeSession?.content || '',
     editorProps: {
       attributes: {
@@ -100,14 +124,15 @@ export default function WorkspaceEditor() {
     });
   }, [editor, settings.spellcheck]);
 
-  // Premium unlocks AI inside the document (the API checks again on every call).
+  // Autocomplete reads these on every pause; switching it off removes a suggestion already showing.
   useEffect(() => {
-    let cancelled = false;
-    subscriptionService.getActive()
-      .then((res) => { if (!cancelled) setIsPremium(res.data?.subscription?.plan === 'premium'); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
+    // A destroyed editor (React remounting in development) has no storage left.
+    const storage = editor?.storage.autocomplete;
+    if (!editor || !storage) return;
+    Object.assign(storage, { enabled: settings.autocomplete && !autocompleteStopped, fetchSuggestion });
+    // Running out of today's allowance leaves the last suggestion showing.
+    if (!settings.autocomplete) dismissSuggestion(editor);
+  }, [editor, settings.autocomplete, autocompleteStopped, fetchSuggestion]);
 
   // Load session — only run once on mount (not when editor changes)
   const editorRef = useRef(editor);
@@ -321,7 +346,8 @@ export default function WorkspaceEditor() {
           aiSelectedText={aiSelectedText}
           fullDocText={fullDocText}
           onInsertAIContent={handleInsertAIContent}
-          isPremium={isPremium}
+          plan={plan}
+          maxSources={limits.sourcesPerDocument}
           onRequestReview={() => setReviewOpen(true)}
           reviewRefreshKey={reviewRefreshKey}
           hasStudyDraft={hasStudyDraft}

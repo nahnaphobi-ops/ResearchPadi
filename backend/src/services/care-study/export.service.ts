@@ -3,6 +3,7 @@ import {
   type ISectionOptions,
 } from 'docx';
 import { formatCitation } from '../citations/formatter.service.js';
+import { draftBlocks, isTableLine, splitRow } from '../documents/draft-text.js';
 import { chartData, chartImages, CHART_HEIGHT, CHART_WIDTH } from './chart.service.js';
 import { citedSources, type CareSource } from './guards.js';
 import { entriesText, type CareStudyTemplate, type SectionEntries, type TemplateSection } from './template.service.js';
@@ -14,6 +15,8 @@ import { entriesText, type CareStudyTemplate, type SectionEntries, type Template
  * - clean copy: the study as a document to submit (the drafts only), with
  *   full-width tables and the app-plotted charts.
  * Tables in the drafts are Markdown pipe tables and become real Word tables.
+ * export-pdf.service.ts makes the same two documents as PDFs from the layout,
+ * wording and figures shared here.
  */
 export interface ExportStudy {
   id: string;
@@ -26,7 +29,7 @@ export interface ExportStudy {
   sources: CareSource[];
 }
 
-type SectionRows = Record<string, { entries?: SectionEntries; draft?: string | null } | undefined>;
+export type SectionRows = Record<string, { entries?: SectionEntries; draft?: string | null } | undefined>;
 type Block = Paragraph | Table;
 
 const FONT = 'Times New Roman';
@@ -36,12 +39,26 @@ const GREY = '6B7C93';
 const run = (text: string, opts: { bold?: boolean; italics?: boolean; size?: number; color?: string; highlight?: boolean } = {}) =>
   new TextRun({ text, font: FONT, size: opts.size ?? 20, bold: opts.bold, italics: opts.italics, color: opts.color, highlight: opts.highlight ? 'yellow' : undefined });
 
-const isTableLine = (line: string) => /^\s*\|.*\|\s*$/.test(line);
-const splitRow = (line: string) => line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
-const isSeparator = (cells: string[]) => cells.every((c) => /^:?-{2,}:?$/.test(c));
 const isHeading = (line: string) => line.length < 100 && /[A-Z]{3}/.test(line) && line === line.toUpperCase() && !/[.!?]$/.test(line);
-const PLACEHOLDER = /(\[Student to supply:[^\]]*\])/g;
+/** Splits text around its "[Student to supply: …]" placeholders, keeping them. */
+export const PLACEHOLDER = /(\[Student to supply:[^\]]*\])/g;
+export const isPlaceholder = (part: string) => part.startsWith('[Student to supply:');
 const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+export const SUPERVISOR_COPY_TITLE = 'About this export';
+export const SUPERVISOR_COPY_ABOUT =
+  "Each section shows the student's own notes on the left and the AI-assisted draft on the right. The AI was instructed to reword, order and explain only what the student entered. Items the student has not supplied appear as [Student to supply: …]. Charts are plotted by ResearchPadi from the numbers the student entered. This document has not been approved by any college or council.";
+export const SUPERVISOR_COPY_DESCRIPTION = "Care study export: the student's own notes beside the AI-assisted draft.";
+export const CLEAN_COPY_DESCRIPTION = 'Care study prepared with ResearchPadi from the student\'s own entries. Not approved by any college or council.';
+
+/** The supervisor copy's record of the student's declarations and of this export. */
+export const declarationLine = (study: ExportStudy, generatedAt: string) =>
+  `Student declared they personally cared for this client on ${study.declaration_confirmed_at.slice(0, 10)} and confirmed the client's consent on ${study.consent_confirmed_at.slice(0, 10)}. Exported ${generatedAt.slice(0, 16).replace('T', ' ')} UTC. Study ID ${study.id}.`;
+
+export const documentTitle = (study: ExportStudy, template: CareStudyTemplate) => `${template.name} — ${study.pseudonym}`;
+
+/** A section whose draft has a table this wide is laid out on landscape pages. */
+export const LANDSCAPE_COLUMNS = 6;
 
 /** How many columns the widest table in a draft has (care plans have eight). */
 export function widestTable(text: string | null | undefined): number {
@@ -50,8 +67,7 @@ export function widestTable(text: string | null | undefined): number {
   return widest;
 }
 
-function pipeTable(lines: string[], opts: { size: number; wide?: boolean }): Table {
-  const rows = lines.map(splitRow).filter((cells) => !isSeparator(cells));
+function pipeTable(rows: string[][], opts: { size: number }): Table {
   const columns = Math.max(...rows.map((r) => r.length));
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -61,7 +77,7 @@ function pipeTable(lines: string[], opts: { size: number; wide?: boolean }): Tab
       children: Array.from({ length: columns }, (_, c) => new TableCell({
         shading: r === 0 ? { type: ShadingType.CLEAR, color: 'auto', fill: 'E8EEF5' } : undefined,
         children: (cells[c] ?? '').split(/<br\s*\/?>/i).map((t) => new Paragraph({
-          children: t.split(PLACEHOLDER).filter(Boolean).map((part) => part.startsWith('[Student to supply:')
+          children: t.split(PLACEHOLDER).filter(Boolean).map((part) => isPlaceholder(part)
             ? run(part, { size: opts.size, bold: true, color: AMBER })
             : run(part, { size: opts.size, bold: r === 0 })),
         })),
@@ -81,76 +97,112 @@ interface TextOptions {
   headingStyles?: boolean;
 }
 
-/** Draft text → paragraphs and tables. */
-function textBlocks(text: string, opts: TextOptions): Block[] {
-  const lines = text.replace(/\r/g, '').split('\n');
-  const skip = new Set((opts.skipHeadings ?? []).map(normalise).filter(Boolean));
-  const blocks: Block[] = [];
+export type SectionBlock =
+  | { kind: 'table'; rows: string[][] }
+  | { kind: 'line'; text: string; heading: boolean; numbered: boolean };
+
+/**
+ * A section draft as tables and lines with its headings marked, for the Word
+ * and PDF exports. Opening headings that repeat one already printed are dropped.
+ */
+export function sectionLayout(text: string, skipHeadings: string[] = []): SectionBlock[] {
+  const skip = new Set(skipHeadings.map(normalise).filter(Boolean));
+  const blocks: SectionBlock[] = [];
   let seenContent = false;
-  for (let i = 0; i < lines.length; i++) {
-    if (isTableLine(lines[i])) {
-      const start = i;
-      while (i + 1 < lines.length && isTableLine(lines[i + 1])) i++;
-      blocks.push(pipeTable(lines.slice(start, i + 1), { size: opts.tableSize }));
-      blocks.push(new Paragraph({ spacing: { after: 120 }, children: [] }));
+  for (const block of draftBlocks(text)) {
+    if (block.kind === 'table') {
+      blocks.push(block);
       seenContent = true;
       continue;
     }
-    const line = lines[i].replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
-    if (!line) continue;
+    const line = block.text;
     // Only the opening headings of a section can repeat the part heading.
     if (!seenContent && isHeading(line) && skip.has(normalise(line))) continue;
     seenContent = true;
     const numbered = /^\d+(\.\d+)+\.?\s+[A-Z]/.test(line) && line.length < 90 && !/[.!?]$/.test(line);
     // "2.1 SOCIAL HISTORY" is a heading; "1. Reassure the client" is a list item.
-    const heading = isHeading(line) || numbered;
-    const styled = Boolean(opts.headingStyles && numbered);
-    blocks.push(new Paragraph({
-      heading: styled ? HeadingLevel.HEADING_2 : undefined,
-      spacing: { before: heading ? 200 : 0, after: heading ? 100 : 120, line: opts.line },
-      alignment: heading ? AlignmentType.LEFT : AlignmentType.JUSTIFIED,
-      keepNext: heading,
-      children: line.split(PLACEHOLDER).filter(Boolean).map((part) => part.startsWith('[Student to supply:')
-        ? run(part, { size: opts.size, bold: true, color: opts.highlightPlaceholders ? undefined : AMBER, highlight: opts.highlightPlaceholders })
-        // Heading styles carry their own colour; keep headings black like the rest of the document.
-        : run(part, { size: opts.size, bold: heading, color: styled ? '000000' : undefined })),
-    }));
+    blocks.push({ kind: 'line', text: line, heading: isHeading(line) || numbered, numbered });
   }
   return blocks;
 }
 
+/** Draft text → paragraphs and tables. */
+function textBlocks(text: string, opts: TextOptions): Block[] {
+  return sectionLayout(text, opts.skipHeadings).flatMap((block): Block[] => {
+    if (block.kind === 'table') {
+      return [pipeTable(block.rows, { size: opts.tableSize }), new Paragraph({ spacing: { after: 120 }, children: [] })];
+    }
+    const { text: line, heading, numbered } = block;
+    const styled = Boolean(opts.headingStyles && numbered);
+    return [new Paragraph({
+      heading: styled ? HeadingLevel.HEADING_2 : undefined,
+      spacing: { before: heading ? 200 : 0, after: heading ? 100 : 120, line: opts.line },
+      alignment: heading ? AlignmentType.LEFT : AlignmentType.JUSTIFIED,
+      keepNext: heading,
+      children: line.split(PLACEHOLDER).filter(Boolean).map((part) => isPlaceholder(part)
+        ? run(part, { size: opts.size, bold: true, color: opts.highlightPlaceholders ? undefined : AMBER, highlight: opts.highlightPlaceholders })
+        // Heading styles carry their own colour; keep headings black like the rest of the document.
+        : run(part, { size: opts.size, bold: heading, color: styled ? '000000' : undefined })),
+    })];
+  });
+}
+
+export interface ChartFigure {
+  title: string;
+  images: { label: string; png: Buffer }[];
+  /** The template's note on the chart, and any readings left off it. */
+  notes: string;
+}
+
+/** Charts plotted by the app from the student's numbers. */
+export function chartFigures(section: TemplateSection, entries: SectionEntries | undefined): ChartFigure[] {
+  return (section.charts ?? []).flatMap((spec) => {
+    const data = chartData(spec, entries);
+    const images = chartImages(data);
+    if (!images.length) return [];
+    const notes = [spec.note, data.skipped ? `${data.skipped} reading${data.skipped === 1 ? ' has' : 's have'} no date or time and ${data.skipped === 1 ? 'is' : 'are'} not plotted.` : '']
+      .filter(Boolean).join(' ');
+    return [{ title: spec.title, images, notes }];
+  });
+}
+
+/** Height for a chart drawn at this width. */
+export const chartHeight = (width: number) => Math.round((width * CHART_HEIGHT) / CHART_WIDTH);
+
 /** Charts plotted by the app from the student's numbers, as captioned figures. */
 function chartBlocks(section: TemplateSection, entries: SectionEntries | undefined, width: number): Block[] {
   const out: Block[] = [];
-  const height = Math.round((width * CHART_HEIGHT) / CHART_WIDTH);
-  for (const spec of section.charts ?? []) {
-    const data = chartData(spec, entries);
-    const images = chartImages(data);
-    if (!images.length) continue;
-    out.push(new Paragraph({ keepNext: true, spacing: { before: 240, after: 80 }, children: [run(spec.title, { bold: true, size: 22 })] }));
-    for (const image of images) {
+  const height = chartHeight(width);
+  for (const figure of chartFigures(section, entries)) {
+    out.push(new Paragraph({ keepNext: true, spacing: { before: 240, after: 80 }, children: [run(figure.title, { bold: true, size: 22 })] }));
+    for (const image of figure.images) {
       out.push(new Paragraph({ keepNext: true, spacing: { before: 80, after: 40 }, children: [run(image.label, { size: 20 })] }));
       out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [
-        new ImageRun({ type: 'png', data: image.png, transformation: { width, height }, altText: { name: image.label, description: `${spec.title}: ${image.label}`, title: image.label } }),
+        new ImageRun({ type: 'png', data: image.png, transformation: { width, height }, altText: { name: image.label, description: `${figure.title}: ${image.label}`, title: image.label } }),
       ] }));
     }
-    const notes = [spec.note, data.skipped ? `${data.skipped} reading${data.skipped === 1 ? ' has' : 's have'} no date or time and ${data.skipped === 1 ? 'is' : 'are'} not plotted.` : '']
-      .filter(Boolean).join(' ');
-    if (notes) out.push(new Paragraph({ spacing: { after: 160 }, children: [run(notes, { italics: true, size: 18, color: GREY })] }));
+    if (figure.notes) out.push(new Paragraph({ spacing: { after: 160 }, children: [run(figure.notes, { italics: true, size: 18, color: GREY })] }));
   }
   return out;
 }
 
-function bibliographyBlocks(sections: SectionRows, template: CareStudyTemplate, sources: CareSource[]): Block[] {
+/** APA entries for the retrieved sources the drafts cite, in alphabetical order. */
+export function bibliographyEntries(sections: SectionRows, template: CareStudyTemplate, sources: CareSource[]): string[] {
   const cited = citedSources(template.sections.map((s) => sections[s.key]?.draft ?? ''), sources);
-  const entries = cited
+  return cited
     .map((s) => formatCitation({ title: s.title, authors: s.authors, year: s.year ?? undefined, source: s.container || s.publisher, url: s.doi ? `https://doi.org/${s.doi}` : s.url }, 'apa').replace(/\*/g, ''))
     .sort((a, b) => a.localeCompare(b));
+}
+
+export const NO_SOURCES_CITED = 'No retrieved sources are cited yet.';
+
+function bibliographyBlocks(sections: SectionRows, template: CareStudyTemplate, sources: CareSource[]): Block[] {
+  const entries = bibliographyEntries(sections, template, sources);
   return [
     new Paragraph({ heading: HeadingLevel.HEADING_1, pageBreakBefore: true, alignment: AlignmentType.CENTER, spacing: { after: 240 }, children: [run('BIBLIOGRAPHY', { bold: true, size: 26 })] }),
     ...(entries.length
       ? entries.map((b) => new Paragraph({ indent: { left: 720, hanging: 720 }, spacing: { after: 160 }, children: [run(b, { size: 24 })] }))
-      : [new Paragraph({ children: [run('No retrieved sources are cited yet.', { italics: true, color: GREY, size: 22 })] })]),
+      : [new Paragraph({ children: [run(NO_SOURCES_CITED, { italics: true, color: GREY, size: 22 })] })]),
   ];
 }
 
@@ -209,8 +261,8 @@ export async function buildCareStudyDocx(
 
   const doc = new Document({
     creator: 'ResearchPadi',
-    title: `${template.name} — ${study.pseudonym}`,
-    description: "Care study export: the student's own notes beside the AI-assisted draft.",
+    title: documentTitle(study, template),
+    description: SUPERVISOR_COPY_DESCRIPTION,
     sections: [{
       properties: { page: { size: { orientation: PageOrientation.LANDSCAPE }, margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
       footers: { default: footer() },
@@ -220,14 +272,9 @@ export async function buildCareStudyDocx(
         ...(study.focus ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`${template.focus_label}: ${study.focus}`, { size: 24 })] })] : []),
         ...(study.institution_name ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(study.institution_name, { size: 24 })] })] : []),
         ...(study.supervisor_name ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`Supervisor: ${study.supervisor_name}`, { size: 24 })] })] : []),
-        new Paragraph({ spacing: { before: 300 }, children: [run('About this export', { bold: true })] }),
-        new Paragraph({ children: [run(
-          "Each section shows the student's own notes on the left and the AI-assisted draft on the right. The AI was instructed to reword, order and explain only what the student entered. Items the student has not supplied appear as [Student to supply: …]. Charts are plotted by ResearchPadi from the numbers the student entered. This document has not been approved by any college or council.",
-        )] }),
-        new Paragraph({ spacing: { before: 120 }, children: [run(
-          `Student declared they personally cared for this client on ${study.declaration_confirmed_at.slice(0, 10)} and confirmed the client's consent on ${study.consent_confirmed_at.slice(0, 10)}. Exported ${generatedAt.slice(0, 16).replace('T', ' ')} UTC. Study ID ${study.id}.`,
-          { italics: true, color: GREY },
-        )] }),
+        new Paragraph({ spacing: { before: 300 }, children: [run(SUPERVISOR_COPY_TITLE, { bold: true })] }),
+        new Paragraph({ children: [run(SUPERVISOR_COPY_ABOUT)] }),
+        new Paragraph({ spacing: { before: 120 }, children: [run(declarationLine(study, generatedAt), { italics: true, color: GREY })] }),
         new Paragraph({ children: [run(template.notice, { italics: true, color: GREY })] }),
         ...body,
         ...bibliographyBlocks(sections, template, study.sources),
@@ -268,7 +315,7 @@ export async function buildCleanCareStudyDocx(
 
   for (const s of template.sections) {
     const row = sections[s.key];
-    const landscape = widestTable(row?.draft) >= 6;
+    const landscape = widestTable(row?.draft) >= LANDSCAPE_COLUMNS;
     const blocks: Block[] = [];
 
     if (s.part && s.part !== lastPart) {
@@ -321,8 +368,8 @@ export async function buildCleanCareStudyDocx(
 
   const doc = new Document({
     creator: 'ResearchPadi',
-    title: `${template.name} — ${study.pseudonym}`,
-    description: 'Care study prepared with ResearchPadi from the student\'s own entries. Not approved by any college or council.',
+    title: documentTitle(study, template),
+    description: CLEAN_COPY_DESCRIPTION,
     // Word asks to update fields on opening, which fills in the contents page.
     features: { updateFields: true },
     sections: docSections,

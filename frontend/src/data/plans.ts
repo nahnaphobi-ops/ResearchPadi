@@ -1,7 +1,7 @@
 /**
  * Single source of truth for what each plan includes. Used by the landing
  * pricing section and the Subscribe page. Keep this in line with the backend:
- * prices in backend/src/config (PRICING) and limits in subscription.middleware.ts.
+ * prices in backend/src/config (PRICING) and limits in backend/src/lib/workspace-plans.ts.
  */
 
 export const FULL_PAPER = {
@@ -11,9 +11,23 @@ export const FULL_PAPER = {
     'Structured for your institution and programme',
     'AI supervisor review before delivery',
     'References checked, with doubtful ones flagged',
-    'DOCX download, clearly marked as AI-written',
+    'Word or PDF download, clearly marked as AI-written',
   ],
 };
+
+/** The Workspace without a subscription. */
+export const FREE_PLAN = {
+  name: 'Free',
+  desc: 'Try the Workspace before you pay',
+  features: [
+    'Up to 2 documents',
+    'Quick AI edits: rewrite, shorten, fix grammar, academic tone, simplify',
+    'Autocomplete as you type: 10 suggestions a day',
+    'Grammar and AI-writing checks, and citation search',
+    'Up to 3 of your own sources per document',
+    'Export to Word (.docx)',
+  ],
+} as const;
 
 export const WORKSPACE_PLANS = {
   standard: {
@@ -23,6 +37,8 @@ export const WORKSPACE_PLANS = {
     features: [
       'Up to 5 workspace sessions',
       'AI writing assistant (continue, expand, shorten, rewrite)',
+      'Autocomplete as you type, with no daily limit',
+      'Up to 10 of your own sources per document',
       'Grammar, claim and plagiarism checks',
       'Citation search (OpenAlex + Semantic Scholar)',
       'APA, MLA, Chicago and Harvard formats',
@@ -37,7 +53,7 @@ export const WORKSPACE_PLANS = {
       'Everything in Standard',
       'Unlimited workspace sessions',
       'AI inside the editor: select text to improve, explain or continue it',
-      'Upload your own sources and ask questions about them',
+      'Up to 20 sources per document, and ask questions about them',
       'Book a human supervisor review of your writing',
       'Priority support',
     ],

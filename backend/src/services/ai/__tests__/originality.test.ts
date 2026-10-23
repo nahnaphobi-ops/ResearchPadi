@@ -62,8 +62,9 @@ for (const [feature, own, ownRule] of FEATURES) {
 }
 
 test('only verbatim parsing calls may opt out of the rule', () => {
-  assert.equal(systemPromptFor({ systemPrompt: 'Parse.', originality: false }), 'Parse.');
-  assert.equal(systemPromptFor({ originality: false }), undefined);
+  assert.ok(!systemPromptFor({ systemPrompt: 'Parse.', originality: false }).includes(ORIGINALITY_RULE));
+  assert.ok(systemPromptFor({ systemPrompt: 'Parse.', originality: false }).startsWith('Parse.\n\n'));
+  assert.ok(!systemPromptFor({ originality: false }).includes(ORIGINALITY_RULE));
 });
 
 /** Source files under src, excluding tests and declaration files. */

@@ -9,7 +9,7 @@ export const STUDY_DRAFT_NOTICE =
   'This document was researched and written by artificial intelligence (ResearchPadi) from a brief supplied by the student. ' +
   "It is a study and reference draft, not the student's own work. Use it to understand the topic, plan your chapters and find sources, " +
   'then write your paper in your own words. Do not submit this draft, or any part of it, as your own work. ' +
-  'Check every reference against the original source before you rely on it.';
+  'AI can be wrong and can present a guess as fact: check every fact, figure, quotation and reference against the original source before you rely on it.';
 
 export const STUDY_DRAFT_HEADER = 'AI-generated study draft (ResearchPadi) · not for submission as your own work';
 
@@ -19,6 +19,42 @@ export interface DocxProvenance {
   toolName?: string;
   toolVersion?: string;
 }
+
+/** The file details every study draft carries, in Word and PDF alike. */
+export const STUDY_DRAFT_METADATA = {
+  subject: 'AI-generated academic study draft',
+  description: 'AI-generated study draft, not the student\'s own work. Marked for EU AI Act Article 50 transparency.',
+  keywords: 'AI-generated, study draft, ResearchPadi, EU AI Act Article 50, provenance',
+};
+
+/** Machine-readable provenance: who generated the draft, when, and that it is AI-generated. */
+export function provenanceProperties(provenance: DocxProvenance): { name: string; value: string }[] {
+  const toolName = provenance.toolName || 'ResearchPadi';
+  const toolVersion = provenance.toolVersion || '1.0';
+  return [
+    { name: 'c2pa.claimGenerator', value: `${toolName}/${toolVersion}` },
+    { name: 'c2pa.digitalSourceType', value: 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' },
+    { name: 'schema.org.creativeWorkStatus', value: 'AI-generated' },
+    { name: 'schema.org.additionalType', value: 'https://schema.org/DigitalDocument' },
+    { name: 'eu.ai.act.article', value: '50' },
+    { name: 'eu.ai.act.marked', value: 'true' },
+    { name: 'eu.ai.act.machineReadable', value: 'true' },
+    { name: 'ai.generated', value: 'true' },
+    { name: 'ai.tool', value: toolName },
+    { name: 'ai.toolVersion', value: toolVersion },
+    { name: 'ai.generatedAt', value: provenance.generatedAt },
+    { name: 'ai.paperId', value: provenance.paperId },
+    { name: 'ai.documentType', value: 'study-draft' },
+    { name: 'ai.disclosureText', value: STUDY_DRAFT_NOTICE.slice(0, 255) },
+  ];
+}
+
+/** The line under the notice box: which draft this is and when it was made. */
+export const draftIdLine = (provenance: DocxProvenance) => `Draft ID ${provenance.paperId} · Generated ${provenance.generatedAt}`;
+
+/** The last line of the closing statement. */
+export const markedLine = (provenance: DocxProvenance) =>
+  `Marked as AI-generated under EU AI Act Article 50 · ${draftIdLine(provenance)}`;
 
 const FONT = 'Times New Roman';
 
@@ -62,7 +98,7 @@ function noticeBox(provenance: DocxProvenance) {
       spacing: { before: 80, after: 0, line: 300 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: `Draft ID ${provenance.paperId} · Generated ${provenance.generatedAt}`, size: 18, font: FONT, color: '6B7C93' })],
+      children: [new TextRun({ text: draftIdLine(provenance), size: 18, font: FONT, color: '6B7C93' })],
       border: { bottom: border, left: border, right: border },
       shading: { fill: 'FFF7ED' },
       spacing: { before: 80, after: 400 },
@@ -85,7 +121,7 @@ function closingStatement(provenance: DocxProvenance) {
     new Paragraph({
       children: [
         new TextRun({
-          text: `Marked as AI-generated under EU AI Act Article 50 · Draft ID ${provenance.paperId} · Generated ${provenance.generatedAt}`,
+          text: markedLine(provenance),
           size: 20,
           font: FONT,
           color: '6B7C93'
@@ -98,31 +134,13 @@ function closingStatement(provenance: DocxProvenance) {
 
 export const generateDocx = async (title: string, content: string, provenance: DocxProvenance) => {
   const toolName = provenance.toolName || 'ResearchPadi';
-  const toolVersion = provenance.toolVersion || '1.0';
 
   const doc = new Document({
     creator: toolName,
     lastModifiedBy: toolName,
     title,
-    subject: 'AI-generated academic study draft',
-    description: 'AI-generated study draft, not the student\'s own work. Marked for EU AI Act Article 50 transparency.',
-    keywords: 'AI-generated, study draft, ResearchPadi, EU AI Act Article 50, provenance',
-    customProperties: [
-      { name: 'c2pa.claimGenerator', value: `${toolName}/${toolVersion}` },
-      { name: 'c2pa.digitalSourceType', value: 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' },
-      { name: 'schema.org.creativeWorkStatus', value: 'AI-generated' },
-      { name: 'schema.org.additionalType', value: 'https://schema.org/DigitalDocument' },
-      { name: 'eu.ai.act.article', value: '50' },
-      { name: 'eu.ai.act.marked', value: 'true' },
-      { name: 'eu.ai.act.machineReadable', value: 'true' },
-      { name: 'ai.generated', value: 'true' },
-      { name: 'ai.tool', value: toolName },
-      { name: 'ai.toolVersion', value: toolVersion },
-      { name: 'ai.generatedAt', value: provenance.generatedAt },
-      { name: 'ai.paperId', value: provenance.paperId },
-      { name: 'ai.documentType', value: 'study-draft' },
-      { name: 'ai.disclosureText', value: STUDY_DRAFT_NOTICE.slice(0, 255) },
-    ],
+    ...STUDY_DRAFT_METADATA,
+    customProperties: provenanceProperties(provenance),
     sections: [
       {
         properties: {

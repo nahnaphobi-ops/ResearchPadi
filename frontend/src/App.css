@@ -255,6 +255,14 @@ input:focus, select:focus, textarea:focus {
 }
 .cite-chip:hover { background: #ddd6fe; }
 
+/* Autocomplete: the suggested next sentence, in grey after the cursor */
+.rp-ghost { color: #8a8886; cursor: pointer; }
+.rp-ghost kbd {
+  margin-left: 6px; padding: 0 4px; border: 1px solid #c8c6c4; border-radius: 3px; background: #faf9f8;
+  font: 600 9.5px 'Segoe UI', system-ui, sans-serif; color: #605e5c; vertical-align: 0.15em; white-space: nowrap;
+}
+@media print { .rp-ghost { display: none; } }
+
 /* Show/Hide ¶ */
 .word-doc.show-marks .ProseMirror p::after,
 .word-doc.show-marks .ProseMirror h1::after,

@@ -27,12 +27,12 @@ export const careStudyService = {
   check: (id: string) => api.post<{ issues: CheckIssue[]; note: string }>(`/care-studies/${id}/check`),
   help: (id: string, message: string) => api.post<HelpResult>(`/care-studies/${id}/help`, { message }),
   /** 'clean' is the document to submit; 'supervisor' keeps the student's notes beside the draft. */
-  exportDocx: (id: string, pseudonym: string, format: 'clean' | 'supervisor' = 'supervisor') =>
-    api.get(`/care-studies/${id}/export`, { responseType: 'blob', params: { format } }).then((response) => {
+  exportStudy: (id: string, pseudonym: string, format: 'clean' | 'supervisor' = 'supervisor', file: 'docx' | 'pdf' = 'docx') =>
+    api.get(`/care-studies/${id}/export`, { responseType: 'blob', params: { format, file } }).then((response) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Care_study_${pseudonym.replace(/[^A-Za-z0-9]+/g, '_')}${format === 'clean' ? '' : '_supervisor_copy'}.docx`);
+      link.setAttribute('download', `Care_study_${pseudonym.replace(/[^A-Za-z0-9]+/g, '_')}${format === 'clean' ? '' : '_supervisor_copy'}.${file}`);
       document.body.appendChild(link);
       link.click();
       link.remove();

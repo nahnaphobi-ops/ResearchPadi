@@ -1,4 +1,4 @@
-import { Eye, FileText, Minus, Plus } from 'lucide-react';
+import { Eye, FileText, Minus, Plus, WandSparkles } from 'lucide-react';
 import { ZOOM_MAX, ZOOM_MIN, type PageSettings } from './pageLayout';
 
 interface Props {
@@ -25,6 +25,16 @@ export function StatusBar({ currentPage, pageCount, wordCount, selectedWords, se
         <span className="hidden md:inline text-[#605e5c]">English (Ghana)</span>
       </div>
       <div className="flex items-center gap-1">
+        <button
+          type="button"
+          className={`h-6 px-1.5 inline-flex items-center gap-1 rounded hover:bg-[#e1dfdd] ${settings.autocomplete ? 'text-[#2b579a]' : 'text-[#8a8886]'}`}
+          onClick={() => onSettingsChange({ autocomplete: !settings.autocomplete })}
+          aria-pressed={settings.autocomplete}
+          title={settings.autocomplete ? 'Autocomplete is on: pause while writing for a suggestion. Click to turn it off.' : 'Autocomplete is off. Click to turn it on.'}
+        >
+          <WandSparkles size={13} /> <span className="hidden sm:inline">Autocomplete {settings.autocomplete ? 'on' : 'off'}</span>
+        </button>
+        <span className="w-px h-4 bg-[#c8c6c4] mx-1" />
         <button
           type="button"
           className={`${btn} ${settings.view === 'print' ? 'bg-[#e1dfdd]' : ''}`}

@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { apiErrorMessage } from '../../utils/apiError';
+import { Link } from 'react-router-dom';
+import { Lock } from 'lucide-react';
+import { apiErrorCode, apiErrorMessage } from '../../utils/apiError';
 import { workspaceService } from '../../services/workspaceService';
+import type { WorkspacePlan } from '../../services/subscriptionService';
 import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
 import type { Source } from './citations/types';
 import { ScrollRow } from './ribbon/controls';
 
 interface Props {
   sessionId: string;
+  /** Free has the quick edits and the checks that need no AI model; the rest are paid. */
+  plan: WorkspacePlan;
   selectedText: string;
   fullDocument: string;
   onInsert: (text: string) => void;
@@ -16,19 +21,34 @@ interface Props {
 
 type Tab = 'write' | 'grammar' | 'claims' | 'plagiarism' | 'ai-detect' | 'citations';
 
+// `paid`: part of Standard and Premium. The quick edits of the student's own text are free.
 const WRITE_ACTIONS = [
-  { key: 'continue', label: 'Continue Writing', icon: '➡️', desc: 'Continue from where you left off' },
-  { key: 'expand', label: 'Expand', icon: '📝', desc: 'Add more detail and evidence' },
-  { key: 'shorten', label: 'Shorten', icon: '✂️', desc: 'Make it more concise' },
-  { key: 'rewrite', label: 'Rewrite', icon: '🔄', desc: 'Improve clarity and flow' },
-  { key: 'rag-enhance', label: 'RAG Enhance', icon: '📚', desc: 'Enhance with local sources' },
+  { key: 'rewrite', label: 'Rewrite', icon: '🔄', desc: 'Improve clarity and flow', paid: false },
+  { key: 'shorten', label: 'Shorten', icon: '✂️', desc: 'Make it more concise', paid: false },
+  { key: 'grammar', label: 'Fix Grammar', icon: '✏️', desc: 'Fix grammar and spelling', paid: false },
+  { key: 'tone', label: 'Academic Tone', icon: '🎓', desc: 'Make it more formal', paid: false },
+  { key: 'simplify', label: 'Simplify', icon: '💡', desc: 'Say it more simply', paid: false },
+  { key: 'continue', label: 'Continue Writing', icon: '➡️', desc: 'Continue from where you left off', paid: true },
+  { key: 'expand', label: 'Expand', icon: '📝', desc: 'Add more detail and evidence', paid: true },
+  { key: 'rag-enhance', label: 'RAG Enhance', icon: '📚', desc: 'Enhance with local sources', paid: true },
 ];
 
 const STANDALONE_ACTIONS = [
-  { key: 'outline', label: 'Generate Outline', icon: '📋', desc: 'Create paper outline' },
-  { key: 'abstract', label: 'Generate Abstract', icon: '📄', desc: 'Write structured abstract' },
-  { key: 'suggest-citations', label: 'Suggest Citations', icon: '🔍', desc: 'Find citations for text' },
+  { key: 'outline', label: 'Generate Outline', icon: '📋', desc: 'Create paper outline', paid: true },
+  { key: 'abstract', label: 'Generate Abstract', icon: '📄', desc: 'Write structured abstract', paid: true },
+  { key: 'suggest-citations', label: 'Suggest Citations', icon: '🔍', desc: 'Find citations for text', paid: false },
 ];
+
+/** Shown to Free users who reach for a paid tool. */
+function PlanUpsell() {
+  return (
+    <div className="bg-brand-soft border border-rule rounded-lg p-3 text-xs text-ink">
+      <p className="font-semibold text-navy flex items-center gap-1.5"><Lock size={12} /> Part of Standard and Premium</p>
+      <p className="mt-1 text-muted leading-relaxed">Your Free plan includes the quick edits, the grammar and AI checks, and citation search.</p>
+      <Link to="/subscribe" className="mt-2 inline-block font-semibold text-brand hover:underline">See plans</Link>
+    </div>
+  );
+}
 
 function IssueItem({ issue }: { issue: GrammarIssue }) {
   const severityColors: Record<string, string> = {
@@ -139,8 +159,10 @@ function AIDetectResult({ result }: { result: AIDetectionResult }) {
   );
 }
 
-export default function AIAssistantPanel({ sessionId, selectedText, fullDocument, onInsert, onCite }: Props) {
+export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDocument, onInsert, onCite }: Props) {
   const [tab, setTab] = useState<Tab>('write');
+  const [upsell, setUpsell] = useState(false);
+  const locked = (paid: boolean) => paid && plan === 'free';
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -157,7 +179,9 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
 
   const contentToAnalyze = selectedText || fullDocument || '';
 
-  const handleWriteAction = async (instruction: string) => {
+  const handleWriteAction = async (instruction: string, paid = true) => {
+    if (locked(paid)) { setUpsell(true); return; }
+    setUpsell(false);
     setLoading(true);
     setError('');
     setResponse('');
@@ -171,13 +195,16 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
       setResponse(text);
       setHistory((prev) => [{ action: instruction, result: text }, ...prev].slice(0, 10));
     } catch (err) {
-      setError(apiErrorMessage(err, 'AI request failed'));
+      if (apiErrorCode(err) === 'PLAN_REQUIRED') setUpsell(true);
+      else setError(apiErrorMessage(err, 'AI request failed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleAdvancedAction = async (action: string) => {
+    if (locked(action === 'claims' || action === 'plagiarism')) { setUpsell(true); return; }
+    setUpsell(false);
     if (!contentToAnalyze) {
       setError('Select text or write content first');
       return;
@@ -211,7 +238,8 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
           break;
       }
     } catch (err) {
-      setError(apiErrorMessage(err, `${action} failed`));
+      if (apiErrorCode(err) === 'PLAN_REQUIRED') setUpsell(true);
+      else setError(apiErrorMessage(err, `${action} failed`));
     } finally {
       setLoading(false);
     }
@@ -233,13 +261,13 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
     setSuggestedCitations([]);
   };
 
-  const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: 'write', label: 'Write', icon: '✍️' },
-    { key: 'grammar', label: 'Grammar', icon: '✅' },
-    { key: 'claims', label: 'Claims', icon: '📊' },
-    { key: 'plagiarism', label: 'Plagiarism', icon: '🔍' },
-    { key: 'ai-detect', label: 'AI Detect', icon: '🤖' },
-    { key: 'citations', label: 'Citations', icon: '📚' },
+  const TABS: { key: Tab; label: string; icon: string; paid: boolean }[] = [
+    { key: 'write', label: 'Write', icon: '✍️', paid: false },
+    { key: 'grammar', label: 'Grammar', icon: '✅', paid: false },
+    { key: 'claims', label: 'Claims', icon: '📊', paid: true },
+    { key: 'plagiarism', label: 'Plagiarism', icon: '🔍', paid: true },
+    { key: 'ai-detect', label: 'AI Detect', icon: '🤖', paid: false },
+    { key: 'citations', label: 'Citations', icon: '📚', paid: false },
   ];
 
   return (
@@ -264,10 +292,10 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
         {TABS.map((t) => (
           <button
             key={t.key}
-            onClick={() => { setTab(t.key); clearResults(); setError(''); }}
+            onClick={() => { setTab(t.key); clearResults(); setError(''); setUpsell(false); }}
             className={`px-2.5 py-2 text-[10px] font-medium whitespace-nowrap transition ${tab === t.key ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            {t.icon} {t.label}
+            {t.icon} {t.label}{locked(t.paid) && <Lock size={9} className="inline ml-0.5 -mt-0.5" />}
           </button>
         ))}
       </ScrollRow>
@@ -283,11 +311,11 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
               {WRITE_ACTIONS.map((action) => (
                 <button
                   key={action.key}
-                  onClick={() => handleWriteAction(action.key)}
+                  onClick={() => handleWriteAction(action.key, action.paid)}
                   disabled={loading || (!selectedText && !fullDocument && action.key !== 'outline' && action.key !== 'abstract')}
                   className="p-2 text-left bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <span className="font-medium">{action.icon} {action.label}</span>
+                  <span className="font-medium">{action.icon} {action.label}{locked(action.paid) && <Lock size={10} className="inline ml-1 -mt-0.5 text-gray-400" />}</span>
                   <p className="text-gray-400 mt-0.5">{action.desc}</p>
                 </button>
               ))}
@@ -297,11 +325,11 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
               {STANDALONE_ACTIONS.map((action) => (
                 <button
                   key={action.key}
-                  onClick={() => action.key === 'suggest-citations' ? handleAdvancedAction('suggest-citations') : handleWriteAction(action.key)}
+                  onClick={() => action.key === 'suggest-citations' ? handleAdvancedAction('suggest-citations') : handleWriteAction(action.key, action.paid)}
                   disabled={loading || (action.key === 'suggest-citations' && !contentToAnalyze)}
                   className="p-2 text-left bg-green-50 hover:bg-green-100 border border-green-200 hover:border-green-400 rounded-lg text-xs transition disabled:opacity-40"
                 >
-                  <span className="font-medium">{action.icon} {action.label}</span>
+                  <span className="font-medium">{action.icon} {action.label}{locked(action.paid) && <Lock size={10} className="inline ml-1 -mt-0.5 text-gray-400" />}</span>
                   <p className="text-gray-400 mt-0.5">{action.desc}</p>
                 </button>
               ))}
@@ -345,8 +373,10 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
           </>
         )}
 
+        {(tab === 'claims' || tab === 'plagiarism') && locked(true) && <PlanUpsell />}
+
         {/* === CLAIMS TAB === */}
-        {tab === 'claims' && (
+        {tab === 'claims' && !locked(true) && (
           <>
             <button
               onClick={() => handleAdvancedAction('claims')}
@@ -387,7 +417,7 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
         )}
 
         {/* === PLAGIARISM TAB === */}
-        {tab === 'plagiarism' && (
+        {tab === 'plagiarism' && !locked(true) && (
           <>
             <button
               onClick={() => handleAdvancedAction('plagiarism')}
@@ -484,8 +514,10 @@ export default function AIAssistantPanel({ sessionId, selectedText, fullDocument
           </>
         )}
 
-        {/* Custom Prompt (Write tab only) */}
-        {tab === 'write' && (
+        {tab === 'write' && upsell && <PlanUpsell />}
+
+        {/* Custom Prompt (Write tab only; Standard and Premium) */}
+        {tab === 'write' && !locked(true) && (
           <div className="pt-2 border-t border-gray-100">
             <p className="text-xs font-medium text-gray-500 mb-2">Custom Request</p>
             <div className="flex gap-2">
