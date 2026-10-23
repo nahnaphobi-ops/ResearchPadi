@@ -4,11 +4,14 @@ import { Lock } from 'lucide-react';
 import { apiErrorCode, apiErrorMessage } from '../../utils/apiError';
 import { workspaceService } from '../../services/workspaceService';
 import type { WorkspacePlan } from '../../services/subscriptionService';
+import type { Editor } from '@tiptap/react';
+import SourceClaimCheck from './claims/SourceClaimCheck';
 import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
 import type { Source } from './citations/types';
 import { ScrollRow } from './ribbon/controls';
 
 interface Props {
+  editor: Editor | null;
   sessionId: string;
   /** Free has the quick edits and the checks that need no AI model; the rest are paid. */
   plan: WorkspacePlan;
@@ -159,7 +162,7 @@ function AIDetectResult({ result }: { result: AIDetectionResult }) {
   );
 }
 
-export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDocument, onInsert, onCite }: Props) {
+export default function AIAssistantPanel({ editor, sessionId, plan, selectedText, fullDocument, onInsert, onCite }: Props) {
   const [tab, setTab] = useState<Tab>('write');
   const [upsell, setUpsell] = useState(false);
   const locked = (paid: boolean) => paid && plan === 'free';
@@ -383,6 +386,8 @@ export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDo
         {/* === CLAIMS TAB === */}
         {tab === 'claims' && !locked(true) && (
           <>
+            <SourceClaimCheck editor={editor} sessionId={sessionId} />
+            <p className="text-[11px] font-semibold text-gray-600 pt-2 border-t border-gray-100">Or look claims up in the ResearchPadi library</p>
             <button
               onClick={() => handleAdvancedAction('claims')}
               disabled={loading || !contentToAnalyze}

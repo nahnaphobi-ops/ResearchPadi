@@ -16,6 +16,7 @@ import { COACH_ANSWERS_PER_DAY, FREE_CHECKS, PLAN_LIMITS } from '../lib/workspac
 import { countToday, usedToday } from '../lib/daily-count.js';
 import { ownSession, searchSources, type SourceExcerpt } from '../services/notebook/notebook.service.js';
 import { autocompletesUsed, countAutocomplete, suggestContinuation } from '../services/workspace/autocomplete.service.js';
+import { checkClaims, cleanClaims } from '../services/workspace/claim-check.service.js';
 import { documentLimitError, paidPlanRequired, planOf } from '../middleware/subscription.middleware.js';
 import { formatPlan } from '../services/pipeline/plan.service.js';
 import {
@@ -198,6 +199,26 @@ export const autocomplete = async (req: Request, res: Response) => {
     if (err.status === 429) return res.status(429).json({ error: err.message, code: 'AI_LIMIT' });
     log.warn({ err: err.message }, 'Autocomplete failed');
     res.status(502).json({ error: 'No suggestion right now.' });
+  }
+};
+
+/** Each cited sentence checked against the passages of the uploaded source it cites. */
+export const claimCheck = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id as string;
+  const sessionId = req.params.id as string;
+  const claims = cleanClaims(req.body?.claims);
+  if (!claims.length) return res.status(400).json({ error: 'There are no sentences citing your uploaded sources to check yet.' });
+  try {
+    await ownSession(sessionId, userId);
+  } catch {
+    return res.status(404).json({ error: 'Document not found' });
+  }
+  try {
+    res.json({ results: await checkClaims(sessionId, claims, userId) });
+  } catch (err: any) {
+    if (err.status === 429) return res.status(429).json({ error: err.message });
+    log.warn({ err: err.message }, 'Claim check failed');
+    res.status(502).json({ error: 'Could not check your claims right now. Please try again.' });
   }
 };
 

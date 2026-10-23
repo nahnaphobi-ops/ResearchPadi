@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import * as notebook from '../controllers/notebook.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { attachPlan, enforceSessionLimit, requirePremium } from '../middleware/subscription.middleware.js';
+import { attachPlan, enforceSessionLimit, requirePaidPlan, requirePremium } from '../middleware/subscription.middleware.js';
 
 const router = Router();
 
@@ -24,6 +24,8 @@ router.post('/sessions/:id/coach', workspaceController.coach);
 
 router.post('/assist', workspaceController.assist);
 router.post('/assist-advanced', workspaceController.assistAdvanced);
+// Standard and Premium: cited sentences checked against the document's own sources.
+router.post('/sessions/:id/claim-check', requirePaidPlan, workspaceController.claimCheck);
 router.post('/autocomplete', workspaceController.autocomplete);
 router.post('/citations', workspaceController.searchCitations);
 router.get('/citation-styles', workspaceController.listCitationStyles);

@@ -96,6 +96,7 @@ export const SidePanel: React.FC<Props> = ({
         {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'ai' && (
           <AIAssistantPanel
+            editor={editor}
             sessionId={sessionId}
             plan={plan}
             selectedText={aiSelectedText}
