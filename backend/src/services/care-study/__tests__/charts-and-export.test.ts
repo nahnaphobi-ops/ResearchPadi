@@ -5,7 +5,12 @@ import JSZip from 'jszip';
 import { getTemplate, type SectionEntries } from '../template.service.js';
 import { chartData, chartImages, hasChart, parseNaiveTime } from '../chart.service.js';
 import { ruleChecks } from '../checks.js';
-import { buildCareStudyDocx, buildCleanCareStudyDocx, widestTable } from '../export.service.js';
+import { PDFParse } from 'pdf-parse';
+import {
+  buildCareStudyDocx, buildCleanCareStudyDocx, CLEAN_COPY_DESCRIPTION, declarationLine, SUPERVISOR_COPY_ABOUT, SUPERVISOR_COPY_DESCRIPTION, widestTable,
+} from '../export.service.js';
+import { buildCareStudyPdf, buildCleanCareStudyPdf } from '../export-pdf.service.js';
+import { extractPdf } from '../../notebook/extract.service.js';
 import type { CareSource } from '../guards.js';
 
 const midwifery = getTemplate('midwifery-family-centred')!;
@@ -168,4 +173,71 @@ test('the clean copy has a contents page built from the headings, with numbered 
   assert.match(document, /w:pStyle w:val="Heading2"/);
   const settings = await zip.file('word/settings.xml')!.async('string');
   assert.match(settings, /w:updateFields/);
+});
+
+// ── PDF exports ──────────────────────────────────────────────────────────
+
+const flat = (s: string) => s.replace(/\s+/g, ' ');
+const pdfText = async (pdf: Buffer) => flat(await extractPdf(pdf));
+const pdfInfo = async (pdf: Buffer) => {
+  const parser = new PDFParse({ data: new Uint8Array(pdf) });
+  try {
+    return await parser.getInfo() as unknown as { total: number; info: Record<string, any> };
+  } finally {
+    await parser.destroy();
+  }
+};
+const raw = (pdf: Buffer) => pdf.toString('latin1');
+const PORTRAIT = '/MediaBox [0 0 595.28 841.89]';
+const LANDSCAPE = '/MediaBox [0 0 841.89 595.28]';
+
+test('the clean PDF matches the clean Word copy: contents page, landscape care plan, highlighted gaps, chart and bibliography', async () => {
+  const withHeadings = {
+    ...sections,
+    client_particulars: { entries: { fields: { age: '30' } }, draft: '1.0 INTRODUCTION\nThis chapter covers the history.\n1.1 SOCIAL HISTORY\nShe is a farmer.' },
+  };
+  const pdf = await buildCleanCareStudyPdf(study, midwifery, withHeadings);
+  const text = await pdfText(pdf);
+  assert.doesNotMatch(text, /Student's own notes|Polished draft/);
+  assert.match(text, /CLIENT\/FAMILY CENTRED MATERNITY CARE STUDY/i);
+  assert.match(text, /The client was met at the antenatal clinic/);
+
+  // The contents page lists the parts and numbered headings with their page numbers.
+  const contents = text.slice(text.indexOf('TABLE OF CONTENTS'), text.indexOf('PREFACE', text.indexOf('BIBLIOGRAPHY')));
+  assert.match(contents, /INTRODUCTION \d+/);
+  assert.match(contents, /1\.1 SOCIAL HISTORY \d+/);
+  assert.match(contents, /BIBLIOGRAPHY \d+/);
+
+  // The part heading is printed once (plus its contents entry) though the draft repeats it.
+  assert.equal(text.split('INTRODUCTION The client was met').length - 1, 1);
+
+  // The 8-column care plan is a table on a landscape page; the rest are portrait.
+  assert.match(text, /NURSING DIAGNOSIS/);
+  assert.ok(raw(pdf).includes(LANDSCAPE) && raw(pdf).includes(PORTRAIT));
+
+  // Missing items stay marked, including sections never drafted.
+  assert.match(text, /\[Student to supply: initials\]/);
+  assert.match(text, /has not been drafted yet/);
+
+  // The partograph is drawn in, and only cited sources are listed.
+  assert.ok((raw(pdf).match(/\/Subtype \/Image/g) ?? []).length >= 3);
+  assert.match(text, /BIBLIOGRAPHY/);
+  assert.match(text, /Mensah, K\./);
+
+  const { info } = await pdfInfo(pdf);
+  assert.equal(info.Title, `${midwifery.name} — ${study.pseudonym}`);
+  assert.equal(info.Subject, CLEAN_COPY_DESCRIPTION);
+});
+
+test('the supervisor PDF keeps the notes beside the draft, with the same statement as the Word copy', async () => {
+  const pdf = await buildCareStudyPdf(study, midwifery, sections, '2026-10-23T10:00:00Z');
+  const text = await pdfText(pdf);
+  assert.match(text, /Student's own notes Polished draft/);
+  assert.match(text, /Where and when you first met her: ANC clinic/);
+  assert.ok(text.includes(flat(SUPERVISOR_COPY_ABOUT)));
+  assert.ok(text.includes(flat(declarationLine(study, '2026-10-23T10:00:00Z'))));
+  assert.match(text, /Not drafted yet\./);
+  assert.ok(raw(pdf).includes(LANDSCAPE) && !raw(pdf).includes(PORTRAIT));
+  assert.ok((raw(pdf).match(/\/Subtype \/Image/g) ?? []).length >= 3);
+  assert.equal((await pdfInfo(pdf)).info.Subject, SUPERVISOR_COPY_DESCRIPTION);
 });
