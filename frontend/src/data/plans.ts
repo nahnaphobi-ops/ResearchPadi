@@ -11,7 +11,7 @@ export const FULL_PAPER = {
     'Structured for your institution and programme',
     'AI supervisor review before delivery',
     'References checked, with doubtful ones flagged',
-    'DOCX download, clearly marked as AI-written',
+    'Word or PDF download, clearly marked as AI-written',
   ],
 };
 

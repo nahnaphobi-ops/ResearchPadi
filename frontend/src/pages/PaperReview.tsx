@@ -134,7 +134,7 @@ export default function PaperReview() {
                 onClick={() => setShowDownload(true)}
                 className="px-4 py-2 bg-white text-navy rounded-[10px] font-bold text-xs hover:bg-brand-soft transition inline-flex items-center gap-1.5"
               >
-                <Download size={13} /> Download .docx
+                <Download size={13} /> Download
               </button>
             )}
           </div>

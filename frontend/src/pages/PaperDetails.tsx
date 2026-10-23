@@ -136,7 +136,7 @@ export default function PaperDetails() {
               <FileSearch size={16} /> Read study draft
             </button>
             <button onClick={() => setShowDownload(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
-              <Download size={16} /> Download .docx
+              <Download size={16} /> Download
             </button>
             <button onClick={() => setShowReview(true)} className="btn-ghost px-5 py-3 text-sm inline-flex items-center gap-2">
               <GraduationCap size={16} /> Request supervisor review

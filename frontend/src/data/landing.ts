@@ -33,7 +33,7 @@ export const useCases: UseCase[] = [
     icon: FileText,
     title: 'Study from a full research draft',
     desc: 'Give us your topic and brief. We research and draft a full paper, chapter by chapter, for you to study and then rewrite in your own words.',
-    points: ['Brief-to-outline structuring', 'Chapter-by-chapter study draft', 'Checked references, DOCX export'],
+    points: ['Brief-to-outline structuring', 'Chapter-by-chapter study draft', 'Checked references, Word or PDF download'],
     image: '/landing/course-research.webp',
     imageAlt: 'Student writing a research paper in a university library',
     plan: 'paper',
