@@ -5,7 +5,7 @@ import { paperService } from '../services/apiService';
 import { paymentService } from '../services/paymentService';
 import { useAuthStore } from '../store/useAuthStore';
 import AppShell from '../components/layout/AppShell';
-import { ArrowLeft, Baby, FileText, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Baby, FileText, ShieldCheck, Sparkles } from 'lucide-react';
 
 const PAPER_FEE_GHS = 250;
 
@@ -132,6 +132,24 @@ export default function FullPaperForm() {
       <p className="eyebrow mb-2">Study draft</p>
       <h1 className="text-3xl font-bold mb-2 text-navy">New study draft</h1>
       <p className="mb-6 text-muted">Tell us what you need. Our AI researches and drafts it for you to study from, then you write your own in your own words.</p>
+
+      <div role="note" aria-labelledby="draft-disclaimer" className="mb-6 p-4 sm:p-5 rounded-[14px] border-2 border-amber-200 bg-amber-50 text-sm text-ink">
+        <p id="draft-disclaimer" className="font-bold text-amber-900 flex items-center gap-1.5 mb-2">
+          <AlertTriangle size={16} className="shrink-0" /> Before you use your draft
+        </p>
+        <ul className="list-disc pl-5 space-y-1.5 leading-relaxed">
+          <li>
+            <strong>Don't submit it as yours.</strong> Go through it thoroughly and write your own paper in your own words.
+            Handing in the draft as it is, or lightly changed, is not your work.
+          </li>
+          <li>
+            <strong>ResearchPadi is powered by AI, and AI can be wrong.</strong> It can misstate a fact, or guess and sound
+            sure about it. Check every fact, figure, quotation and reference against the original source, and confirm it is
+            right before you rely on it.
+          </li>
+          <li>You know your course, your supervisor's expectations and your subject. Where the draft disagrees with them, trust them.</li>
+        </ul>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6" role="radiogroup" aria-label="What do you need?">
         {([
@@ -361,8 +379,9 @@ export default function FullPaperForm() {
             required
           />
           <span className="leading-relaxed">
-            I understand this is a <strong>study draft written by AI</strong>. I'll use it to learn and plan my own work, and I
-            won't submit it, or any part of it, as my own work. I agree to the{' '}
+            I understand this is a <strong>study draft written by AI</strong>, and that AI can get things wrong, so I'll check
+            everything in it before I rely on it. I'll use it to learn and plan my own work, and I won't submit it, or any part
+            of it, as my own work. I agree to the{' '}
             <Link to="/terms" target="_blank" className="text-brand font-semibold hover:underline">Terms of Service</Link>{' '}
             and{' '}
             <Link to="/refunds" target="_blank" className="text-brand font-semibold hover:underline">Refund Policy</Link>.

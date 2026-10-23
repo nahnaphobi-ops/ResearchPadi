@@ -19,7 +19,7 @@ const log = childLogger('papers-controller');
 const MIN_WORDS = 3000;
 const MAX_WORDS = 25000;
 // Bump when the study-draft wording on the order form or in the Terms changes.
-const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-17';
+const STUDY_DRAFT_AGREEMENT_VERSION = '2026-10-23';
 
 // Columns added by later migrations. Until one is applied, PostgREST rejects the
 // insert ("could not find the column", PGRST204); retry without them instead of

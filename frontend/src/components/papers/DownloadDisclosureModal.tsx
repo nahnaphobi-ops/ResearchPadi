@@ -69,7 +69,7 @@ export default function DownloadDisclosureModal({ paperId, topic, onClose }: Dow
             <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 mb-2">How to use it</p>
             <ul className="text-sm text-ink leading-relaxed list-disc pl-5 space-y-1">
               <li>Study it to understand your topic and how the chapters fit together.</li>
-              <li>Follow up the sources, and check every reference before you use it.</li>
+              <li>Follow up the sources. AI can be wrong or guess, so check every fact, figure and reference before you use it.</li>
               <li>Write your own paper in your own words. Don't submit this draft, or parts of it, as your work.</li>
             </ul>
           </div>

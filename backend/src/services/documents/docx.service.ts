@@ -9,7 +9,7 @@ export const STUDY_DRAFT_NOTICE =
   'This document was researched and written by artificial intelligence (ResearchPadi) from a brief supplied by the student. ' +
   "It is a study and reference draft, not the student's own work. Use it to understand the topic, plan your chapters and find sources, " +
   'then write your paper in your own words. Do not submit this draft, or any part of it, as your own work. ' +
-  'Check every reference against the original source before you rely on it.';
+  'AI can be wrong and can present a guess as fact: check every fact, figure, quotation and reference against the original source before you rely on it.';
 
 export const STUDY_DRAFT_HEADER = 'AI-generated study draft (ResearchPadi) · not for submission as your own work';
 
