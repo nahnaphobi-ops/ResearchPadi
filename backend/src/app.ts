@@ -45,7 +45,7 @@ function allowedOrigins(): string[] {
   return configured;
 }
 
-const ORIGINS = allowedOrigins();
+export const ORIGINS = allowedOrigins();
 
 // Security
 app.use(helmet({

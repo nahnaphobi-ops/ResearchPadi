@@ -328,3 +328,27 @@ input:focus, select:focus, textarea:focus {
 .word-doc .bibliography .bib-number { display: inline-block; width: 0.45in; text-indent: 0; }
 .word-doc .bibliography .bib-empty { color: #8a8886; font-style: italic; text-align: center; }
 @media print { .word-doc .bibliography .bib-empty { display: none; } }
+
+/* Live co-writing: other people's cursors and selections. */
+.collaboration-carets__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 2px solid;
+  word-break: normal;
+  pointer-events: none;
+}
+.collaboration-carets__label {
+  position: absolute;
+  top: -1.35em;
+  left: -2px;
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px 3px 3px 0;
+  color: #fff;
+  font: 600 11px/1.3 Poppins, system-ui, sans-serif;
+  white-space: nowrap;
+  user-select: none;
+}
+@media print {
+  .collaboration-carets__caret, .collaboration-carets__label { display: none; }
+}

@@ -21,6 +21,8 @@ export interface SharedDocument {
   document: { title: string; content: string; updatedAt: string };
   owner: string;
   comments: DocComment[];
+  /** Edit links only: the live document to join. */
+  sessionId?: string;
 }
 
 /** The owner's version history, share links and comments for one document. */
@@ -33,7 +35,8 @@ export const sharingService = {
 
   shares: (id: string) => api.get<{ shares: Share[] }>(`/workspace/sessions/${id}/shares`),
   share: (id: string, role: ShareRole) => api.post<{ share: Share }>(`/workspace/sessions/${id}/shares`, { role }),
-  unshare: (id: string, shareId: string) => api.delete(`/workspace/sessions/${id}/shares/${shareId}`),
+  /** `collaborative`: an edit link is still on after this one goes. */
+  unshare: (id: string, shareId: string) => api.delete<{ ok: true; collaborative: boolean }>(`/workspace/sessions/${id}/shares/${shareId}`),
 
   comments: (id: string) => api.get<{ comments: DocComment[] }>(`/workspace/sessions/${id}/comments`),
   comment: (id: string, c: NewComment) => api.post<{ comment: DocComment }>(`/workspace/sessions/${id}/comments`, c),
@@ -45,6 +48,8 @@ export const sharingService = {
 export const sharedService = {
   open: (token: string) => api.get<SharedDocument>(`/shared/${token}`),
   comment: (token: string, c: NewComment & { name: string }) => api.post<{ comment: DocComment }>(`/shared/${token}/comments`, c),
+  /** A co-writer's copy of the HTML (signed in, edit links only). */
+  save: (token: string, content: string) => api.put(`/shared/${token}/content`, { content }),
 };
 
 export const shareUrl = (token: string) => `${window.location.origin}/shared/${token}`;

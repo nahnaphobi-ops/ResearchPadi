@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Check, Copy, Eye, Link2, Loader2, MessageSquare, X } from 'lucide-react';
+import { Check, Copy, Eye, Link2, Loader2, MessageSquare, PenLine, X } from 'lucide-react';
 import { sharingService, shareUrl, type Share, type ShareRole } from '../../../services/sharingService';
 import { apiErrorMessage } from '../../../utils/apiError';
 
 interface Props {
   sessionId: string;
   onClose: () => void;
+  /** Whether a working edit link exists (the document is then edited live). */
+  onLiveChange?: (live: boolean) => void;
 }
 
 const ROLES: { role: ShareRole; label: string; hint: string; icon: typeof Eye }[] = [
   { role: 'view', label: 'Can view', hint: 'Read the document; no account needed', icon: Eye },
   { role: 'comment', label: 'Can comment', hint: 'Read and comment, e.g. your supervisor; no account needed', icon: MessageSquare },
+  { role: 'edit', label: 'Can edit', hint: 'Write with you at the same time, e.g. group members; they sign in', icon: PenLine },
 ];
 
 /** Links to the document for a supervisor, classmates or group members. Turning a link off stops it at once. */
-export default function ShareDialog({ sessionId, onClose }: Props) {
+export default function ShareDialog({ sessionId, onClose, onLiveChange }: Props) {
   const [shares, setShares] = useState<Share[] | null>(null);
   const [busy, setBusy] = useState<ShareRole | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export default function ShareDialog({ sessionId, onClose }: Props) {
     try {
       const { data } = await sharingService.share(sessionId, role);
       setShares((list) => [data.share, ...(list ?? [])]);
+      if (role === 'edit') onLiveChange?.(true);
       void copy(data.share.token);
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not create the link.'));
@@ -58,8 +62,9 @@ export default function ShareDialog({ sessionId, onClose }: Props) {
 
   const turnOff = async (s: Share) => {
     try {
-      await sharingService.unshare(sessionId, s.id);
+      const { data } = await sharingService.unshare(sessionId, s.id);
       setShares((list) => (list ?? []).filter((x) => x.id !== s.id));
+      if (s.role === 'edit') onLiveChange?.(data.collaborative);
     } catch (err) {
       setError(apiErrorMessage(err, 'Could not turn off that link.'));
     }
@@ -103,7 +108,7 @@ export default function ShareDialog({ sessionId, onClose }: Props) {
                 {shares.map((s) => (
                   <li key={s.id} className="flex items-center gap-2 rounded-lg border border-rule px-2.5 py-2">
                     <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-semibold text-navy">{ROLES.find((r) => r.role === s.role)?.label ?? 'Can edit'}</span>
+                      <span className="block text-xs font-semibold text-navy">{ROLES.find((r) => r.role === s.role)?.label}</span>
                       <span className="block truncate text-[11px] text-muted">{shareUrl(s.token)}</span>
                     </span>
                     <button type="button" onClick={() => void copy(s.token)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand hover:bg-brand-soft">

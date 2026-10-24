@@ -14,15 +14,20 @@ interface Props {
   onTogglePanel: (panel: WorkspacePanel) => void;
   hasStudyDraft?: boolean;
   onShare: () => void;
+  /** Set while the document is edited live: connected yet, and who else is in it. */
+  live?: { connected: boolean; others: { name: string; color: string }[] } | null;
 }
 
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
 /** Word-style title bar: quick access toolbar, document name and save state. */
-export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft, onShare }) => {
+export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft, onShare, live }) => {
   const navigate = useNavigate();
   const { activeSession } = useWorkspaceStore();
   const history = useEditorState({
     editor,
-    selector: ({ editor: e }) => ({ canUndo: e?.can().undo() ?? false, canRedo: e?.can().redo() ?? false }),
+    // A replaced editor (going live or leaving live) is destroyed before React lets go of it.
+    selector: ({ editor: e }) => (e && !e.isDestroyed ? { canUndo: e.can().undo(), canRedo: e.can().redo() } : { canUndo: false, canRedo: false }),
   });
 
   const status = saving
@@ -117,6 +122,21 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
         >
           <BarChart3 size={15} /> <span className="hidden lg:inline">Data</span>
         </button>
+        {live && (
+          <span
+            className="mr-1 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-0.5 text-[11.5px]"
+            title={live.others.length ? `Writing with you: ${live.others.map((o) => o.name).join(', ')}` : 'People with the edit link can write with you'}
+          >
+            <span className={`h-2 w-2 rounded-full ${live.connected ? 'bg-[#6ccb5f]' : 'bg-[#f7c948] animate-pulse'}`} aria-hidden />
+            <span className="hidden sm:inline">{live.connected ? 'Live' : 'Connecting…'}</span>
+            {live.others.slice(0, 3).map((o, i) => (
+              <span key={i} className="grid h-5 w-5 place-items-center rounded-full text-[9.5px] font-bold text-white ring-1 ring-white/70" style={{ backgroundColor: o.color }} aria-label={o.name}>
+                {initials(o.name)}
+              </span>
+            ))}
+            {live.others.length > 3 && <span>+{live.others.length - 3}</span>}
+          </span>
+        )}
         <button
           onClick={() => onTogglePanel('comments')}
           aria-label="Comments"

@@ -16,6 +16,8 @@ interface WorkspaceSession {
   uploaded_materials: unknown[];
   created_at: string;
   updated_at: string;
+  /** Shared with an edit link, so edited live. */
+  collaborative?: boolean;
 }
 
 interface WorkspaceState {

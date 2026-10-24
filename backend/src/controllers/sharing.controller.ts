@@ -3,14 +3,16 @@ import { supabase } from '../db/supabase.js';
 import { childLogger } from '../lib/logger.js';
 import {
   SharingError, addComment, cleanComment, createShare, deleteComment, getVersion, isShareRole, listComments, listShares,
-  listVersions, openShare, revokeShare, saveVersion, setResolved,
+  autoVersion, listVersions, openShare, revokeShare, saveVersion, setResolved,
 } from '../services/workspace/sharing.service.js';
+import { dropState, hasEditShare } from '../services/workspace/collab.service.js';
+import { closeCollab } from '../lib/collab.js';
 
 /**
  * Version history, share links and comments. The owner's routes sit under
  * /api/workspace/sessions/:id (signed in); /api/shared/:token serves people
  * who were given a link: view only, or view and comment (no account needed,
- * they give a name).
+ * they give a name), or edit (signed in, live through /api/collab).
  */
 const log = childLogger('sharing');
 const userOf = (req: Request) => (req as any).user?.id as string;
@@ -113,8 +115,13 @@ export const share = async (req: Request, res: Response) => {
 export const unshare = async (req: Request, res: Response) => {
   try {
     await ownDocument(req);
-    await revokeShare(req.params.id as string, req.params.shareId as string);
-    res.json({ ok: true });
+    const id = req.params.id as string;
+    await revokeShare(id, req.params.shareId as string);
+    // Anyone editing through a link signs in again; with no edit link left, the live copy goes.
+    const collaborative = await hasEditShare(id);
+    if (!collaborative) await dropState(id);
+    closeCollab(id);
+    res.json({ ok: true, collaborative });
   } catch (err) {
     fail(res, err, 'Could not turn off that link.');
   }
@@ -173,6 +180,8 @@ export const openShared = async (req: Request, res: Response) => {
       document: { title: session.title, content: session.content ?? '', updatedAt: session.updated_at },
       owner: await displayName(session.user_id),
       comments: withComments ? await listComments(session.id) : [],
+      // Co-writers join the live document by its id (with the link as their pass).
+      ...(link.role === 'edit' ? { sessionId: session.id } : {}),
     });
   } catch (err) {
     fail(res, err, 'Could not open this link.');
@@ -190,5 +199,24 @@ export const commentShared = async (req: Request, res: Response) => {
     res.status(201).json({ comment: created });
   } catch (err) {
     fail(res, err, 'Could not save the comment.');
+  }
+};
+
+/** A co-writer's copy of the HTML (the live document syncs separately), so readers and exports stay current. */
+export const saveShared = async (req: Request, res: Response) => {
+  try {
+    const { share: link, session } = await openShare(req.params.token as string);
+    if (link.role !== 'edit') return res.status(403).json({ error: 'This link does not allow editing.' });
+    const content = req.body?.content;
+    if (typeof content !== 'string') return res.status(400).json({ error: 'Nothing to save.' });
+    const { error } = await supabase
+      .from('workspace_sessions')
+      .update({ content, updated_at: new Date().toISOString() })
+      .eq('id', session.id);
+    if (error) throw new SharingError('Could not save your changes.', 500);
+    void autoVersion(session.id, userOf(req), content);
+    res.json({ ok: true });
+  } catch (err) {
+    fail(res, err, 'Could not save your changes.');
   }
 };

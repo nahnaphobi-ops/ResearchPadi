@@ -20,6 +20,7 @@ import { CITATION_STYLES } from '../citations/format';
 import { getCitationStyle, getCitedSources, hasBibliography } from '../citations/CitationExtension';
 import type { CitationStyleId } from '../citations/types';
 import { MARGINS, PAGE_SIZES, type MarginKey, type PageSettings, type PageSizeKey } from '../pageLayout';
+import { onEditorDom } from '../editorDom';
 
 type Tab = 'file' | 'home' | 'insert' | 'layout' | 'references' | 'review' | 'view';
 
@@ -132,8 +133,8 @@ export default function Ribbon(props: RibbonProps) {
         linkHref: (e.getAttributes('link').href as string | undefined) ?? '',
         lineHeight: String(e.getAttributes(blockType).lineHeight ?? '1.5'),
         table: e.isActive('table'),
-        canUndo: e.can().undo(),
-        canRedo: e.can().redo(),
+        canUndo: !e.isDestroyed && e.can().undo(),
+        canRedo: !e.isDestroyed && e.can().redo(),
         hasSelection: !e.state.selection.empty,
         citationStyle: getCitationStyle(e.state),
         citedCount: getCitedSources(e.state).length,
@@ -145,22 +146,23 @@ export default function Ribbon(props: RibbonProps) {
   // Format Painter: copy marks from the selection, apply them to the next selection made with the mouse.
   useEffect(() => {
     if (!painterMarks) return;
-    const dom = editor.view.dom;
-    const onUp = () => {
-      window.setTimeout(() => {
-        if (editor.state.selection.empty) return;
-        let chain = editor.chain().focus().unsetAllMarks();
-        for (const mark of painterMarks) chain = chain.setMark(mark.type.name, mark.attrs);
-        chain.run();
-        setPainterMarks(null);
-      }, 0);
-    };
-    dom.classList.add('format-painter');
-    dom.addEventListener('mouseup', onUp);
-    return () => {
-      dom.classList.remove('format-painter');
-      dom.removeEventListener('mouseup', onUp);
-    };
+    return onEditorDom(editor, (dom) => {
+      const onUp = () => {
+        window.setTimeout(() => {
+          if (editor.state.selection.empty) return;
+          let chain = editor.chain().focus().unsetAllMarks();
+          for (const mark of painterMarks) chain = chain.setMark(mark.type.name, mark.attrs);
+          chain.run();
+          setPainterMarks(null);
+        }, 0);
+      };
+      dom.classList.add('format-painter');
+      dom.addEventListener('mouseup', onUp);
+      return () => {
+        dom.classList.remove('format-painter');
+        dom.removeEventListener('mouseup', onUp);
+      };
+    });
   }, [painterMarks, editor]);
 
   const chain = () => editor.chain().focus();

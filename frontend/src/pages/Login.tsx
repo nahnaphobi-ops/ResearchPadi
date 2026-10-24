@@ -6,6 +6,7 @@ import BrandLogo from '../components/common/BrandLogo';
 import HeroStudent from '../components/brand/HeroStudent';
 import { parsePlan, planDestination, withPlan } from '../utils/planIntent';
 import { apiErrorMessage } from '../utils/apiError';
+import { takeAfterLogin } from '../utils/afterLogin';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -104,9 +105,12 @@ export default function Login() {
       const response = await authService.verifyOtp(phone, otp);
       const { token, user, isNewUser } = response.data;
       setAuth(token, user);
+      const after = takeAfterLogin();
 
       if (isNewUser) {
         navigate(withPlan('/register', plan));
+      } else if (after) {
+        navigate(after);
       } else if (user.is_admin && !plan) {
         navigate('/admin');
       } else {
