@@ -387,7 +387,7 @@ export default function WritingAssist() {
                       ind.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
                       'border-gray-500 bg-gray-50'
                     }`}>
-                      {ind.description}
+                      {ind.type}: {ind.description}
                     </div>
                   ))}
                 </div>

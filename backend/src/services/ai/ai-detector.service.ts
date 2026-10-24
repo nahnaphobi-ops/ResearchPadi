@@ -85,139 +85,157 @@ const DISCLOSURE_TEMPLATES: DisclosureTemplate[] = [
   },
 ];
 
-const AI_PATTERNS = {
-  repetitiveStructure: /\b(furthermore|moreover|additionally|consequently|in conclusion|it is important to note|it is worth noting|in summary|to summarize)\b/gi,
-  genericHedging: /\b(it is possible|it is likely|it may be|it could be|it seems|it appears|it suggests)\b/gi,
-  formalPhrasing: /\b(in this regard|in this context|with regard to|in terms of|as regards|with respect to|in light of|it should be noted)\b/gi,
-  transitionOveruse: /\b(however|therefore|thus|hence|consequently|accordingly|nevertheless|nonetheless|on the other hand|in contrast|conversely)\b/gi,
-  listPatterns: /\b:firstly|secondly|thirdly|lastly|in addition|also|furthermore|moreover\b/gi,
-  sentenceStarters: /\b(the (purpose|aim|objective|goal) of|this (paper|study|research|article)|the (results|findings|data) (show|indicate|suggest|reveal|demonstrate))\b/gi,
-  hedgingFrequency: /\b(may|might|could|would|should|must|shall|can|likely|unlikely|possibly|perhaps|probably|arguably)\b/gi,
-};
+// Phrases and vocabulary that AI models overuse.
+const STOCK_PHRASES = /\b(furthermore|moreover|additionally|in conclusion|it is important to note|it is worth noting|in summary|to summarize|delves? into|underscores?|pivotal|paramount|multifaceted|nuanced|sheds? light on|in the realm of|tapestry|embarks? on|plays? a (?:crucial|vital|pivotal) role|in today's (?:world|society))\b/gi;
+const GENERIC_HEDGING = /\b(it is possible|it is likely|it may be|it could be|it seems|it appears|it suggests)\b/gi;
+const FORMAL_FILLER = /\b(in this regard|in this context|with regard to|in terms of|as regards|with respect to|in light of|it should be noted)\b/gi;
+const TRANSITIONS = /\b(however|therefore|thus|hence|consequently|accordingly|nevertheless|nonetheless|on the other hand|in contrast|conversely)\b/gi;
+const FORMULAIC_START = /^(the (purpose|aim|objective|goal) of|this (paper|study|research|article)|the (results|findings|data) (show|indicate|suggest|reveal|demonstrate))\b/i;
 
-function analyzeTextPatterns(text: string): { type: string; count: number; severity: 'high' | 'medium' | 'low' }[] {
-  const indicators: { type: string; count: number; severity: 'high' | 'medium' | 'low' }[] = [];
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const avgSentenceLength = text.split(/\s+/).length / Math.max(sentences.length, 1);
+// Below this many words there is too little text to call it either way.
+export const MIN_WORDS_TO_JUDGE = 150;
+const VOCABULARY_WINDOW = 50;
 
-  let repetitiveCount = 0;
-  let match;
-  while ((match = AI_PATTERNS.repetitiveStructure.exec(text)) !== null) repetitiveCount++;
-  if (repetitiveCount > 3) {
-    indicators.push({
-      type: 'Repetitive Transitions',
-      count: repetitiveCount,
-      severity: repetitiveCount > 6 ? 'high' : 'medium',
-    });
-  }
-
-  let hedgingCount = 0;
-  while ((match = AI_PATTERNS.genericHedging.exec(text)) !== null) hedgingCount++;
-  if (hedgingCount > 5) {
-    indicators.push({
-      type: 'Excessive Hedging',
-      count: hedgingCount,
-      severity: hedgingCount > 8 ? 'high' : 'medium',
-    });
-  }
-
-  let formalCount = 0;
-  while ((match = AI_PATTERNS.formalPhrasing.exec(text)) !== null) formalCount++;
-  if (formalCount > 4) {
-    indicators.push({
-      type: 'Generic Formal Phrasing',
-      count: formalCount,
-      severity: formalCount > 7 ? 'high' : 'medium',
-    });
-  }
-
-  let transitionCount = 0;
-  while ((match = AI_PATTERNS.transitionOveruse.exec(text)) !== null) transitionCount++;
-  if (transitionCount > 8) {
-    indicators.push({
-      type: 'Transition Overuse',
-      count: transitionCount,
-      severity: transitionCount > 12 ? 'high' : 'medium',
-    });
-  }
-
-  let sentenceStarters = 0;
-  while ((match = AI_PATTERNS.sentenceStarters.exec(text)) !== null) sentenceStarters++;
-  if (sentenceStarters > 3) {
-    indicators.push({
-      type: 'Formulaic Sentence Starters',
-      count: sentenceStarters,
-      severity: sentenceStarters > 5 ? 'high' : 'medium',
-    });
-  }
-
-  if (avgSentenceLength > 30) {
-    indicators.push({
-      type: 'Unnaturally Long Sentences',
-      count: Math.round(avgSentenceLength),
-      severity: avgSentenceLength > 40 ? 'high' : 'medium',
-    });
-  }
-
-  const wordCount = text.split(/\s+/).length;
-  const uniqueWords = new Set(text.toLowerCase().split(/\s+/));
-  const lexicalDiversity = uniqueWords.size / Math.max(wordCount, 1);
-
-  if (lexicalDiversity < 0.4) {
-    indicators.push({
-      type: 'Low Lexical Diversity',
-      count: Math.round(lexicalDiversity * 100),
-      severity: lexicalDiversity < 0.3 ? 'high' : 'medium',
-    });
-  }
-
-  return indicators;
+/** One pattern, how strongly it shows (0 to 1) and how much it counts towards the score. */
+interface Signal {
+  type: string;
+  weight: number;
+  strength: number;
+  evidence: string;
 }
 
-export function detectAIContent(text: string): AIDetectionResult {
-  const indicators = analyzeTextPatterns(text);
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const wordCount = text.split(/\s+/).length;
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
-  let aiScore = 0;
-  const maxScore = indicators.length * 10;
+function found(text: string, pattern: RegExp): string[] {
+  return (text.match(pattern) ?? []).map(m => m.toLowerCase());
+}
 
-  for (const indicator of indicators) {
-    switch (indicator.severity) {
-      case 'high': aiScore += 10; break;
-      case 'medium': aiScore += 6; break;
-      case 'low': aiScore += 3; break;
-    }
+function phraseEvidence(phrases: string[]): string {
+  const examples = [...new Set(phrases)].slice(0, 4).map(p => `"${p}"`).join(', ');
+  return `Found ${phrases.length}: ${examples}`;
+}
+
+/**
+ * Average share of distinct words in each 50-word stretch. A whole-text ratio
+ * falls as any text gets longer; this one does not, so long theses are not
+ * penalised for their length.
+ */
+function vocabularyVariety(words: string[]): number {
+  const counts = new Map<string, number>();
+  const add = (w: string) => counts.set(w, (counts.get(w) ?? 0) + 1);
+  const remove = (w: string) => {
+    const n = (counts.get(w) ?? 0) - 1;
+    if (n > 0) counts.set(w, n);
+    else counts.delete(w);
+  };
+  words.slice(0, VOCABULARY_WINDOW).forEach(add);
+  let total = counts.size;
+  for (let i = VOCABULARY_WINDOW; i < words.length; i++) {
+    add(words[i]);
+    remove(words[i - VOCABULARY_WINDOW]);
+    total += counts.size;
+  }
+  return total / (words.length - VOCABULARY_WINDOW + 1) / VOCABULARY_WINDOW;
+}
+
+function analyzeSignals(text: string): { signals: Signal[]; wordCount: number } {
+  const words = text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+  const wordCount = words.length;
+  const per100 = (n: number) => (wordCount ? (n / wordCount) * 100 : 0);
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => /\p{L}/u.test(s));
+  const signals: Signal[] = [];
+
+  const stock = found(text, STOCK_PHRASES);
+  signals.push({ type: 'Stock AI phrases', weight: 3, strength: clamp01(per100(stock.length) / 1.5), evidence: phraseEvidence(stock) });
+
+  const hedging = found(text, GENERIC_HEDGING);
+  signals.push({ type: 'Generic hedging', weight: 1, strength: clamp01(per100(hedging.length) / 1), evidence: phraseEvidence(hedging) });
+
+  const filler = found(text, FORMAL_FILLER);
+  signals.push({ type: 'Formal filler phrases', weight: 1, strength: clamp01(per100(filler.length) / 1), evidence: phraseEvidence(filler) });
+
+  // Academic writing uses "however" and "therefore" often, so only heavy use counts.
+  const transitions = found(text, TRANSITIONS);
+  signals.push({ type: 'Transition overuse', weight: 1, strength: clamp01((per100(transitions.length) - 1) / 1.5), evidence: phraseEvidence(transitions) });
+
+  if (sentences.length >= 3) {
+    const starts = sentences.filter(s => FORMULAIC_START.test(s));
+    signals.push({
+      type: 'Formulaic sentence openings',
+      weight: 1.5,
+      strength: clamp01(starts.length / sentences.length / 0.3),
+      evidence: `${starts.length} of ${sentences.length} sentences open with a stock phrase`,
+    });
   }
 
-  if (wordCount < 50) aiScore += 5;
-  if (wordCount > 500) aiScore += Math.min(indicators.length * 2, 10);
+  if (sentences.length >= 5) {
+    const lengths = sentences.map(s => s.split(/\s+/).length);
+    const mean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+    const sd = Math.sqrt(lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / lengths.length);
+    const variation = mean ? sd / mean : 0;
+    signals.push({
+      type: 'Even sentence lengths',
+      weight: 2,
+      strength: clamp01((0.45 - variation) / 0.25),
+      evidence: `Sentences average ${Math.round(mean)} words and vary by ${Math.round(variation * 100)}% around that`,
+    });
+  }
 
-  const normalizedScore = maxScore > 0 ? (aiScore / maxScore) * 100 : 0;
-  const humanScore = 100 - normalizedScore;
+  if (wordCount >= 100) {
+    const variety = vocabularyVariety(words);
+    signals.push({
+      type: 'Repetitive vocabulary',
+      weight: 1,
+      strength: clamp01((0.65 - variety) / 0.15),
+      evidence: `${Math.round(variety * 100)}% distinct words in each 50-word stretch`,
+    });
+  }
+
+  return { signals, wordCount };
+}
+
+/**
+ * Pattern check for wording common in AI-generated text. The score is the
+ * weighted share of all applicable signals that show, so one pattern on its
+ * own cannot make a text "likely AI", and length alone never raises it.
+ */
+export function detectAIContent(text: string): AIDetectionResult {
+  const { signals, wordCount } = analyzeSignals(text);
+  const totalWeight = signals.reduce((sum, s) => sum + s.weight, 0);
+  const shown = signals.reduce((sum, s) => sum + s.weight * s.strength, 0);
+  const aiScore = totalWeight > 0 ? Math.round((shown / totalWeight) * 100) : 0;
+  const enoughText = wordCount >= MIN_WORDS_TO_JUDGE;
 
   let recommendation = '';
-  if (normalizedScore > 70) {
+  if (!enoughText) {
+    recommendation = `Too little text to judge reliably. Check at least ${MIN_WORDS_TO_JUDGE} words.`;
+    if (aiScore > 30) recommendation += ' The patterns listed below are still worth a look.';
+  } else if (aiScore > 70) {
     recommendation = 'High likelihood of AI-generated content. Consider significant revision to add original voice and analysis.';
-  } else if (normalizedScore > 50) {
+  } else if (aiScore > 50) {
     recommendation = 'Moderate AI indicators detected. Review flagged areas and add more specific, personal analysis.';
-  } else if (normalizedScore > 30) {
+  } else if (aiScore > 30) {
     recommendation = 'Some AI patterns detected. Minor revisions recommended to improve originality.';
   } else {
     recommendation = 'Content appears predominantly human-written with minimal AI indicators.';
   }
+  recommendation += ' These are writing patterns, not proof of how the text was written.';
 
   return {
-    isLikelyAI: normalizedScore > 50,
-    confidence: Math.min(95, Math.max(40, normalizedScore + 20)),
-    aiScore: Math.round(normalizedScore),
-    humanScore: Math.round(humanScore),
-    indicators: indicators.map(i => ({
-      type: i.type,
-      description: `${i.type}: Found ${i.count} instances with ${i.severity} severity`,
-      severity: i.severity,
-      evidence: `Detected ${i.count} occurrences`,
-    })),
+    isLikelyAI: enoughText && aiScore > 50,
+    // How much text the call rests on, not how sure the score is.
+    confidence: Math.round(Math.min(90, 40 + wordCount / 20)),
+    aiScore,
+    humanScore: 100 - aiScore,
+    indicators: signals
+      .filter(s => s.strength > 0)
+      .sort((a, b) => b.weight * b.strength - a.weight * a.strength)
+      .map(s => ({
+        type: s.type,
+        description: s.evidence,
+        severity: s.strength >= 0.67 ? 'high' : s.strength >= 0.34 ? 'medium' : 'low',
+        evidence: s.evidence,
+      })),
     recommendation,
   };
 }
