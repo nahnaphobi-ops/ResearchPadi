@@ -8,6 +8,8 @@ import { reviewService, type ReviewPart, type ReviewPricing, type ReviewScope, t
 interface Props {
   sourceType: Exclude<ReviewSourceType, 'workspace'>;
   sourceId: string;
+  /** A research project is a care_study source with its own wording. */
+  researchProject?: boolean;
   /** Run before sending, e.g. save unsaved notes so the reviewer sees the latest version. */
   onBeforeSubmit?: () => Promise<boolean>;
   onClose: () => void;
@@ -30,10 +32,17 @@ const COPY: Record<Props['sourceType'], { whole: string; part: string; partNoun:
   },
 };
 
-/** Ask for a human review of a generated paper or care study, paid from the wallet. */
-export default function ReviewRequestDialog({ sourceType, sourceId, onBeforeSubmit, onClose, onSubmitted }: Props) {
+const RESEARCH_COPY = {
+  whole: 'The whole research project',
+  part: 'One section',
+  partNoun: 'section',
+  intro: 'A reviewer vetted in research methods reads your notes beside the draft and checks your objectives, methodology, ethics and consistency. They give feedback; they do not rewrite your work or replace your supervisor.',
+};
+
+/** Ask for a human review of a generated paper, care study or research project, paid from the wallet. */
+export default function ReviewRequestDialog({ sourceType, sourceId, researchProject, onBeforeSubmit, onClose, onSubmitted }: Props) {
   const navigate = useNavigate();
-  const copy = COPY[sourceType];
+  const copy = researchProject ? RESEARCH_COPY : COPY[sourceType];
   const [pricing, setPricing] = useState<ReviewPricing | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [parts, setParts] = useState<ReviewPart[]>([]);
@@ -123,7 +132,7 @@ export default function ReviewRequestDialog({ sourceType, sourceId, onBeforeSubm
 
           {sourceType === 'care_study' && (
             <p className="rounded-[10px] bg-navy-mist p-3 text-xs text-ink">
-              The reviewer sees your pseudonym, your notes and the draft, never your name or phone number. Details like phone numbers and ID numbers are blocked before anything is sent.
+              {researchProject ? 'The reviewer sees your notes and the draft, never your name or phone number.' : 'The reviewer sees your pseudonym, your notes and the draft, never your name or phone number.'} Details like phone numbers and ID numbers are blocked before anything is sent.
             </p>
           )}
 

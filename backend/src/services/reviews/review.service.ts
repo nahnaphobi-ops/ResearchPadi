@@ -148,6 +148,14 @@ async function resolveSource(userId: string, input: CreateInput): Promise<Resolv
   return { title, snapshot, sessionId: null, sourceId: study.id, specialty };
 }
 
+/** The checklist for a request: a research project is a care_study source with its own template kind. */
+async function rubricOfRequest(request: { source_type?: string | null; source_id?: string | null }) {
+  if (request.source_type !== 'care_study' || !request.source_id) return rubricFor(request.source_type);
+  const { data } = await supabase.from('care_studies').select('template_id').eq('id', request.source_id).maybeSingle();
+  const template = data ? getTemplate(data.template_id) : null;
+  return rubricFor(request.source_type, template?.kind);
+}
+
 /** Snapshot the work, charge the wallet, and queue the request. */
 export async function createRequest(userId: string, input: CreateInput) {
   const sourceType: SourceType = input.sourceType ?? 'workspace';
@@ -237,7 +245,7 @@ export async function getMine(userId: string, id: string) {
     scores: request.status === 'returned' ? request.scores : null,
     reviewer_name: (reviewer.data as { display_name?: string } | null)?.display_name ?? null,
     comments: comments.data ?? [],
-    rubric: rubricFor(request.source_type),
+    rubric: await rubricOfRequest(request),
   };
 }
 
@@ -325,7 +333,7 @@ export async function release(reviewerId: string, id: string) {
 export async function getForReviewer(reviewerId: string, id: string) {
   const { data: request } = await supabase
     .from('review_requests')
-    .select(`${DESK_COLUMNS}, content_snapshot, summary, scores`)
+    .select(`${DESK_COLUMNS}, source_id, content_snapshot, summary, scores`)
     .eq('id', id)
     .eq('reviewer_id', reviewerId)
     .maybeSingle();
@@ -336,7 +344,7 @@ export async function getForReviewer(reviewerId: string, id: string) {
     .eq('request_id', id)
     .order('created_at');
   const reviewerPay = Math.round(Number(request.price_ghs) * CONFIG.PRICING.REVIEW.REVIEWER_SHARE * 100) / 100;
-  return { ...request, reviewer_pay_ghs: reviewerPay, comments: comments ?? [], rubric: rubricFor(request.source_type) };
+  return { ...request, reviewer_pay_ghs: reviewerPay, comments: comments ?? [], rubric: await rubricOfRequest(request) };
 }
 
 async function assertReviewing(reviewerId: string, id: string) {
@@ -373,13 +381,13 @@ export async function deleteComment(reviewerId: string, id: string, commentId: s
 
 export async function returnReview(reviewerId: string, id: string, input: { summary?: unknown; scores?: unknown }) {
   await assertReviewing(reviewerId, id);
-  const { data: source } = await supabase.from('review_requests').select('source_type').eq('id', id).maybeSingle();
+  const { data: source } = await supabase.from('review_requests').select('source_type, source_id').eq('id', id).maybeSingle();
   const summary = typeof input.summary === 'string' ? input.summary.trim().slice(0, 8_000) : '';
   if (summary.length < 40) throw new ReviewError('Write an overall summary for the student (at least a few sentences).');
 
   const scores: Record<string, number> = {};
   const given = (input.scores ?? {}) as Record<string, unknown>;
-  for (const { key } of rubricFor(source?.source_type)) {
+  for (const { key } of await rubricOfRequest(source ?? {})) {
     const value = Number(given[key]);
     if (!Number.isInteger(value) || value < 1 || value > 5) throw new ReviewError('Score every checklist item from 1 to 5.');
     scores[key] = value;

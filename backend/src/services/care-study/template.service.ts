@@ -25,6 +25,8 @@ export interface TemplateField {
    * extra to add), so no "[Student to supply: …]" placeholder is made for it.
    */
   blank_ok?: boolean;
+  /** Number fields: must not be more than the number in this other field of the same entry (e.g. returned of distributed). */
+  not_more_than?: string;
 }
 
 /**
@@ -63,8 +65,21 @@ export interface TemplateSection {
   requires_sources?: boolean;
 }
 
+/**
+ * Each item of one repeating section should have a matching item in another
+ * (every objective needs a finding). Reported by "Check my work" as a question.
+ * The message may use {from} and {to} for the two counts.
+ */
+export interface CoverageCheck {
+  from: string;
+  to: string;
+  message: string;
+}
+
 export interface CareStudyTemplate {
   id: string;
+  /** Care studies are about a real client; research projects are about a study the student carried out. Default care_study. */
+  kind?: 'care_study' | 'research_project';
   name: string;
   description: string;
   /** Shown to the student: what the template is based on and that it is not an official format. */
@@ -78,7 +93,10 @@ export interface CareStudyTemplate {
   /** nursing_process: false for stages outside the nursing process (e.g. front pages). */
   stages: { key: string; label: string; nursing_process?: boolean }[];
   sections: TemplateSection[];
+  coverage_checks?: CoverageCheck[];
 }
+
+export const isResearchProject = (t: Pick<CareStudyTemplate, 'kind'>) => t.kind === 'research_project';
 
 export interface SectionEntries {
   fields?: Record<string, string>;
@@ -93,6 +111,7 @@ let cache: Map<string, CareStudyTemplate> | null = null;
 function validate(t: CareStudyTemplate, file: string): CareStudyTemplate {
   const fail = (msg: string) => { throw new Error(`Care study template ${file}: ${msg}`); };
   if (!t.id || !t.name || !Array.isArray(t.sections) || !Array.isArray(t.stages)) fail('needs id, name, stages and sections');
+  if (t.kind !== undefined && t.kind !== 'care_study' && t.kind !== 'research_project') fail(`unknown kind ${String(t.kind)}`);
   const stages = new Set(t.stages.map((s) => s.key));
   const keys = new Set<string>();
   for (const s of t.sections) {
@@ -101,8 +120,13 @@ function validate(t: CareStudyTemplate, file: string): CareStudyTemplate {
     keys.add(s.key);
     if (!stages.has(s.stage)) fail(`section ${s.key} has unknown stage ${s.stage}`);
     if (!s.fields?.length && !s.repeat) fail(`section ${s.key} has no fields`);
-    for (const f of [...(s.fields ?? []), ...(s.repeat?.fields ?? [])]) {
-      if (!f.key || !f.label || !f.hint) fail(`a field in ${s.key} needs key, label and hint`);
+    for (const group of [s.fields ?? [], s.repeat?.fields ?? []]) {
+      for (const f of group) {
+        if (!f.key || !f.label || !f.hint) fail(`a field in ${s.key} needs key, label and hint`);
+        if (f.not_more_than && !(f.type === 'number' && group.some((o) => o.key === f.not_more_than && o.type === 'number'))) {
+          fail(`field ${f.key} in ${s.key}: not_more_than must name another number field in the same group`);
+        }
+      }
     }
     for (const c of s.charts ?? []) {
       const byKey = new Map((s.repeat?.fields ?? []).map((f) => [f.key, f]));
@@ -115,6 +139,10 @@ function validate(t: CareStudyTemplate, file: string): CareStudyTemplate {
         if (!(ser.max > ser.min) || !(ser.step > 0)) fail(`chart ${c.key} series ${ser.field} needs min < max and a positive step`);
       }
     }
+  }
+  for (const c of t.coverage_checks ?? []) {
+    const has = (key: string) => t.sections.some((s) => s.key === key && s.repeat);
+    if (!has(c.from) || !has(c.to) || !c.message) fail(`coverage check ${c.from} → ${c.to} needs two repeating sections and a message`);
   }
   return t;
 }

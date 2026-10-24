@@ -162,6 +162,22 @@ export function guardValues(draft: string, facts: string): { text: string; flagg
   return { text, flagged };
 }
 
+/** A number written two ways (1,200 and 1200, 35.20 and 35.2) is one number. */
+const canonNumber = (n: string) => {
+  const s = n.replace(/,/g, '');
+  return (s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s).replace(/^0+(?=\d)/, '');
+};
+
+const FIGURE_PATTERNS: RegExp[] = [
+  // Percentages: 35.2%, 35 per cent.
+  /\b(\d+(?:\.\d+)?)\s?(?:%|per\s?cent|percent)/gi,
+  // Counts of people or forms: 120 respondents, 45 mothers, 98 questionnaires.
+  /\b(\d[\d,]*)\s+(?:pregnant\s+women|health\s+workers?|respondents?|participants?|mothers?|women|men|nurses?|midwives|students?|patients?|clients?|children|people|persons?|questionnaires?|households?|interviewees?)\b/gi,
+  // Sample size and test statistics: n = 120, p < 0.05.
+  /\b[nN]\s*=\s*(\d[\d,]*)/g,
+  /\bp\s*[<=>]\s*(0?\.\d+)/gi,
+];
+
 const CITE_PART = /^(.*?[A-Za-z].*?),?\s+((?:19|20)\d{2})[a-z]?$/;
 const MONTH_WORD = new RegExp(`^(?:${MONTHS.join('|')}|${MONTHS.map((m) => m.slice(0, 3)).join('|')})\\b`, 'i');
 
@@ -225,4 +241,48 @@ export function citedSources(drafts: string[], sources: CareSource[]): CareSourc
   return sources.filter((s) =>
     s.year != null && s.surnames.some((sn) =>
       new RegExp(`\\b${sn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[^()\\n]{0,40}?\\(?${s.year}`, 'i').test(all)));
+}
+
+/**
+ * Replace figures in a research draft that the student did not enter and no
+ * listed source supplies: percentages, counts of people or forms, sample sizes,
+ * p-values and numbers in table cells. A result the student never found is the
+ * research version of an invented patient.
+ */
+export function guardFigures(draft: string, facts: string, sources: CareSource[] = []): { text: string; flagged: string[] } {
+  const known = new Set<string>();
+  const learn = (s: string) => { for (const m of s.matchAll(/\d+(?:[.,]\d+)*/g)) known.add(canonNumber(m[0])); };
+  learn(facts);
+  for (const s of sources) learn(`${s.title} ${s.snippet ?? ''}`);
+  const flagged: string[] = [];
+
+  // Leave placeholders and citations alone.
+  const protectedSpans = (t: string) => [...t.matchAll(/\[[^\]]*\]|\(([^()]*\b(?:19|20)\d{2}[a-z]?)\)/g)]
+    .filter((m) => m[0].startsWith('[') || isCitation(m[1]))
+    .map((m) => [m.index!, m.index! + m[0].length]);
+
+  let text = draft;
+  for (const re of FIGURE_PATTERNS) {
+    const spans = protectedSpans(text);
+    text = text.replace(re, (whole: string, number: string, ...rest: unknown[]) => {
+      const offset = rest[rest.length - 2] as number;
+      if (spans.some(([a, b]) => offset >= a && offset < b)) return whole;
+      if (known.has(canonNumber(number))) return whole;
+      flagged.push(whole.trim());
+      return placeholder(`check "${whole.trim()}" — not in your data`);
+    });
+  }
+
+  // Numbers in table cells: small whole numbers are row labels and are left alone.
+  text = text.split('\n').map((line) => {
+    if (!/^\s*\|.*\|\s*$/.test(line)) return line;
+    return line.replace(/\|\s*(\d+(?:[.,]\d+)*)\s*%?\s*(?=\|)/g, (whole: string, number: string) => {
+      const plain = canonNumber(number);
+      if (known.has(plain) || (/^\d$/.test(plain) && !whole.includes('%'))) return whole;
+      flagged.push(number);
+      return `| ${placeholder(`check "${number}" — not in your data`)} `;
+    });
+  }).join('\n');
+
+  return { text, flagged };
 }

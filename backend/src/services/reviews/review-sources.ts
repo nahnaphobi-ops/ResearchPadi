@@ -54,8 +54,18 @@ export const CARE_STUDY_RUBRIC = [
   { key: 'professionalism', label: 'Privacy, consent & professionalism' },
 ] as const;
 
-export const rubricFor = (sourceType: string | null | undefined): readonly { key: string; label: string }[] =>
-  sourceType === 'care_study' ? CARE_STUDY_RUBRIC : RUBRIC;
+export const RESEARCH_PROJECT_RUBRIC = [
+  { key: 'objectives', label: 'Objectives match findings' },
+  { key: 'methodology', label: 'Methodology & sampling' },
+  { key: 'ethics', label: 'Ethics, consent & privacy' },
+  { key: 'consistency', label: 'Draft matches the notes' },
+  { key: 'citations', label: 'Citations & Ghanaian sources' },
+  { key: 'writing', label: 'Academic writing & clarity' },
+] as const;
+
+/** The checklist a reviewer scores: care studies and research projects (both source type care_study) have their own. */
+export const rubricFor = (sourceType: string | null | undefined, templateKind?: string | null): readonly { key: string; label: string }[] =>
+  sourceType === 'care_study' ? (templateKind === 'research_project' ? RESEARCH_PROJECT_RUBRIC : CARE_STUDY_RUBRIC) : RUBRIC;
 
 // ── Snapshots ─────────────────────────────────────────────────────────────
 
@@ -161,6 +171,8 @@ export function careStudySnapshot(
   const keys = onlyKey
     ? [onlyKey]
     : careStudyParts(template, sections).map((p) => p.key);
-  const head = `<h1>${escapeHtml(template.name)}</h1><p><em>Client: ${escapeHtml(study.pseudonym)}${study.focus ? ` · ${escapeHtml(template.focus_label)}: ${escapeHtml(study.focus)}` : ''}. Check the draft against the student's own notes; anything marked [Student to supply: …] is still missing.</em></p>`;
+  const subject = template.kind === 'research_project' ? '' : `Client: ${escapeHtml(study.pseudonym)}`;
+  const focus = study.focus ? `${escapeHtml(template.focus_label)}: ${escapeHtml(study.focus)}` : '';
+  const head = `<h1>${escapeHtml(template.name)}</h1><p><em>${[subject, focus].filter(Boolean).join(' · ')}${subject || focus ? '. ' : ''}Check the draft against the student's own notes; anything marked [Student to supply: …] is still missing.</em></p>`;
   return head + keys.map((k) => careSectionHtml(template, k, sections[k])).join('');
 }

@@ -1,21 +1,21 @@
 import { routeDrafting, tokensForWords } from '../ai/router.service.js';
 import { findSources } from '../citations/sources.service.js';
 import type { Source } from '../citations/source.types.js';
-import { ensurePlaceholders, guardCitations, guardValues, type CareSource } from './guards.js';
+import { ensurePlaceholders, guardCitations, guardFigures, guardValues, type CareSource } from './guards.js';
 import { ruleChecks, type CheckIssue } from './checks.js';
-import { CARE_STUDY_RULES, CARE_STUDY_SYSTEM_PROMPT, buildHelpPrompt, buildReviewPrompt, buildSectionPrompt, isWholeStudyRequest } from './prompts.js';
+import { buildHelpPrompt, buildReviewPrompt, buildSectionPrompt, isWholeStudyRequest, rulesFor, systemPromptFor } from './prompts.js';
 import {
-  entriesText, missingOptional, missingRequired, studyChecklist,
+  entriesText, isResearchProject, missingOptional, missingRequired, studyChecklist,
   type CareStudyTemplate, type SectionEntries, type TemplateSection,
 } from './template.service.js';
 
 /** The model call, injectable so the rules can be tested without one. */
 export type Generate = (prompt: string, opts: { tier: 'light' | 'drafting'; maxTokens: number; action: string }) => Promise<string>;
 
-export const defaultGenerate = (userId?: string): Generate => (prompt, opts) =>
+export const defaultGenerate = (userId?: string, template?: Pick<CareStudyTemplate, 'kind'>): Generate => (prompt, opts) =>
   routeDrafting(prompt, { action: opts.action }, {
     tier: opts.tier,
-    systemPrompt: opts.action === 'care-study-draft' ? CARE_STUDY_SYSTEM_PROMPT : CARE_STUDY_RULES,
+    systemPrompt: opts.action === 'care-study-draft' ? systemPromptFor(template ?? {}) : rulesFor(template ?? {}),
     maxTokens: opts.maxTokens,
     userId,
   });
@@ -123,10 +123,13 @@ export async function draftSection(ctx: StudyContext, section: TemplateSection, 
   // Theory-only sections explain reference values from the sources, so they are left as written.
   const facts = `${sectionFacts(ctx, ctx.template.sections)}\n${ctx.focus}`;
   const values = section.requires_sources ? { text: raw, flagged: [] } : guardValues(raw, facts);
-  const cites = guardCitations(values.text, ctx.sources);
+  // A research project's figures must also be the student's own: counts, percentages, sample sizes and table cells.
+  // Sections that review the literature may quote figures from the listed sources.
+  const figures = isResearchProject(ctx.template) ? guardFigures(values.text, facts, ctx.sources) : { text: values.text, flagged: [] as string[] };
+  const cites = guardCitations(figures.text, ctx.sources);
   const draft = ensurePlaceholders(cites.text, optional);
 
-  return { status: 'drafted', draft, flaggedValues: values.flagged, removedCitations: cites.removed };
+  return { status: 'drafted', draft, flaggedValues: [...values.flagged, ...figures.flagged], removedCitations: cites.removed };
 }
 
 export function checklistText(ctx: StudyContext): string {
@@ -149,7 +152,9 @@ export async function help(ctx: StudyContext, question: string, generate: Genera
     return {
       kind: 'checklist',
       message: checklist.length
-        ? 'A care study has to be built from your own client, so ResearchPadi can\'t write it for you. Here is what to collect from your client, her records and your notes. Enter it section by section and each section can then be drafted.'
+        ? isResearchProject(ctx.template)
+          ? 'A research project has to be built from your own study, so ResearchPadi can\'t write it or make up results for you. Here is what to collect from your proposal, your instrument and your data. Enter it section by section and each section can then be drafted.'
+          : 'A care study has to be built from your own client, so ResearchPadi can\'t write it for you. Here is what to collect from your client, her records and your notes. Enter it section by section and each section can then be drafted.'
         : 'All the required details are in. Draft each section from its own page, then use "Check my work" before you export.',
       checklist,
     };

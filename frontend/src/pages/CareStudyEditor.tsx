@@ -71,7 +71,7 @@ function IssueList({ issues }: { issues: PrivacyIssue[] }) {
   const blocking = issues.some((i) => i.severity === 'block');
   return (
     <div role="alert" className={`p-3 rounded-[10px] text-sm ${blocking ? 'bg-red-100 text-red-700' : 'bg-orange-50 text-orange-800 border border-orange-200'}`}>
-      <p className="font-bold mb-1 inline-flex items-center gap-1.5"><AlertTriangle size={14} /> {blocking ? 'Not saved — remove these personal details' : 'Check client privacy'}</p>
+      <p className="font-bold mb-1 inline-flex items-center gap-1.5"><AlertTriangle size={14} /> {blocking ? 'Not saved — remove these personal details' : 'Check personal details'}</p>
       <ul className="list-disc ml-5 space-y-0.5">
         {issues.map((i, n) => <li key={n}><span className="font-mono">{i.match}</span> — {i.message}</li>)}
       </ul>
@@ -280,7 +280,8 @@ export default function CareStudyEditor() {
     }
     setBusy('export');
     try {
-      await careStudyService.exportStudy(id, study.pseudonym, format, fileType);
+      const isResearch = template.kind === 'research_project';
+      await careStudyService.exportStudy(id, isResearch ? study.focus : study.pseudonym, format, fileType, isResearch ? 'Research_project' : 'Care_study');
     } catch (err) {
       setError(apiErrorMessage(err, 'Export failed'));
     } finally {
@@ -303,6 +304,9 @@ export default function CareStudyEditor() {
     );
   }
 
+  const research = template.kind === 'research_project';
+  const noun = research ? 'research project' : 'care study';
+
   const sectionState = (s: TemplateSection) => {
     const row = s.key === activeKey ? { ...rows[s.key], entries } : rows[s.key];
     if (row?.draft) return 'drafted';
@@ -315,14 +319,14 @@ export default function CareStudyEditor() {
 
   return (
     <AppShell wide>
-      <button onClick={() => navigate('/care-studies')} className="text-sm text-muted hover:text-navy font-medium inline-flex items-center gap-1.5 mb-4">
-        <ArrowLeft size={15} /> All care studies
+      <button onClick={() => navigate(research ? '/care-studies?kind=research' : '/care-studies')} className="text-sm text-muted hover:text-navy font-medium inline-flex items-center gap-1.5 mb-4">
+        <ArrowLeft size={15} /> All {research ? 'research projects' : 'care studies'}
       </button>
 
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 mb-6">
         <div>
           <p className="eyebrow mb-1">{template.name}</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-navy">{study.pseudonym}{study.focus ? ` · ${study.focus}` : ''}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-navy">{research ? study.focus || 'Research project' : `${study.pseudonym}${study.focus ? ` · ${study.focus}` : ''}`}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setHelpOpen((o) => !o)} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5"><MessageCircleQuestion size={15} /> Ask for help</button>
@@ -338,7 +342,7 @@ export default function CareStudyEditor() {
             <option value="pdf">PDF</option>
           </select>
           <button onClick={() => void exportStudy('supervisor')} disabled={busy === 'export'} className="btn-ghost px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="Your notes beside the draft, so a supervisor can see what is yours"><Download size={15} /> Supervisor copy</button>
-          <button onClick={() => void exportStudy('clean')} disabled={busy === 'export'} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title="The care study as a document to submit"><Download size={15} /> {busy === 'export' ? 'Exporting...' : 'Download study'}</button>
+          <button onClick={() => void exportStudy('clean')} disabled={busy === 'export'} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5 disabled:opacity-50" title={`The ${noun} as a document to submit`}><Download size={15} /> {busy === 'export' ? 'Exporting...' : 'Download study'}</button>
         </div>
       </div>
 
@@ -348,6 +352,7 @@ export default function CareStudyEditor() {
         <ReviewRequestDialog
           sourceType="care_study"
           sourceId={id}
+          researchProject={research}
           onBeforeSubmit={saveAll}
           onClose={() => setReviewOpen(false)}
           onSubmitted={(requestId) => navigate(`/reviews/${requestId}`)}
@@ -357,11 +362,11 @@ export default function CareStudyEditor() {
       {helpOpen && (
         <div className="mb-6 p-5 bg-white rounded-[14px] border border-rule shadow-soft">
           <div className="flex justify-between items-start gap-3 mb-2">
-            <p className="font-bold text-navy">Ask about your care study</p>
+            <p className="font-bold text-navy">Ask about your {noun}</p>
             <button onClick={() => setHelpOpen(false)} aria-label="Close help" className="text-muted hover:text-navy"><X size={16} /></button>
           </div>
           <form onSubmit={askHelp} className="flex flex-col sm:flex-row gap-2">
-            <input className="flex-1 p-2.5 border rounded-[10px] text-sm" value={helpQuestion} onChange={(e) => setHelpQuestion(e.target.value)} placeholder='e.g. "What goes in the family history?"' />
+            <input className="flex-1 p-2.5 border rounded-[10px] text-sm" value={helpQuestion} onChange={(e) => setHelpQuestion(e.target.value)} placeholder={research ? 'e.g. "What goes in the sampling section?"' : 'e.g. "What goes in the family history?"'} />
             <button disabled={busy === 'help' || !helpQuestion.trim()} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">{busy === 'help' ? 'Thinking...' : 'Ask'}</button>
           </form>
           {helpAnswer && (
@@ -388,7 +393,7 @@ export default function CareStudyEditor() {
             <p className="font-bold text-navy inline-flex items-center gap-1.5"><ClipboardCheck size={16} /> Check my work</p>
             <button onClick={() => setCheckIssues(null)} aria-label="Close check results" className="text-muted hover:text-navy"><X size={16} /></button>
           </div>
-          <p className="text-xs text-muted mb-3">These are questions to look at, not corrections. Confirm anything clinical with your supervisor — this check does not replace clinical judgement.</p>
+          <p className="text-xs text-muted mb-3">These are questions to look at, not corrections. {research ? 'Confirm your method and results with your supervisor — this check does not replace their judgement.' : 'Confirm anything clinical with your supervisor — this check does not replace clinical judgement.'}</p>
           {checkIssues.length === 0 ? (
             <p className="text-sm text-green-700 inline-flex items-center gap-1.5"><CheckCircle2 size={15} /> Nothing to flag right now.</p>
           ) : (
@@ -411,7 +416,7 @@ export default function CareStudyEditor() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <nav aria-label="Care study sections" className="bg-white rounded-[14px] border border-rule p-4 h-fit lg:sticky lg:top-4">
+        <nav aria-label={`${research ? 'Research project' : 'Care study'} sections`} className="bg-white rounded-[14px] border border-rule p-4 h-fit lg:sticky lg:top-4">
           {template.stages.map((stage) => {
             const inStage = template.sections.filter((s) => s.stage === stage.key);
             if (!inStage.length) return null;
