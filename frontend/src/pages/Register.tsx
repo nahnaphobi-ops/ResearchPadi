@@ -5,6 +5,7 @@ import { parsePlan, planDestination, withPlan } from '../utils/planIntent';
 import { authService } from '../services/apiService';
 import { useAuthStore } from '../store/useAuthStore';
 import BrandLogo from '../components/common/BrandLogo';
+import { takeAfterLogin } from '../utils/afterLogin';
 
 const fields = [
   { name: 'full_name', label: 'Full name', placeholder: 'e.g. Kwesi Mensah', autoComplete: 'name' },
@@ -44,7 +45,7 @@ export default function Register() {
       if (token) {
         setAuth(token, user);
       }
-      navigate(user?.is_admin && !plan ? '/admin' : planDestination(plan));
+      navigate(takeAfterLogin() ?? (user?.is_admin && !plan ? '/admin' : planDestination(plan)));
     } catch (err) {
       setError(apiErrorMessage(err, 'Registration failed'));
     } finally {

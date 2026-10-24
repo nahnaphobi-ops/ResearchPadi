@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import api from '../services/api';
 import { BookMarked, Check, Loader2, LogOut, PenLine, Quote, Search, Sparkles } from 'lucide-react';
 import { authService } from '../services/apiService';
 import { workspaceService } from '../services/workspaceService';
-import { apiErrorMessage } from '../utils/apiError';
+import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
 import { CITATION_STYLES } from '../components/workspace/citations/format';
 import type { CitationStyleId, Source } from '../components/workspace/citations/types';
 import {
@@ -235,6 +236,18 @@ function CiteTab() {
 
 export default function WordPane({ inWord }: { inWord: boolean }) {
   const [signedIn, setSignedIn] = useState(() => !!localStorage.getItem('token'));
+  // Sign-ins last 7 days; after that every call fails, so go back to the sign-in form.
+  useEffect(() => {
+    const id = api.interceptors.response.use(undefined, (err) => {
+      if (apiErrorStatus(err) === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setSignedIn(false);
+      }
+      return Promise.reject(err);
+    });
+    return () => api.interceptors.response.eject(id);
+  }, []);
   const [tab, setTab] = useState<'write' | 'cite'>('write');
 
   if (!inWord) {

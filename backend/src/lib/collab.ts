@@ -90,7 +90,9 @@ export function attachCollab(server: Server, origins: string[]) {
   log.info({ path: PATH }, 'Live co-writing ready');
 }
 
-/** Saves every document still waiting to be stored (on shutdown). */
-export function flushCollab() {
+/** Saves every document still waiting to be stored (on shutdown), giving the saves a moment to finish. */
+export async function flushCollab() {
+  if (!hocuspocus.getDocumentsCount()) return;
   hocuspocus.flushPendingStores();
+  await new Promise((resolve) => setTimeout(resolve, 2_000));
 }

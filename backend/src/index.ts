@@ -46,7 +46,7 @@ async function bootstrap() {
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, 'Shutting down gracefully');
-    flushCollab();
+    await flushCollab();
     if (server) server.close();
     await stopPaperWorker();
     await closeRedis();

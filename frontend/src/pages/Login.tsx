@@ -105,7 +105,8 @@ export default function Login() {
       const response = await authService.verifyOtp(phone, otp);
       const { token, user, isNewUser } = response.data;
       setAuth(token, user);
-      const after = takeAfterLogin();
+      // New users finish registering first; Register sends them on.
+      const after = isNewUser ? null : takeAfterLogin();
 
       if (isNewUser) {
         navigate(withPlan('/register', plan));

@@ -52,7 +52,9 @@ export default function SharedDocument() {
     const people = () => setOthers(othersHere(joined));
     joined.provider.on('synced', ready);
     joined.provider.on('awarenessChange', people);
+    const slow = window.setTimeout(() => { if (!joined.provider.isSynced) setError("Can't reach live editing yet. Check your connection or reload."); }, 15_000);
     return () => {
+      window.clearTimeout(slow);
       joined.provider.off('synced', ready);
       joined.provider.off('awarenessChange', people);
       setLive((cur) => (cur === joined ? null : cur));
