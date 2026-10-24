@@ -329,10 +329,10 @@ export const assistAdvanced = async (req: Request, res: Response) => {
 };
 
 // Get available citation styles
-const SOURCE_ORIGINS = ['ghana-repository', 'openalex', 'semantic-scholar'] as const;
+const SOURCE_ORIGINS = ['ghana-repository', 'openalex', 'semantic-scholar', 'europe-pmc'] as const;
 
 // Unified source search for inline citations: Ghanaian repositories, Ghana-affiliated
-// OpenAlex works, global OpenAlex and Semantic Scholar — de-duplicated and ranked.
+// OpenAlex works, global OpenAlex, Semantic Scholar and Europe PMC (PubMed) — de-duplicated and ranked.
 export const findSources = async (req: Request, res: Response) => {
   const { query, ghanaFirst, yearFrom, origins, limit } = req.body ?? {};
   if (typeof query !== 'string' || !query.trim()) return res.status(400).json({ error: 'Query is required' });
