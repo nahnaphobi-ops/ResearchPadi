@@ -6,7 +6,7 @@ export interface PersonName {
 }
 
 export type SourceType = 'article' | 'thesis' | 'book' | 'chapter' | 'report' | 'conference' | 'webpage' | 'other';
-export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar' | 'notebook';
+export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar' | 'notebook' | 'imported';
 
 export interface Source {
   id: string;
@@ -31,7 +31,7 @@ export interface Source {
   openAccess?: boolean;
 }
 
-export type CitationStyleId = 'apa7' | 'harvard' | 'mla9' | 'chicago' | 'ieee' | 'vancouver';
+export type CitationStyleId = 'apa7' | 'apa6' | 'harvard' | 'mla9' | 'chicago' | 'ieee' | 'vancouver' | 'ama';
 export type CitationMode = 'parenthetical' | 'narrative';
 
 /** A run of reference-list text; italic runs become <em>. */

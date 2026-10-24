@@ -1,5 +1,6 @@
 import './config/runtime-env.js';
-import app from './app.js';
+import app, { ORIGINS } from './app.js';
+import { attachCollab, flushCollab } from './lib/collab.js';
 import { CONFIG } from './config/index.js';
 import { validateEnv } from './config/env.js';
 import { logger } from './lib/logger.js';
@@ -40,10 +41,12 @@ async function bootstrap() {
     server = app.listen(CONFIG.PORT, () => {
       log.info({ port: CONFIG.PORT }, 'Server running');
     });
+    attachCollab(server, ORIGINS);
   }
 
   const shutdown = async (signal: string) => {
     log.info({ signal }, 'Shutting down gracefully');
+    await flushCollab();
     if (server) server.close();
     await stopPaperWorker();
     await closeRedis();

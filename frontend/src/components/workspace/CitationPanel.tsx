@@ -6,10 +6,12 @@ import { workspaceService } from '../../services/workspaceService';
 import { CITATION_STYLES, referencePreview, referenceText } from './citations/format';
 import { getCitationStyle, getCitedSources, hasBibliography } from './citations/CitationExtension';
 import type { CitationStyleId, Source } from './citations/types';
+import ImportedLibrary from './citations/ImportedLibrary';
 
 interface Props {
   editor: Editor | null;
   selectedText: string;
+  sessionId: string;
 }
 
 const YEAR_FILTERS = [
@@ -37,8 +39,8 @@ const TYPE_LABEL: Record<Source['type'], string> = {
   article: 'Article', thesis: 'Thesis', book: 'Book', chapter: 'Chapter', report: 'Report', conference: 'Conference', webpage: 'Web page', other: 'Other',
 };
 
-export default function CitationPanel({ editor, selectedText }: Props) {
-  const [tab, setTab] = useState<'search' | 'document'>('search');
+export default function CitationPanel({ editor, selectedText, sessionId }: Props) {
+  const [tab, setTab] = useState<'search' | 'library' | 'document'>('search');
   const [query, setQuery] = useState('');
   const [ghanaFirst, setGhanaFirst] = useState(true);
   const [yearFrom, setYearFrom] = useState('');
@@ -120,6 +122,7 @@ export default function CitationPanel({ editor, selectedText }: Props) {
         <div className="flex text-[12px]" role="tablist">
           {([
             ['search', 'Find sources'],
+            ['library', 'Your library'],
             ['document', `In this document (${cited.length})`],
           ] as const).map(([key, label]) => (
             <button
@@ -136,7 +139,9 @@ export default function CitationPanel({ editor, selectedText }: Props) {
         </div>
       </div>
 
-      {tab === 'search' ? (
+      {tab === 'library' ? (
+        <div className="flex-1 overflow-y-auto"><ImportedLibrary editor={editor} sessionId={sessionId} /></div>
+      ) : tab === 'search' ? (
         <>
           <form
             className="p-3 space-y-2 border-b border-[#edebe9]"

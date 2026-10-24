@@ -1,11 +1,13 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
-import { BookOpen, FileText, GraduationCap, Library, Sparkles, X } from 'lucide-react';
+import { BarChart3, BookOpen, FileText, GraduationCap, Library, MessageSquare, Sparkles, X } from 'lucide-react';
 import AIAssistantPanel from '../workspace/AIAssistantPanel';
 import CitationPanel from '../workspace/CitationPanel';
 import NotebookPanel from './notebook/NotebookPanel';
 import FeedbackPanel from './review/FeedbackPanel';
 import StudyDraftPanel from './draft/StudyDraftPanel';
+import DataPanel from './data/DataPanel';
+import CommentsPanel from './comments/CommentsPanel';
 import type { WorkspacePanel } from './panels';
 import type { WorkspacePlan } from '../../services/subscriptionService';
 
@@ -21,6 +23,7 @@ interface Props {
   /** Sources a document can hold on this plan (null: the most any plan allows). */
   maxSources: number | null;
   onRequestReview: () => void;
+  onShare: () => void;
   reviewRefreshKey: number;
   hasStudyDraft: boolean;
 }
@@ -30,6 +33,8 @@ const tabs = [
   { key: 'ai' as const, label: 'AI', icon: Sparkles },
   { key: 'citations' as const, label: 'Citations', icon: BookOpen },
   { key: 'sources' as const, label: 'Sources', icon: Library },
+  { key: 'data' as const, label: 'Data', icon: BarChart3 },
+  { key: 'comments' as const, label: 'Comments', icon: MessageSquare },
   { key: 'feedback' as const, label: 'Feedback', icon: GraduationCap },
 ];
 
@@ -48,6 +53,7 @@ export const SidePanel: React.FC<Props> = ({
   plan,
   maxSources,
   onRequestReview,
+  onShare,
   reviewRefreshKey,
   hasStudyDraft,
 }) => (
@@ -93,9 +99,10 @@ export const SidePanel: React.FC<Props> = ({
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} plan={plan} />}
+        {sidePanel === 'draft' && hasStudyDraft && <StudyDraftPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'ai' && (
           <AIAssistantPanel
+            editor={editor}
             sessionId={sessionId}
             plan={plan}
             selectedText={aiSelectedText}
@@ -104,8 +111,10 @@ export const SidePanel: React.FC<Props> = ({
             onCite={(source) => editor?.chain().focus().insertCitation([source]).run()}
           />
         )}
-        {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} />}
+        {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} sessionId={sessionId} />}
         {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} plan={plan} maxSources={maxSources} />}
+        {sidePanel === 'data' && <DataPanel editor={editor} sessionId={sessionId} />}
+        {sidePanel === 'comments' && <CommentsPanel editor={editor} sessionId={sessionId} onShare={onShare} />}
         {sidePanel === 'feedback' && <FeedbackPanel editor={editor} sessionId={sessionId} onRequestReview={onRequestReview} refreshKey={reviewRefreshKey} />}
       </div>
     </aside>

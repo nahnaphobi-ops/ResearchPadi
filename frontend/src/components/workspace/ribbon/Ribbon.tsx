@@ -8,7 +8,7 @@ import {
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
-  WandSparkles,
+  WandSparkles, BarChart3, Share2, History, MessageSquare, FileCode2, ClipboardCheck,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -20,6 +20,7 @@ import { CITATION_STYLES } from '../citations/format';
 import { getCitationStyle, getCitedSources, hasBibliography } from '../citations/CitationExtension';
 import type { CitationStyleId } from '../citations/types';
 import { MARGINS, PAGE_SIZES, type MarginKey, type PageSettings, type PageSizeKey } from '../pageLayout';
+import { onEditorDom } from '../editorDom';
 
 type Tab = 'file' | 'home' | 'insert' | 'layout' | 'references' | 'review' | 'view';
 
@@ -82,11 +83,15 @@ export interface RibbonProps {
   pageCount: number;
   onSave: () => void;
   onExportDocx: () => void;
+  onExportLatex: () => void;
+  onFormatCheck: () => void;
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
-  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'feedback') => void;
+  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'data' | 'comments' | 'feedback') => void;
   onRequestReview: () => void;
+  onShare: () => void;
+  onVersionHistory: () => void;
   onTogglePanel: () => void;
   onFitWidth: () => void;
   onBack: () => void;
@@ -128,8 +133,8 @@ export default function Ribbon(props: RibbonProps) {
         linkHref: (e.getAttributes('link').href as string | undefined) ?? '',
         lineHeight: String(e.getAttributes(blockType).lineHeight ?? '1.5'),
         table: e.isActive('table'),
-        canUndo: e.can().undo(),
-        canRedo: e.can().redo(),
+        canUndo: !e.isDestroyed && e.can().undo(),
+        canRedo: !e.isDestroyed && e.can().redo(),
         hasSelection: !e.state.selection.empty,
         citationStyle: getCitationStyle(e.state),
         citedCount: getCitedSources(e.state).length,
@@ -141,22 +146,23 @@ export default function Ribbon(props: RibbonProps) {
   // Format Painter: copy marks from the selection, apply them to the next selection made with the mouse.
   useEffect(() => {
     if (!painterMarks) return;
-    const dom = editor.view.dom;
-    const onUp = () => {
-      window.setTimeout(() => {
-        if (editor.state.selection.empty) return;
-        let chain = editor.chain().focus().unsetAllMarks();
-        for (const mark of painterMarks) chain = chain.setMark(mark.type.name, mark.attrs);
-        chain.run();
-        setPainterMarks(null);
-      }, 0);
-    };
-    dom.classList.add('format-painter');
-    dom.addEventListener('mouseup', onUp);
-    return () => {
-      dom.classList.remove('format-painter');
-      dom.removeEventListener('mouseup', onUp);
-    };
+    return onEditorDom(editor, (dom) => {
+      const onUp = () => {
+        window.setTimeout(() => {
+          if (editor.state.selection.empty) return;
+          let chain = editor.chain().focus().unsetAllMarks();
+          for (const mark of painterMarks) chain = chain.setMark(mark.type.name, mark.attrs);
+          chain.run();
+          setPainterMarks(null);
+        }, 0);
+      };
+      dom.classList.add('format-painter');
+      dom.addEventListener('mouseup', onUp);
+      return () => {
+        dom.classList.remove('format-painter');
+        dom.removeEventListener('mouseup', onUp);
+      };
+    });
   }, [painterMarks, editor]);
 
   const chain = () => editor.chain().focus();
@@ -209,7 +215,10 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Document">
           <LargeButton icon={<Save />} label="Save" shortcut="Ctrl+S" onClick={props.onSave} />
           <LargeButton icon={<FileDown />} label="Download .docx" onClick={props.onExportDocx} />
+          <LargeButton icon={<FileCode2 />} label="Download LaTeX" onClick={props.onExportLatex} />
           <LargeButton icon={<Printer />} label="Print" shortcut="Ctrl+P" onClick={props.onPrint} />
+          <LargeButton icon={<Share2 />} label="Share" onClick={props.onShare} />
+          <LargeButton icon={<History />} label="Version History" onClick={props.onVersionHistory} />
         </RibbonGroup>
         <RibbonGroup label="Info">
           <div className="px-2 pt-1 text-[12px] text-[#323130] leading-5 min-w-[170px]">
@@ -376,6 +385,7 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Writing tools">
           <LargeButton icon={<Sparkles />} label="AI Assistant" onClick={() => props.onOpenPanel('ai')} />
           <LargeButton icon={<BookOpen />} label="Citations" onClick={() => props.onOpenPanel('citations')} />
+          <LargeButton icon={<BarChart3 />} label="Data Analysis" onClick={() => props.onOpenPanel('data')} />
         </RibbonGroup>
       </>
     ),
@@ -587,6 +597,7 @@ export default function Ribbon(props: RibbonProps) {
             onClick={() => onSettingsChange({ autocomplete: !settings.autocomplete })}
           />
           <WordCountButton editor={editor} pageCount={props.pageCount} />
+          <LargeButton icon={<ClipboardCheck />} label="Check Format" onClick={props.onFormatCheck} />
         </RibbonGroup>
         <RibbonGroup label="AI Review">
           <LargeButton icon={<Sparkles />} label="Check Document" onClick={() => props.onOpenPanel('ai')} />
@@ -595,6 +606,7 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Expert Review">
           <LargeButton icon={<GraduationCap />} label="Request Review" onClick={props.onRequestReview} />
           <LargeButton icon={<MessageSquareText />} label="Feedback" onClick={() => props.onOpenPanel('feedback')} />
+          <LargeButton icon={<MessageSquare />} label="Comments" onClick={() => props.onOpenPanel('comments')} />
         </RibbonGroup>
       </>
     ),

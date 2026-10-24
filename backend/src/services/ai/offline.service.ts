@@ -78,6 +78,15 @@ function respond(prompt: string, meta?: Record<string, any>): string {
   if (action === 'care-study-help') {
     return '[Offline test answer] Look in the antenatal card and the client\'s folder for this, and confirm anything clinical with your supervisor.';
   }
+  if (action === 'autocomplete') {
+    // Cites the first passage when there is one, so the citation path can be tested.
+    return /^\[1\] /m.test(prompt) ? 'and this is an offline test suggestion [1].' : 'and this is an offline test suggestion.';
+  }
+  if (action === 'claim-check') {
+    const ids = [...prompt.matchAll(/^CLAIM (\S+):/gm)].map((m) => m[1]);
+    const verdicts = ['supported', 'weak', 'overstated', 'not-found'];
+    return JSON.stringify(ids.map((id, i) => ({ id, verdict: verdicts[i % verdicts.length], reason: '[Offline test verdict] AI is switched off for this test run.', quote: '' })));
+  }
   return '[Offline test response] AI is switched off for this test run.';
 }
 

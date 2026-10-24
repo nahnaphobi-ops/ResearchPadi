@@ -22,18 +22,21 @@ import { SearchHighlight } from './search';
 import { Bibliography, Citation, CitationManager } from './citations/CitationExtension';
 import { AITargetHighlight } from './inlineAI/aiTarget';
 import { ReviewMarks } from './review/reviewMarks';
+import { CommentMarks } from './comments/commentMarks';
 
 /**
  * The document schema shared by the editor and the reviewer's read-only view.
  * Rendering through the same schema also sanitises stored HTML: anything the
  * schema doesn't know (scripts, event handlers, unknown tags) is dropped.
  */
-export function workspaceExtensions(opts: { placeholder?: string } = {}): Extensions {
+export function workspaceExtensions(opts: { placeholder?: string; collaborative?: boolean } = {}): Extensions {
   return [
     StarterKit.configure({
       heading: { levels: [1, 2, 3, 4] },
       underline: false, // registered below with the rest of the formatting marks
       link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
+      // Live documents undo through Yjs (each person's own changes only).
+      ...(opts.collaborative ? { undoRedo: false as const } : {}),
     }),
     Placeholder.configure({ placeholder: opts.placeholder ?? 'Start writing your paper here…' }),
     TextStyle,
@@ -47,6 +50,7 @@ export function workspaceExtensions(opts: { placeholder?: string } = {}): Extens
     SearchHighlight,
     AITargetHighlight,
     ReviewMarks,
+    CommentMarks,
     Citation,
     Bibliography,
     CitationManager,
@@ -59,7 +63,8 @@ export function workspaceExtensions(opts: { placeholder?: string } = {}): Extens
     TableRow,
     TableCell,
     TableHeader,
-    Image,
+    // Data URLs too: charts from the Data panel are embedded PNGs.
+    Image.configure({ allowBase64: true }),
     Typography,
     TaskList,
     TaskItem.configure({ nested: true }),

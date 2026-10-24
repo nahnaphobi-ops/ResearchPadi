@@ -4,11 +4,14 @@ import { Lock } from 'lucide-react';
 import { apiErrorCode, apiErrorMessage } from '../../utils/apiError';
 import { workspaceService } from '../../services/workspaceService';
 import type { WorkspacePlan } from '../../services/subscriptionService';
+import type { Editor } from '@tiptap/react';
+import SourceClaimCheck from './claims/SourceClaimCheck';
 import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
 import type { Source } from './citations/types';
 import { ScrollRow } from './ribbon/controls';
 
 interface Props {
+  editor: Editor | null;
   sessionId: string;
   /** Free has the quick edits and the checks that need no AI model; the rest are paid. */
   plan: WorkspacePlan;
@@ -159,7 +162,7 @@ function AIDetectResult({ result }: { result: AIDetectionResult }) {
   );
 }
 
-export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDocument, onInsert, onCite }: Props) {
+export default function AIAssistantPanel({ editor, sessionId, plan, selectedText, fullDocument, onInsert, onCite }: Props) {
   const [tab, setTab] = useState<Tab>('write');
   const [upsell, setUpsell] = useState(false);
   const locked = (paid: boolean) => paid && plan === 'free';
@@ -203,7 +206,7 @@ export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDo
   };
 
   const handleAdvancedAction = async (action: string) => {
-    if (locked(action === 'claims' || action === 'plagiarism')) { setUpsell(true); return; }
+    if (locked(action === 'claims' || action === 'plagiarism' || action === 'rag-enhance')) { setUpsell(true); return; }
     setUpsell(false);
     if (!contentToAnalyze) {
       setError('Select text or write content first');
@@ -235,6 +238,10 @@ export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDo
           break;
         case 'suggest-citations':
           setSuggestedCitations(res.data.sources || []);
+          break;
+        case 'rag-enhance':
+          setResponse(res.data.response || '');
+          if (res.data.response) setHistory((prev) => [{ action: 'rag-enhance', result: res.data.response }, ...prev].slice(0, 10));
           break;
       }
     } catch (err) {
@@ -311,7 +318,8 @@ export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDo
               {WRITE_ACTIONS.map((action) => (
                 <button
                   key={action.key}
-                  onClick={() => handleWriteAction(action.key, action.paid)}
+                  // RAG Enhance draws on the source library, so it runs as an advanced action.
+                  onClick={() => (action.key === 'rag-enhance' ? handleAdvancedAction('rag-enhance') : handleWriteAction(action.key, action.paid))}
                   disabled={loading || (!selectedText && !fullDocument && action.key !== 'outline' && action.key !== 'abstract')}
                   className="p-2 text-left bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -378,6 +386,8 @@ export default function AIAssistantPanel({ sessionId, plan, selectedText, fullDo
         {/* === CLAIMS TAB === */}
         {tab === 'claims' && !locked(true) && (
           <>
+            <SourceClaimCheck editor={editor} sessionId={sessionId} />
+            <p className="text-[11px] font-semibold text-gray-600 pt-2 border-t border-gray-100">Or look claims up in the ResearchPadi library</p>
             <button
               onClick={() => handleAdvancedAction('claims')}
               disabled={loading || !contentToAnalyze}

@@ -3,6 +3,16 @@ import type { Source } from '../components/workspace/citations/types';
 import { postSse } from '../utils/sse';
 import type { NotebookCitation } from './notebookService';
 
+export type ClaimVerdict = 'supported' | 'weak' | 'overstated' | 'contradicted' | 'misrepresented' | 'not-found';
+export interface ClaimCheckResult {
+  id: string;
+  verdict: ClaimVerdict;
+  reason: string;
+  /** Words from the source that decide it (always really in the source), or empty. */
+  quote: string;
+  sources: { id: string; title: string; authors: string | null; year: number | null }[];
+}
+
 /** Words to insert at the cursor, then a citation of the source they rely on (if any), then the closing punctuation. */
 export interface AutocompleteSuggestion { text: string; tail: string; citation: NotebookCitation | null }
 
@@ -28,6 +38,9 @@ export const workspaceService = {
   },
   assist: (data: { selectedText?: string; instruction: string; context?: string; sessionId?: string }) =>
     api.post('/workspace/assist', data),
+  /** Cited sentences checked against the uploaded sources they cite (Standard and Premium). */
+  claimCheck: (sessionId: string, claims: { id: string; text: string; sourceIds: string[] }[]) =>
+    api.post<{ results: ClaimCheckResult[] }>(`/workspace/sessions/${sessionId}/claim-check`, { claims }),
   /** The next sentence after the cursor; `remaining` is today's Free allowance left (null when unlimited). */
   autocomplete: (data: { sessionId?: string; before: string; after?: string }, signal?: AbortSignal) =>
     api.post<{ suggestion: AutocompleteSuggestion | null; remaining: number | null }>('/workspace/autocomplete', data, { signal }),

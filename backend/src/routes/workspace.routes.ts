@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import * as notebook from '../controllers/notebook.controller.js';
+import * as data from '../controllers/data.controller.js';
+import * as sharing from '../controllers/sharing.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { attachPlan, enforceSessionLimit, requirePaidPlan, requirePremium } from '../middleware/subscription.middleware.js';
 
@@ -19,15 +21,36 @@ router.get('/sessions/:id', workspaceController.getSession);
 router.put('/sessions/:id', workspaceController.updateSession);
 router.delete('/sessions/:id', workspaceController.deleteSession);
 router.get('/sessions/:id/study-draft', workspaceController.getStudyDraft);
-router.post('/sessions/:id/coach', requirePaidPlan, workspaceController.coach);
+
+// Version history, share links and comments: every plan.
+router.get('/sessions/:id/versions', sharing.versions);
+router.post('/sessions/:id/versions', sharing.saveNamedVersion);
+router.get('/sessions/:id/versions/:versionId', sharing.version);
+router.post('/sessions/:id/versions/:versionId/restore', sharing.restore);
+router.get('/sessions/:id/shares', sharing.shares);
+router.post('/sessions/:id/shares', sharing.share);
+router.delete('/sessions/:id/shares/:shareId', sharing.unshare);
+router.get('/sessions/:id/comments', sharing.comments);
+router.post('/sessions/:id/comments', sharing.comment);
+router.patch('/sessions/:id/comments/:commentId', sharing.updateComment);
+router.delete('/sessions/:id/comments/:commentId', sharing.removeComment);
+// Every plan: the coach only works on a study draft the student bought (prepaid).
+router.post('/sessions/:id/coach', workspaceController.coach);
 
 router.post('/assist', workspaceController.assist);
 router.post('/assist-advanced', workspaceController.assistAdvanced);
+// Standard and Premium: cited sentences checked against the document's own sources.
+router.post('/sessions/:id/claim-check', requirePaidPlan, workspaceController.claimCheck);
 router.post('/autocomplete', workspaceController.autocomplete);
 router.post('/citations', workspaceController.searchCitations);
 router.get('/citation-styles', workspaceController.listCitationStyles);
 router.post('/local-citations', workspaceController.searchLocalCitations);
 router.post('/sources', workspaceController.findSources);
+
+// Chapter 4 data analysis: every plan (numbers computed in code); a reading uses the daily AI allowance.
+router.post('/data/parse', data.dataUpload, data.parse);
+router.post('/data/analyse', data.analyse);
+router.post('/data/reading', data.reading);
 
 // Premium: Notion-style AI in the editor (streamed)
 router.post('/inline-ai', requirePremium, workspaceController.inlineAi);

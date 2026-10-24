@@ -1,10 +1,48 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, PageBreak } from 'docx';
+import {
+  Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, PageBreak, Table, TableRow, TableCell, WidthType, ImageRun,
+} from 'docx';
 import { saveAs } from 'file-saver';
 
-function htmlToDocxParagraphs(html: string): Paragraph[] {
+type Block = Paragraph | Table;
+
+/** Embedded images (data URLs) with their pixel size, read before the document is built. */
+interface LoadedImage { data: Uint8Array; type: 'png' | 'jpg' | 'gif' | 'bmp'; width: number; height: number }
+
+async function loadImages(html: string): Promise<Map<string, LoadedImage>> {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const sources = [...new Set(Array.from(doc.querySelectorAll('img')).map((img) => img.getAttribute('src') || '').filter((src) => src.startsWith('data:image/')))];
+  const loaded = new Map<string, LoadedImage>();
+  await Promise.all(sources.map(async (src) => {
+    const match = src.match(/^data:image\/(png|jpe?g|gif|bmp);base64,(.*)$/);
+    if (!match) return;
+    const size = await new Promise<{ width: number; height: number } | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    if (!size) return;
+    const bytes = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+    loaded.set(src, { data: bytes, type: match[1] === 'jpeg' ? 'jpg' : (match[1] as LoadedImage['type']), ...size });
+  }));
+  return loaded;
+}
+
+// At most the text width of an A4 page with 1-inch margins (about 6.3 in at 96 dpi).
+const MAX_IMAGE_WIDTH = 600;
+
+function imageRun(images: Map<string, LoadedImage>, src: string | null): ImageRun | null {
+  const image = src ? images.get(src) : undefined;
+  if (!image) return null;
+  // Charts are drawn at twice their size; show them at half, and never wider than the page.
+  const scale = Math.min(1, MAX_IMAGE_WIDTH / image.width, image.width > MAX_IMAGE_WIDTH * 1.5 ? 0.5 : 1);
+  return new ImageRun({ type: image.type, data: image.data, transformation: { width: Math.round(image.width * scale), height: Math.round(image.height * scale) } });
+}
+
+function htmlToDocxParagraphs(html: string, images: Map<string, LoadedImage>): Block[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  const paragraphs: Paragraph[] = [];
+  const paragraphs: Block[] = [];
 
   const getAlignment = (el: Element): typeof AlignmentType[keyof typeof AlignmentType] => {
     const style = el.getAttribute('style') || '';
@@ -24,7 +62,7 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
     return map[tag] || null;
   };
 
-  const processNode = (node: ChildNode): Paragraph[] => {
+  const processNode = (node: ChildNode): Block[] => {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent || '';
       if (text.trim()) {
@@ -54,16 +92,25 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
       return [new Paragraph({ children: runs, heading: headingLevel, alignment: getAlignment(el) })];
     }
 
-    // Handle table
+    // Tables become real Word tables (header cells in bold).
     if (tag === 'table') {
       const rows = Array.from(el.querySelectorAll('tr'));
-      // Just convert table to text paragraphs for simplicity
-      return rows.flatMap(row => {
-        const cells = Array.from(row.querySelectorAll('td, th'));
-        const hasHeaderCells = cells.some(c => c.tagName.toLowerCase() === 'th');
-        const text = cells.map(c => c.textContent?.trim() || '').join(' | ');
-        return [new Paragraph({ children: [new TextRun({ text, size: 24, bold: hasHeaderCells })] })];
-      });
+      if (!rows.length) return [];
+      return [new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: rows.map((row) => new TableRow({
+          tableHeader: Array.from(row.children).every((c) => c.tagName.toLowerCase() === 'th'),
+          children: Array.from(row.querySelectorAll('td, th')).map((cell) => new TableCell({
+            children: [new Paragraph({ children: [new TextRun({ text: cell.textContent?.trim() || '', size: 22, bold: cell.tagName.toLowerCase() === 'th' })] })],
+          })),
+        })),
+      }), new Paragraph({ children: [] })];
+    }
+
+    // Images (charts from the Data panel are embedded PNGs).
+    if (tag === 'img') {
+      const run = imageRun(images, el.getAttribute('src'));
+      return run ? [new Paragraph({ children: [run], alignment: AlignmentType.CENTER })] : [];
     }
 
     // Manual page break from the editor
@@ -90,7 +137,7 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
 
     // Handle block elements
     if (tag === 'p' || tag === 'div' || tag === 'li') {
-      const runs = Array.from(el.childNodes).flatMap(child => {
+      const runs = Array.from(el.childNodes).flatMap((child): (TextRun | ImageRun)[] => {
         if (child.nodeType === Node.TEXT_NODE) {
           return [new TextRun({ text: child.textContent || '', size: 24 })];
         }
@@ -101,6 +148,10 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
           if (childTag === 'strong' || childTag === 'b') return [new TextRun({ text, bold: true, size: 24 })];
           if (childTag === 'em' || childTag === 'i') return [new TextRun({ text, italics: true, size: 24 })];
           if (childTag === 'u') return [new TextRun({ text, underline: {}, size: 24 })];
+          if (childTag === 'img') {
+            const run = imageRun(images, childEl.getAttribute('src'));
+            return run ? [run] : [];
+          }
           return [new TextRun({ text, size: 24 })];
         }
         return [];
@@ -134,7 +185,12 @@ function htmlToDocxParagraphs(html: string): Paragraph[] {
 }
 
 export async function exportToDocx(html: string, title: string, filename?: string) {
-  const paragraphs = htmlToDocxParagraphs(html);
+  saveAs(await buildDocx(html, title), `${filename || title.replace(/\s+/g, '_')}.docx`);
+}
+
+/** The document as a Word file. */
+export async function buildDocx(html: string, title: string): Promise<Blob> {
+  const paragraphs = htmlToDocxParagraphs(html, await loadImages(html));
 
   const doc = new Document({
     numbering: {
@@ -173,6 +229,5 @@ export async function exportToDocx(html: string, title: string, filename?: strin
     }],
   });
 
-  const blob = await Packer.toBlob(doc);
-  saveAs(blob, `${filename || title.replace(/\s+/g, '_')}.docx`);
+  return Packer.toBlob(doc);
 }

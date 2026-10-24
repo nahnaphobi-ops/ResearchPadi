@@ -12,6 +12,7 @@ import { streamInlineAI, type InlineAction, type InlineAIError, type InlineReque
 import { setAITarget } from './aiTarget';
 import { notebookService, type NotebookCitation } from '../../../services/notebookService';
 import { answerToDocumentHtml } from '../notebook/citeHtml';
+import { onEditorDom } from '../editorDom';
 
 interface Props {
   editor: Editor;
@@ -345,14 +346,13 @@ export default function InlineAI({ editor, isPremium, docTitle, sessionId, onOpe
   }, [editor, setTarget]);
 
   // Hide the toolbar while the mouse is still selecting.
-  useEffect(() => {
-    const dom = editor.view.dom;
+  useEffect(() => onEditorDom(editor, (dom) => {
     const down = () => setDragging(true);
     const up = () => setDragging(false);
     dom.addEventListener('pointerdown', down);
     window.addEventListener('pointerup', up);
     return () => { dom.removeEventListener('pointerdown', down); window.removeEventListener('pointerup', up); };
-  }, [editor]);
+  }), [editor]);
 
   // Keep floating UI attached while the page scrolls or resizes.
   useEffect(() => {

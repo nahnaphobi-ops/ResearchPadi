@@ -151,60 +151,6 @@ COLLEGE OF EDUCATION-SPECIFIC RULES:
   `
 };
 
-export const buildResearchContext = (
-  topic: string,
-  course: string,
-  institution: string,
-  programme: string,
-  institutionType: string,
-  globalSources: any[],
-  ghanaianSources: any[],
-  webFindings: string
-): string => {
-  return `
-You are preparing a research context document for an academic
-paper by a Ghanaian ${institutionType} student.
-
-PAPER DETAILS:
-- Topic: ${topic}
-- Course: ${course}
-- Institution: ${institution}
-- Programme: ${programme}
-- Institution Type: ${institutionType}
-
-GLOBAL ACADEMIC SOURCES (OpenAlex + Semantic Scholar):
-${globalSources.map((s, i) => `
-[${i + 1}] ${s.title}
-     Authors: ${s.authors}
-     Year: ${s.year}
-     Journal: ${s.journal || 'N/A'}
-     Summary: ${s.abstract || s.tldr || 'No summary available'}
-     DOI: ${s.doi || 'N/A'}
-`).join('\n')}
-
-GHANAIAN & AFRICAN SOURCES (ResearchPadi Knowledge Brain):
-${ghanaianSources.map((s, i) => `
-[G${i + 1}] ${s.document_title}
-      Institution: ${s.institution}
-      Year: ${s.year || 'N/A'}
-      Authors: ${s.authors || 'N/A'}
-      Excerpt: ${String(s.chunk_text || '').slice(0, 400)}
-      Source: ${s.source_name}
-`).join('\n')}
-
-CURRENT CONTEXT (Perplexity live web research):
-${webFindings}
-
-YOUR TASK:
-Synthesise ALL sources above into a structured research brief
-covering: key themes, major debates, Ghanaian-specific findings,
-gaps in the literature, and statistical data available.
-This brief will be used by the paper writer — make it thorough.
-Prioritise Ghanaian and African sources in your synthesis.
-Flag which sources are most relevant to each chapter.
-  `.trim();
-};
-
 export const buildChapterPrompt = (
   chapterNumber: number,
   chapterTitle: string,

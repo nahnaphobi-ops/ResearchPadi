@@ -28,6 +28,7 @@ const ReviewFeedback = lazy(() => import('./pages/ReviewFeedback'));
 const BecomeReviewer = lazy(() => import('./pages/BecomeReviewer'));
 const ReviewDesk = lazy(() => import('./pages/ReviewDesk'));
 const ReviewWork = lazy(() => import('./pages/ReviewWork'));
+const SharedDocument = lazy(() => import('./pages/SharedDocument'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminOverview = lazy(() => import('./pages/admin/Overview'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
@@ -93,6 +94,8 @@ function App() {
           <Route path="/become-a-reviewer" element={<ProtectedRoute><BecomeReviewer /></ProtectedRoute>} />
           <Route path="/review-desk" element={<ProtectedRoute><ReviewDesk /></ProtectedRoute>} />
           <Route path="/review-desk/:id" element={<ProtectedRoute><ReviewWork /></ProtectedRoute>} />
+          {/* Share links: no account needed */}
+          <Route path="/shared/:token" element={<SharedDocument />} />
           <Route path="/admin/login" element={<Navigate to="/login" replace />} />
           <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
           <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />

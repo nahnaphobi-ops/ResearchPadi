@@ -10,4 +10,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      // The site, and the Microsoft Word task pane (see docs/word-addin.md).
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        word: fileURLToPath(new URL('./word.html', import.meta.url)),
+      },
+    },
+  },
 })

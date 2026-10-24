@@ -115,6 +115,12 @@ export interface GatewayRequest {
    * is added to every call regardless.
    */
   originality?: boolean;
+  /**
+   * Already paid for (the coach on a study draft the student bought): logged
+   * against the user, but not counted toward or blocked by their daily AI
+   * allowance. Callers cap such use themselves.
+   */
+  prepaid?: boolean;
   /** Metadata for logging */
   meta?: Record<string, any>;
 }
@@ -153,7 +159,7 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
   const systemPrompt = systemPromptFor(req);
 
   // Per-user daily spend cap (throws AiBudgetError → 429)
-  await assertBudget(userId);
+  if (!req.prepaid) await assertBudget(userId);
 
   // Build chain
   const names = req.preferredModel
@@ -191,7 +197,7 @@ export async function aiCall(req: GatewayRequest): Promise<GatewayResponse> {
       aiCircuitBreaker.recordSuccess(circuitKey);
 
       const cost = estimateCost(result.inputTokens, result.outputTokens, model);
-      await recordSpend(userId, cost);
+      if (!req.prepaid) await recordSpend(userId, cost);
       if (result.truncated) {
         log.warn({ model: model.model, tier, outputTokens: result.outputTokens, meta }, 'AI output hit maxTokens and was cut off');
       }
@@ -249,7 +255,7 @@ export async function aiStream(
     onDelta(result.text);
     return result;
   }
-  await assertBudget(userId);
+  if (!req.prepaid) await assertBudget(userId);
   const systemPrompt = systemPromptFor(req);
 
   const chain = FAILOVER_CHAINS[tier].map(n => MODELS[n]).filter(Boolean);
@@ -279,7 +285,7 @@ export async function aiStream(
       aiCircuitBreaker.recordSuccess(circuitKey);
 
       const cost = estimateCost(result.inputTokens, result.outputTokens, model);
-      await recordSpend(userId, cost);
+      if (!req.prepaid) await recordSpend(userId, cost);
       logUsage({
         userId, provider: model.provider, model: model.model, tier,
         inputTokens: result.inputTokens, outputTokens: result.outputTokens,

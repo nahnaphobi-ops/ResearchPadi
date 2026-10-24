@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, FileText, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowLeft, BarChart3, BookOpen, FileText, Library, MessageSquare, Redo2, Save, Share2, Sparkles, Undo2 } from 'lucide-react';
 import type { WorkspacePanel } from './panels';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
@@ -13,15 +13,21 @@ interface Props {
   sidePanel: WorkspacePanel | null;
   onTogglePanel: (panel: WorkspacePanel) => void;
   hasStudyDraft?: boolean;
+  onShare: () => void;
+  /** Set while the document is edited live: connected yet, and who else is in it. */
+  live?: { connected: boolean; others: { name: string; color: string }[] } | null;
 }
 
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
 /** Word-style title bar: quick access toolbar, document name and save state. */
-export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft }) => {
+export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft, onShare, live }) => {
   const navigate = useNavigate();
   const { activeSession } = useWorkspaceStore();
   const history = useEditorState({
     editor,
-    selector: ({ editor: e }) => ({ canUndo: e?.can().undo() ?? false, canRedo: e?.can().redo() ?? false }),
+    // A replaced editor (going live or leaving live) is destroyed before React lets go of it.
+    selector: ({ editor: e }) => (e && !e.isDestroyed ? { canUndo: e.can().undo(), canRedo: e.can().redo() } : { canUndo: false, canRedo: false }),
   });
 
   const status = saving
@@ -101,11 +107,52 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
         <button
           onClick={() => onTogglePanel('sources')}
           aria-label="Sources"
-          title="Your sources (Premium)"
+          title="Your sources"
           aria-pressed={sidePanel === 'sources'}
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'sources' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >
           <Library size={15} /> <span className="hidden lg:inline">Sources</span>
+        </button>
+        <button
+          onClick={() => onTogglePanel('data')}
+          aria-label="Data analysis"
+          title="Analyse your questionnaire data"
+          aria-pressed={sidePanel === 'data'}
+          className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'data' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+        >
+          <BarChart3 size={15} /> <span className="hidden lg:inline">Data</span>
+        </button>
+        {live && (
+          <span
+            className="mr-1 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2 py-0.5 text-[11.5px]"
+            title={live.others.length ? `Writing with you: ${live.others.map((o) => o.name).join(', ')}` : 'People with the edit link can write with you'}
+          >
+            <span className={`h-2 w-2 rounded-full ${live.connected ? 'bg-[#6ccb5f]' : 'bg-[#f7c948] animate-pulse'}`} aria-hidden />
+            <span className="hidden sm:inline">{live.connected ? 'Live' : 'Connecting…'}</span>
+            {live.others.slice(0, 3).map((o, i) => (
+              <span key={i} className="grid h-5 w-5 place-items-center rounded-full text-[9.5px] font-bold text-white ring-1 ring-white/70" style={{ backgroundColor: o.color }} aria-label={o.name}>
+                {initials(o.name)}
+              </span>
+            ))}
+            {live.others.length > 3 && <span>+{live.others.length - 3}</span>}
+          </span>
+        )}
+        <button
+          onClick={() => onTogglePanel('comments')}
+          aria-label="Comments"
+          title="Comments"
+          aria-pressed={sidePanel === 'comments'}
+          className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'comments' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+        >
+          <MessageSquare size={15} />
+        </button>
+        <button
+          onClick={onShare}
+          aria-label="Share"
+          title="Share with your supervisor or classmates"
+          className="h-8 px-3 ml-1 rounded bg-white text-[#2b579a] text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-[#eff6fc]"
+        >
+          <Share2 size={14} /> <span className="hidden sm:inline">Share</span>
         </button>
       </div>
     </div>

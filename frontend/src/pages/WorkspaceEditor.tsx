@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { apiErrorMessage, apiErrorStatus } from '../utils/apiError';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEditor, type JSONContent } from '@tiptap/react';
 import { workspaceService } from '../services/workspaceService';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { exportToDocx } from '../utils/exportDocx';
+import { exportToLatex } from '../utils/exportLatex';
+import FormatCheckDialog from '../components/workspace/format/FormatCheckDialog';
+import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceHeader } from '../components/workspace/WorkspaceHeader';
 import { EditorArea } from '../components/workspace/EditorArea';
 import { SidePanel } from '../components/workspace/SidePanel';
@@ -18,7 +21,10 @@ import RequestReviewModal from '../components/workspace/review/RequestReviewModa
 import type { WorkspacePanel } from '../components/workspace/panels';
 import { Autocomplete, dismissSuggestion } from '../components/workspace/autocomplete/Autocomplete';
 import { useWorkspacePlan } from '../hooks/useWorkspacePlan';
+import ShareDialog from '../components/workspace/comments/ShareDialog';
+import VersionHistory from '../components/workspace/comments/VersionHistory';
 import { apiErrorCode } from '../utils/apiError';
+import { colorFor, editorKey, joinLive, leaveLive, liveExtensions, othersHere, seedWhenSynced, type Live, type LiveUser } from '../components/workspace/collab/live';
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
@@ -34,9 +40,13 @@ export default function WorkspaceEditor() {
   // ?panel=feedback (from the Reviews page or the review-ready SMS) opens that panel.
   const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(() => {
     const p = searchParams.get('panel');
-    return p === 'feedback' || p === 'sources' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
+    return p === 'feedback' || p === 'sources' || p === 'data' || p === 'comments' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
   });
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [formatOpen, setFormatOpen] = useState(false);
+  const profileInstitution = useAuthStore((state) => state.user?.institution_type);
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const [aiSelectedText, setAiSelectedText] = useState('');
   const [fullDocText, setFullDocText] = useState('');
@@ -54,6 +64,33 @@ export default function WorkspaceEditor() {
   const isPremium = plan === 'premium';
   const scrollRef = useRef<HTMLDivElement>(null);
   const savedHtmlRef = useRef<string | null>(null);
+  // The latest text, for rebuilding the editor when the document goes live or stops being live.
+  const htmlRef = useRef('');
+
+  // Live co-writing: on while the document has an edit link. The editor waits
+  // for the live copy before it takes typing, so nothing typed is lost.
+  const [collaborative, setCollaborative] = useState(false);
+  const [live, setLive] = useState<Live | null>(null);
+  const [others, setOthers] = useState<LiveUser[]>([]);
+  const authUser = useAuthStore((state) => state.user);
+  const me = useMemo(() => ({ name: authUser?.full_name || 'Writer', color: colorFor(authUser?.id || 'me') }), [authUser]);
+  useEffect(() => {
+    if (!collaborative || !id) return;
+    const joined = joinLive(id, { onDenied: (reason) => setError(`Live editing is unavailable: ${reason}`) });
+    const ready = () => setLive(joined);
+    const people = () => setOthers(othersHere(joined));
+    joined.provider.on('synced', ready);
+    joined.provider.on('awarenessChange', people);
+    const slow = window.setTimeout(() => { if (!joined.provider.isSynced) setError("Can't reach live editing yet. Your text is safe; check your connection or reload."); }, 15_000);
+    return () => {
+      window.clearTimeout(slow);
+      joined.provider.off('synced', ready);
+      joined.provider.off('awarenessChange', people);
+      setLive((cur) => (cur === joined ? null : cur));
+      setOthers([]);
+      leaveLive(joined);
+    };
+  }, [collaborative, id]);
 
   const updateSettings = useCallback((patch: Partial<PageSettings>) => {
     setSettings((prev) => {
@@ -91,8 +128,10 @@ export default function WorkspaceEditor() {
   }, [id, notify]);
 
   const editor = useEditor({
-    extensions: [...workspaceExtensions(), Autocomplete],
-    content: activeSession?.content || '',
+    extensions: [...workspaceExtensions({ collaborative: !!live }), Autocomplete, ...(live ? liveExtensions(live, me) : [])],
+    // A live editor takes its text from the live copy.
+    content: live ? undefined : activeSession?.content || '',
+    editable: !collaborative || !!live,
     editorProps: {
       attributes: {
         class: 'focus:outline-none',
@@ -100,7 +139,8 @@ export default function WorkspaceEditor() {
       },
     },
     onUpdate: ({ editor }) => {
-      updateSessionContent(editor.getHTML());
+      htmlRef.current = editor.getHTML();
+      updateSessionContent(htmlRef.current);
       const text = editor.getText();
       setWordCount(countWords(text));
       setFullDocText(text);
@@ -111,7 +151,12 @@ export default function WorkspaceEditor() {
       setAiSelectedText(selected);
       setSelectedWords(selected ? countWords(selected) : 0);
     },
-  });
+  }, [live, collaborative]);
+
+  // The first one into a new live document brings the saved text with them.
+  useEffect(() => {
+    if (live && editor) seedWhenSynced(live, editor, () => htmlRef.current);
+  }, [live, editor]);
 
   // Browser spellcheck follows the Review > Spelling toggle. setOptions is safe
   // before the editor view mounts (it is applied when the view is created).
@@ -147,6 +192,12 @@ export default function WorkspaceEditor() {
         const res = await workspaceService.getSession(id);
         setActiveSession(res.data);
         savedHtmlRef.current = res.data.content || '';
+        htmlRef.current = res.data.content || '';
+        // A live document's text comes from the live copy once connected.
+        if (res.data.collaborative) {
+          setCollaborative(true);
+          return;
+        }
         const trySetContent = () => {
           const ed = editorRef.current;
           if (ed && res.data.content && ed.getHTML() !== res.data.content) {
@@ -202,6 +253,11 @@ export default function WorkspaceEditor() {
   const handleExportDocx = useCallback(() => {
     if (!editor || !activeSession) return;
     exportToDocx(editor.getHTML(), activeSession.title || 'Untitled');
+  }, [editor, activeSession]);
+
+  const handleExportLatex = useCallback(() => {
+    if (!editor || !activeSession) return;
+    void exportToLatex(editor.getHTML(), activeSession.title || 'Untitled');
   }, [editor, activeSession]);
 
   const handleInsertToc = useCallback(() => {
@@ -275,6 +331,7 @@ export default function WorkspaceEditor() {
       <style>{`@media print { @page { size: ${PAGE_SIZES[settings.size].css} ${settings.orientation}; margin: ${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px; } }`}</style>
 
       <WorkspaceHeader
+        key={`WorkspaceHeader-${editorKey(editor)}`}
         editor={editor}
         lastSaved={lastSaved}
         saving={saving}
@@ -282,21 +339,28 @@ export default function WorkspaceEditor() {
         sidePanel={sidePanel}
         onTogglePanel={togglePanel}
         hasStudyDraft={hasStudyDraft}
+        onShare={() => setShareOpen(true)}
+        live={collaborative ? { connected: !!live, others } : null}
       />
 
       {editor && (
         <Ribbon
+          key={`Ribbon-${editorKey(editor)}`}
           editor={editor}
           settings={settings}
           onSettingsChange={updateSettings}
           pageCount={pageMetrics.pageCount}
           onSave={handleSave}
           onExportDocx={handleExportDocx}
+          onExportLatex={handleExportLatex}
+          onFormatCheck={() => setFormatOpen(true)}
           onPrint={handlePrint}
           onInsertToc={handleInsertToc}
           onOpenFind={setFind}
           onOpenPanel={(panel) => setSidePanel(panel)}
           onRequestReview={() => setReviewOpen(true)}
+          onShare={() => setShareOpen(true)}
+          onVersionHistory={() => setHistoryOpen(true)}
           onTogglePanel={() => setSidePanel((cur) => (cur ? null : 'ai'))}
           onFitWidth={handleFitWidth}
           onBack={() => navigate('/workspace')}
@@ -314,6 +378,7 @@ export default function WorkspaceEditor() {
 
       <div className="flex-1 flex min-h-0 relative">
         <EditorArea
+          key={`EditorArea-${editorKey(editor)}`}
           editor={editor}
           settings={settings}
           onPageMetrics={setPageMetrics}
@@ -331,6 +396,7 @@ export default function WorkspaceEditor() {
         </EditorArea>
         {editor && (
           <InlineAI
+            key={`InlineAI-${editorKey(editor)}`}
             editor={editor}
             isPremium={isPremium}
             docTitle={activeSession?.title}
@@ -339,6 +405,7 @@ export default function WorkspaceEditor() {
           />
         )}
         <SidePanel
+          key={`SidePanel-${editorKey(editor)}`}
           editor={editor}
           sidePanel={sidePanel}
           setSidePanel={setSidePanel}
@@ -351,7 +418,37 @@ export default function WorkspaceEditor() {
           onRequestReview={() => setReviewOpen(true)}
           reviewRefreshKey={reviewRefreshKey}
           hasStudyDraft={hasStudyDraft}
+          onShare={() => setShareOpen(true)}
         />
+        {shareOpen && id && (
+          <ShareDialog
+            sessionId={id}
+            onClose={() => setShareOpen(false)}
+            onLiveChange={(on) => {
+              if (on === collaborative) return;
+              if (editor) htmlRef.current = editor.getHTML();
+              if (on) void save(true);
+              setCollaborative(on);
+              notify(on ? 'Live editing is on: people with the edit link can write with you.' : 'Live editing is off.');
+            }}
+          />
+        )}
+        {formatOpen && editor && (
+          <FormatCheckDialog editor={editor} institutionType={activeSession?.institution_type || profileInstitution} onClose={() => setFormatOpen(false)} />
+        )}
+        {historyOpen && id && (
+          <VersionHistory
+            sessionId={id}
+            onBeforeChange={() => save(true)}
+            onRestored={(content) => {
+              editor?.commands.setContent(content);
+              savedHtmlRef.current = content;
+              updateSessionContent(content);
+              notify('Version restored. Your previous text was kept in the version history.');
+            }}
+            onClose={() => setHistoryOpen(false)}
+          />
+        )}
         {reviewOpen && editor && (
           <RequestReviewModal
             editor={editor}

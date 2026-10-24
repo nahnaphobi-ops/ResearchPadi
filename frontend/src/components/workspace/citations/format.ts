@@ -2,11 +2,13 @@ import type { BibliographyEntry, CitationMode, CitationStyleId, PersonName, Segm
 
 export const CITATION_STYLES: { id: CitationStyleId; label: string; numeric: boolean; bibliographyTitle: string }[] = [
   { id: 'apa7', label: 'APA 7th', numeric: false, bibliographyTitle: 'References' },
+  { id: 'apa6', label: 'APA 6th (older guides)', numeric: false, bibliographyTitle: 'References' },
   { id: 'harvard', label: 'Harvard (KNUST / UG)', numeric: false, bibliographyTitle: 'References' },
   { id: 'mla9', label: 'MLA 9th', numeric: false, bibliographyTitle: 'Works Cited' },
   { id: 'chicago', label: 'Chicago (author-date)', numeric: false, bibliographyTitle: 'References' },
   { id: 'ieee', label: 'IEEE', numeric: true, bibliographyTitle: 'References' },
   { id: 'vancouver', label: 'Vancouver', numeric: true, bibliographyTitle: 'References' },
+  { id: 'ama', label: 'AMA 11th (medicine, nursing)', numeric: true, bibliographyTitle: 'References' },
 ];
 
 export const DEFAULT_STYLE: CitationStyleId = 'apa7';
@@ -46,6 +48,12 @@ function refAuthors(authors: PersonName[], style: CitationStyleId): string {
       if (names.length > 20) return `${names.slice(0, 19).join(', ')}, . . . ${names[names.length - 1]}`;
       return joinList(names, '&', true);
     }
+    case 'apa6': {
+      // Up to seven authors; more: the first six, an ellipsis, then the last.
+      const names = authors.map(familyGivenInitials);
+      if (names.length > 7) return `${names.slice(0, 6).join(', ')}, . . . ${names[names.length - 1]}`;
+      return joinList(names, '&', true);
+    }
     case 'harvard':
       return joinList(authors.map(familyGivenInitials), 'and', false);
     case 'mla9':
@@ -66,17 +74,24 @@ function refAuthors(authors: PersonName[], style: CitationStyleId): string {
       const names = authors.slice(0, 6).map((n) => (n.given ? `${n.family} ${initialsCompact(n.given)}` : n.family));
       return authors.length > 6 ? `${names.join(', ')}, et al` : names.join(', ');
     }
+    case 'ama': {
+      // Up to six authors; more: the first three, then "et al".
+      const list = authors.length > 6 ? authors.slice(0, 3) : authors;
+      const names = list.map((n) => (n.given ? `${n.family} ${initialsCompact(n.given)}` : n.family));
+      return authors.length > 6 ? `${names.join(', ')}, et al` : names.join(', ');
+    }
   }
 }
 
 /** Author names as they appear in the text ("Mensah & Owusu", "Mensah et al."). */
-function inTextNames(authors: PersonName[], style: CitationStyleId, mode: CitationMode, title: string): string {
+function inTextNames(authors: PersonName[], style: CitationStyleId, mode: CitationMode, title: string, firstTime = false): string {
   if (!authors.length) {
     const short = title.split(/\s+/).slice(0, 4).join(' ');
     return `“${short}${title.split(/\s+/).length > 4 ? '…' : ''}”`;
   }
   const fam = authors.map((a) => a.family);
-  const and = style === 'apa7' && mode === 'parenthetical' ? '&' : 'and';
+  const and = (style === 'apa7' || style === 'apa6') && mode === 'parenthetical' ? '&' : 'and';
+  if (style === 'apa6' && firstTime && fam.length >= 3 && fam.length <= 5) return joinList(fam, and, true);
   if (style === 'chicago') {
     if (fam.length <= 3) return joinList(fam, 'and', true);
     return `${fam[0]} et al.`;
@@ -118,6 +133,9 @@ function compressNumbers(nums: number[], open: string, close: string, joiner: st
   return open === '[' ? parts.join(joiner) : `${open}${parts.join(joiner)}${close}`;
 }
 
+const SUPERSCRIPT: Record<string, string> = { 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹', '–': '⁻', '-': '⁻' };
+const superscript = (s: string) => [...s].map((ch) => SUPERSCRIPT[ch] ?? ch).join('');
+
 // ── Reference-list entries ─────────────────────────────────────────────────
 
 function referenceSegments(s: Source, style: CitationStyleId, suffix: string): Segment[] {
@@ -132,7 +150,9 @@ function referenceSegments(s: Source, style: CitationStyleId, suffix: string): S
   const genre = s.genre || (s.type === 'thesis' ? 'Thesis' : '');
 
   switch (style) {
-    case 'apa7': {
+    case 'apa7':
+    case 'apa6': {
+      const v6 = style === 'apa6';
       if (authors) add(`${authors} (${year}). `);
       if (isArticle) {
         add(authors ? `${endWithPeriod(title)} ` : `${endWithPeriod(title)} (${year}). `);
@@ -151,15 +171,21 @@ function referenceSegments(s: Source, style: CitationStyleId, suffix: string): S
         add(title, true);
         if (!authors) add(` (${year})`);
         if (s.type === 'thesis' || s.type === 'report') {
-          const bracket = [genre, s.institution].filter(Boolean).join(', ');
-          add(bracket ? ` [${bracket}]. ` : '. ');
-          if (s.repository) add(`${endWithPeriod(s.repository)} `);
+          if (v6) {
+            add(genre ? ` (${genre}). ` : '. ');
+            if (s.institution) add(`${endWithPeriod(s.institution)} `);
+          } else {
+            const bracket = [genre, s.institution].filter(Boolean).join(', ');
+            add(bracket ? ` [${bracket}]. ` : '. ');
+            if (s.repository) add(`${endWithPeriod(s.repository)} `);
+          }
         } else {
           add('. ');
           if (where) add(`${endWithPeriod(where)} `);
         }
       }
-      add(link);
+      // APA 6: "doi:10…" or "Retrieved from https://…".
+      add(v6 ? (s.doi ? `doi:${s.doi}` : s.url ? `Retrieved from ${s.url}` : '') : link);
       break;
     }
     case 'harvard': {
@@ -262,6 +288,26 @@ function referenceSegments(s: Source, style: CitationStyleId, suffix: string): S
       if (!s.doi && link) add(` Available from: ${link}`);
       break;
     }
+    case 'ama': {
+      if (authors) add(`${authors}. `);
+      if (isArticle) {
+        add(`${endWithPeriod(title)} `);
+        if (s.containerTitle) { add(s.containerTitle, true); add('. '); }
+        add(`${s.year ?? 'n.d.'}`);
+        if (s.volume) add(`;${s.volume}`);
+        if (s.issue) add(`(${s.issue})`);
+        if (s.pages) add(`:${normDash(s.pages)}`);
+        add('.');
+        if (s.doi) add(` doi:${s.doi}`);
+      } else if (s.type === 'thesis') {
+        add(`${title} [${(genre || 'thesis').toLowerCase()}]. ${s.institution ? `${s.institution}; ` : ''}${s.year ?? 'n.d.'}.`);
+      } else {
+        add(title, true);
+        add(`. ${where ? `${where}; ` : ''}${s.year ?? 'n.d.'}.`);
+      }
+      if (!s.doi && link) add(` ${link}`);
+      break;
+    }
   }
   // Drop trailing whitespace left when an optional final part (e.g. the link) is absent.
   if (out.length) out[out.length - 1] = { ...out[out.length - 1], text: out[out.length - 1].text.trimEnd() };
@@ -328,12 +374,19 @@ export function computeCitations(citations: CitationInput[], style: CitationStyl
     for (const ids of byName.values()) if (ids.length > 1) ids.forEach((id) => mlaNeedsTitle.add(id));
   }
 
+  // APA 6 names three to five authors in full the first time a work is cited.
+  const citedBefore = new Set<string>();
   const labels = citations.map((c) => {
     if (!c.sources.length) return '(citation)';
     const loc = formatLocator(c.page, style);
 
     if (info.numeric) {
       const nums = c.sources.map((s) => numbers.get(s.id)!);
+      if (style === 'ama') {
+        // AMA: superscript numbers, with a page as (p23).
+        const sup = superscript(compressNumbers(nums, '', '', ',')) + (loc ? `⁽ᵖ${superscript(loc.replace(/^pp?\.\s*/, ''))}⁾` : '');
+        return c.mode === 'narrative' ? `${inTextNames(c.sources[0].authors, 'apa7', 'narrative', c.sources[0].title).replace(/et al\.$/, 'et al')}${sup}` : sup;
+      }
       if (style === 'ieee') {
         const core = loc && nums.length === 1 ? `[${nums[0]}, ${loc}]` : compressNumbers(nums, '[', ']', ', ');
         return c.mode === 'narrative' ? `${inTextNames(c.sources[0].authors, 'apa7', 'narrative', c.sources[0].title)} ${core}` : core;
@@ -343,7 +396,7 @@ export function computeCitations(citations: CitationInput[], style: CitationStyl
       return c.mode === 'narrative' ? `${inTextNames(c.sources[0].authors, 'apa7', 'narrative', c.sources[0].title)} ${withLoc}` : withLoc;
     }
 
-    const ordered = style === 'apa7' || style === 'harvard'
+    const ordered = style === 'apa7' || style === 'apa6' || style === 'harvard'
       ? [...c.sources].sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
       : c.sources;
 
@@ -359,7 +412,8 @@ export function computeCitations(citations: CitationInput[], style: CitationStyl
     // Group consecutive works by the same authors: (Mensah, 2019, 2021a)
     const groups: { names: string; years: string[] }[] = [];
     for (const s of ordered) {
-      const names = inTextNames(s.authors, style, c.mode, s.title);
+      const names = inTextNames(s.authors, style, c.mode, s.title, !citedBefore.has(s.id));
+      citedBefore.add(s.id);
       const y = yearLabel(s, suffixes.get(s.id) ?? '');
       const last = groups[groups.length - 1];
       if (last && last.names === names) last.years.push(y);

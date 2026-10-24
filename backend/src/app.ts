@@ -13,6 +13,7 @@ import adminRoutes from './routes/admin.routes.js';
 import writingAssistRoutes from './routes/writing-assist.routes.js';
 import blueprintRoutes from './routes/blueprint.routes.js';
 import usageRoutes from './routes/usage.routes.js';
+import sharedRoutes from './routes/shared.routes.js';
 import careStudyRoutes from './routes/care-study.routes.js';
 import reviewerApplicationRoutes from './routes/reviewer-applications.routes.js';
 import { reviewsRouter, reviewDeskRouter } from './routes/reviews.routes.js';
@@ -44,7 +45,7 @@ function allowedOrigins(): string[] {
   return configured;
 }
 
-const ORIGINS = allowedOrigins();
+export const ORIGINS = allowedOrigins();
 
 // Security
 app.use(helmet({
@@ -106,6 +107,7 @@ app.use('/api/papers', papersRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/subscriptions', subscriptionsRoutes);
 app.use('/api/workspace', workspaceRoutes);
+app.use('/api/shared', sharedRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/writing-assist', writingAssistRoutes);
 app.use('/api/blueprints', blueprintRoutes);
