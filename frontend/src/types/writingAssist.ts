@@ -44,13 +44,23 @@ export interface PlagiarismMatch {
   position: { start: number; end: number };
 }
 
+/** One place the plagiarism check searched, and whether it could. */
+export interface CheckedSource {
+  name: string;
+  status: 'checked' | 'skipped' | 'failed';
+  passages: number;
+  note?: string;
+}
+
 export interface PlagiarismReport {
   totalWords: number;
   uniqueWords: number;
+  sentencesChecked?: number;
   matchCount: number;
   overallSimilarity: number;
   matches: PlagiarismMatch[];
   sources: { name: string; url: string; matchCount: number }[];
+  checkedSources?: CheckedSource[];
 }
 
 export interface AIIndicator {

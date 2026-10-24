@@ -29,6 +29,28 @@ function mapType(types: string[] | null | undefined): SourceType {
   return 'article';
 }
 
+/**
+ * Title, link and full abstract of papers matching a query, for comparing
+ * wording in the plagiarism check. Throws on failure (the keyless API often
+ * answers 429), so the check can say it could not search here.
+ */
+export async function searchSemanticScholarAbstracts(query: string, limit = 8): Promise<{ title: string; url: string; abstract: string }[]> {
+  const q = query.replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (!q) return [];
+  return cacheGet(`plagiarism:semantic:${limit}:${q.toLowerCase()}`, CACHE_TTL.SEMANTIC_SCHOLAR, async () => {
+    const { data } = await axios.get('https://api.semanticscholar.org/graph/v1/paper/search', {
+      params: { query: q, limit, fields: 'title,url,abstract,externalIds' },
+      headers: process.env.SEMANTIC_SCHOLAR_API_KEY ? { 'x-api-key': process.env.SEMANTIC_SCHOLAR_API_KEY } : undefined,
+      timeout: 10_000,
+    });
+    return ((data?.data ?? []) as S2Paper[]).flatMap((p) => {
+      if (!p.title || !p.abstract) return [];
+      const doi = normaliseDoi(p.externalIds?.DOI);
+      return [{ title: p.title.trim(), url: doi ? `https://doi.org/${doi}` : p.url || '', abstract: p.abstract }];
+    });
+  });
+}
+
 export async function searchSemanticScholar(query: string, opts: { yearFrom?: number; limit?: number } = {}): Promise<Source[]> {
   const q = query.replace(/\s+/g, ' ').trim().slice(0, 300);
   if (!q) return [];

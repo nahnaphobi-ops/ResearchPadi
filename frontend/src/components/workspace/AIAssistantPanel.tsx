@@ -6,6 +6,7 @@ import { workspaceService } from '../../services/workspaceService';
 import type { WorkspacePlan } from '../../services/subscriptionService';
 import type { Editor } from '@tiptap/react';
 import SourceClaimCheck from './claims/SourceClaimCheck';
+import CheckedSources from '../common/CheckedSources';
 import type { AIDetectionResult, AIIndicator, ClaimAnalysis, ClaimSource, GrammarIssue, GrammarSummary, PlagiarismMatch, PlagiarismReport } from '../../types/writingAssist';
 import type { Source } from './citations/types';
 import { ScrollRow } from './ribbon/controls';
@@ -122,7 +123,11 @@ function PlagiarismItem({ match }: { match: PlagiarismMatch }) {
         <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 text-[10px] font-medium">
           {Math.round(match.similarity * 100)}% match
         </span>
-        <span className="text-[10px] text-gray-400">{match.source}</span>
+        {match.sourceUrl ? (
+          <a href={match.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-gray-500 underline hover:text-gray-700">{match.source}</a>
+        ) : (
+          <span className="text-[10px] text-gray-400">{match.source}</span>
+        )}
       </div>
       <p className="text-gray-600 line-clamp-2 mb-1 italic">"{match.originalText}"</p>
       <p className="text-[10px] text-gray-500 line-clamp-2">Matched: {match.matchedText?.substring(0, 150)}...</p>
@@ -452,6 +457,7 @@ export default function AIAssistantPanel({ editor, sessionId, plan, selectedText
                   <span>{plagiarismReport.totalWords} words</span>
                   <span>{plagiarismReport.uniqueWords} unique</span>
                 </div>
+                <CheckedSources sources={plagiarismReport.checkedSources} sentences={plagiarismReport.sentencesChecked} />
                 {plagiarismReport.sources?.length > 0 && (
                   <div>
                     <p className="text-[10px] font-medium text-gray-500 mb-1">Top sources:</p>
