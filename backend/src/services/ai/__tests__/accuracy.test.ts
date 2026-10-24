@@ -12,6 +12,7 @@ import { CARE_STUDY_RULES, CARE_STUDY_SYSTEM_PROMPT as GUIDED_CARE_STUDY_PROMPT 
 import { CARE_STUDY_SYSTEM_PROMPT as MODEL_CARE_STUDY_PROMPT } from '../../pipeline/care-study.service.js';
 import { AUTOCOMPLETE_SYSTEM_PROMPT } from '../../workspace/autocomplete.service.js';
 import { CLAIM_CHECK_SYSTEM_PROMPT } from '../../workspace/claim-check.service.js';
+import { INTERPRET_SYSTEM_PROMPT } from '../../data/interpret.service.js';
 
 test('the rule covers every accuracy requirement', () => {
   // The person is treated as at least as capable as the model.
@@ -53,6 +54,7 @@ const FEATURES: [feature: string, systemPrompt: string | undefined, ownRule: Reg
   ['paper supervision', buildSupervisionSystemPrompt('Malaria in Ghana', 'Nursing', 'university', 8000, []), /only these may be cited/],
   ['autocomplete', AUTOCOMPLETE_SYSTEM_PROMPT, /Never add a figure, date, name, finding or claim that neither contains/],
   ['claim check', CLAIM_CHECK_SYSTEM_PROMPT, /You have no other knowledge of those sources, and you must not use any/],
+  ['data reading', INTERPRET_SYSTEM_PROMPT, /using only the numbers given, written exactly as given/],
   ['paper chapters and other single-prompt calls', undefined, null],
 ];
 

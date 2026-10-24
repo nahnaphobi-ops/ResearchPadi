@@ -8,7 +8,7 @@ import {
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
-  WandSparkles,
+  WandSparkles, BarChart3,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -85,7 +85,7 @@ export interface RibbonProps {
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
-  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'feedback') => void;
+  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'data' | 'feedback') => void;
   onRequestReview: () => void;
   onTogglePanel: () => void;
   onFitWidth: () => void;
@@ -376,6 +376,7 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Writing tools">
           <LargeButton icon={<Sparkles />} label="AI Assistant" onClick={() => props.onOpenPanel('ai')} />
           <LargeButton icon={<BookOpen />} label="Citations" onClick={() => props.onOpenPanel('citations')} />
+          <LargeButton icon={<BarChart3 />} label="Data Analysis" onClick={() => props.onOpenPanel('data')} />
         </RibbonGroup>
       </>
     ),

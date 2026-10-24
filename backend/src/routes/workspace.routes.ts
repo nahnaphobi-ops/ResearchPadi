@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import * as notebook from '../controllers/notebook.controller.js';
+import * as data from '../controllers/data.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { attachPlan, enforceSessionLimit, requirePaidPlan, requirePremium } from '../middleware/subscription.middleware.js';
 
@@ -31,6 +32,11 @@ router.post('/citations', workspaceController.searchCitations);
 router.get('/citation-styles', workspaceController.listCitationStyles);
 router.post('/local-citations', workspaceController.searchLocalCitations);
 router.post('/sources', workspaceController.findSources);
+
+// Chapter 4 data analysis: every plan (numbers computed in code); a reading uses the daily AI allowance.
+router.post('/data/parse', data.dataUpload, data.parse);
+router.post('/data/analyse', data.analyse);
+router.post('/data/reading', data.reading);
 
 // Premium: Notion-style AI in the editor (streamed)
 router.post('/inline-ai', requirePremium, workspaceController.inlineAi);

@@ -34,7 +34,7 @@ export default function WorkspaceEditor() {
   // ?panel=feedback (from the Reviews page or the review-ready SMS) opens that panel.
   const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(() => {
     const p = searchParams.get('panel');
-    return p === 'feedback' || p === 'sources' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
+    return p === 'feedback' || p === 'sources' || p === 'data' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
   });
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);

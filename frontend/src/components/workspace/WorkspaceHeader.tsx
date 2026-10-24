@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, FileText, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowLeft, BarChart3, BookOpen, FileText, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
 import type { WorkspacePanel } from './panels';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
@@ -101,11 +101,20 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
         <button
           onClick={() => onTogglePanel('sources')}
           aria-label="Sources"
-          title="Your sources (Premium)"
+          title="Your sources"
           aria-pressed={sidePanel === 'sources'}
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'sources' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >
           <Library size={15} /> <span className="hidden lg:inline">Sources</span>
+        </button>
+        <button
+          onClick={() => onTogglePanel('data')}
+          aria-label="Data analysis"
+          title="Analyse your questionnaire data"
+          aria-pressed={sidePanel === 'data'}
+          className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'data' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+        >
+          <BarChart3 size={15} /> <span className="hidden lg:inline">Data</span>
         </button>
       </div>
     </div>

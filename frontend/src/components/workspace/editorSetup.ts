@@ -59,7 +59,8 @@ export function workspaceExtensions(opts: { placeholder?: string } = {}): Extens
     TableRow,
     TableCell,
     TableHeader,
-    Image,
+    // Data URLs too: charts from the Data panel are embedded PNGs.
+    Image.configure({ allowBase64: true }),
     Typography,
     TaskList,
     TaskItem.configure({ nested: true }),

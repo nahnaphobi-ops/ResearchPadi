@@ -1,11 +1,12 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
-import { BookOpen, FileText, GraduationCap, Library, Sparkles, X } from 'lucide-react';
+import { BarChart3, BookOpen, FileText, GraduationCap, Library, Sparkles, X } from 'lucide-react';
 import AIAssistantPanel from '../workspace/AIAssistantPanel';
 import CitationPanel from '../workspace/CitationPanel';
 import NotebookPanel from './notebook/NotebookPanel';
 import FeedbackPanel from './review/FeedbackPanel';
 import StudyDraftPanel from './draft/StudyDraftPanel';
+import DataPanel from './data/DataPanel';
 import type { WorkspacePanel } from './panels';
 import type { WorkspacePlan } from '../../services/subscriptionService';
 
@@ -30,6 +31,7 @@ const tabs = [
   { key: 'ai' as const, label: 'AI', icon: Sparkles },
   { key: 'citations' as const, label: 'Citations', icon: BookOpen },
   { key: 'sources' as const, label: 'Sources', icon: Library },
+  { key: 'data' as const, label: 'Data', icon: BarChart3 },
   { key: 'feedback' as const, label: 'Feedback', icon: GraduationCap },
 ];
 
@@ -107,6 +109,7 @@ export const SidePanel: React.FC<Props> = ({
         )}
         {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} />}
         {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} plan={plan} maxSources={maxSources} />}
+        {sidePanel === 'data' && <DataPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'feedback' && <FeedbackPanel editor={editor} sessionId={sessionId} onRequestReview={onRequestReview} refreshKey={reviewRefreshKey} />}
       </div>
     </aside>

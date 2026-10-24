@@ -12,7 +12,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && node scripts/copy-assets.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/services/pipeline/__tests__/*.test.ts src/services/notebook/__tests__/*.test.ts src/services/reviews/__tests__/*.test.ts src/services/workspace/__tests__/*.test.ts src/services/rag/__tests__/*.test.ts src/lib/__tests__/*.test.ts src/services/care-study/__tests__/*.test.ts src/services/documents/__tests__/*.test.ts",
+    "test": "tsx --test src/services/citations/verify/__tests__/*.test.ts src/services/ai/__tests__/*.test.ts src/services/pipeline/__tests__/*.test.ts src/services/notebook/__tests__/*.test.ts src/services/reviews/__tests__/*.test.ts src/services/workspace/__tests__/*.test.ts src/services/rag/__tests__/*.test.ts src/lib/__tests__/*.test.ts src/services/care-study/__tests__/*.test.ts src/services/documents/__tests__/*.test.ts src/services/data/__tests__/*.test.ts",
     "rag:verify": "tsx src/scripts/verify-sources.ts",
     "rag:harvest": "tsx src/scripts/harvest-now.ts"
   },
