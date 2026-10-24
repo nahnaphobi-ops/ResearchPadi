@@ -166,8 +166,17 @@ export default function ReviewWork() {
             <div className="min-w-0">
               {request.source_type === 'care_study' && (
                 <p className="mb-3 rounded-xl border border-rule bg-white p-3 text-sm text-ink">
-                  <span className="font-semibold">Care study. </span>
-                  Each section shows the student's own notes, then her draft. The notes are the only facts about the client. Flag any draft detail the notes do not support, and anything marked [Student to supply: …] that is still missing. Do not add clinical facts yourself.
+                  {request.specialty === 'research_methods' ? (
+                    <>
+                      <span className="font-semibold">Research project. </span>
+                      Each section shows the student's own notes, then her draft. The notes are the only facts about the study and its results. Flag any figure or detail in the draft that the notes do not support, any objective without a finding, and anything marked [Student to supply: …] that is still missing. Do not add results yourself.
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold">Care study. </span>
+                      Each section shows the student's own notes, then her draft. The notes are the only facts about the client. Flag any draft detail the notes do not support, and anything marked [Student to supply: …] that is still missing. Do not add clinical facts yourself.
+                    </>
+                  )}
                 </p>
               )}
               {request.notes && <p className="mb-3 rounded-xl bg-brand-soft p-3 text-sm text-ink"><span className="font-semibold">Student's note: </span>{request.notes}</p>}

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell';
-import { ArrowRight, CheckCircle, FileText, PenLine, Stethoscope } from 'lucide-react';
+import { ArrowRight, CheckCircle, FileText, FlaskConical, PenLine, Stethoscope } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 const services = [
@@ -44,10 +44,23 @@ const careStudyService = {
   path: '/care-studies',
 };
 
+const researchProjectService = {
+  key: 'research-project',
+  icon: FlaskConical,
+  iconClass: 'bg-brand-soft text-brand',
+  title: 'Research Project',
+  desc: 'Write up the research you carried out, chapter by chapter. We organise, explain and polish — you supply every figure and result.',
+  points: ['Chapters 1 to 5, built from your own data', 'Ghanaian sources first, plus PubMed', 'Checks that your objectives, sample and results line up'],
+  price: 'GHS 250',
+  priceNote: 'per research project, paid from your wallet',
+  cta: 'Start a research project',
+  path: '/care-studies?kind=research',
+};
+
 export default function NewPaper() {
   const navigate = useNavigate();
   const isNmtc = useAuthStore((s) => s.user?.institution_type === 'nmtc');
-  const shown = isNmtc ? [...services, careStudyService] : services;
+  const shown = isNmtc ? [...services, careStudyService, researchProjectService] : services;
 
   return (
     <AppShell>
@@ -55,7 +68,7 @@ export default function NewPaper() {
       <h1 className="text-3xl font-bold mb-2 text-center text-navy">Choose your service</h1>
       <p className="text-sm text-muted text-center mb-8">Study from a full AI draft, or write your paper yourself with AI beside you.</p>
 
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${shown.length > 2 ? 'xl:grid-cols-3' : ''} gap-6`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${shown.length === 3 ? 'xl:grid-cols-3' : ''} gap-6`}>
         {shown.map((s) => {
           const Icon = s.icon;
           return (

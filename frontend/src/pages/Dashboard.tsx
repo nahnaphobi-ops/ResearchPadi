@@ -155,9 +155,14 @@ export default function Dashboard() {
             <h2 className="display text-3xl text-navy">Your research papers</h2>
           </div>
           {user?.institution_type === 'nmtc' && (
-            <button onClick={() => navigate('/care-studies')} className="text-sm font-semibold text-brand hover:underline inline-flex items-center gap-1">
-              Your care studies <ArrowUpRight size={14} />
-            </button>
+            <span className="inline-flex items-center gap-4">
+              <button onClick={() => navigate('/care-studies')} className="text-sm font-semibold text-brand hover:underline inline-flex items-center gap-1">
+                Your care studies <ArrowUpRight size={14} />
+              </button>
+              <button onClick={() => navigate('/care-studies?kind=research')} className="text-sm font-semibold text-brand hover:underline inline-flex items-center gap-1">
+                Your research projects <ArrowUpRight size={14} />
+              </button>
+            </span>
           )}
           {hasPaperInProgress && (
             <span className="text-xs text-muted inline-flex items-center gap-1.5">

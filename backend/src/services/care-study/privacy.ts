@@ -18,30 +18,30 @@ const BLOCK_RULES: { kind: PrivacyIssue['kind']; re: RegExp; message: string }[]
     kind: 'phone',
     // Ghana numbers: 0XX XXX XXXX or +233 XX XXX XXXX, with or without spaces/dashes.
     re: /(?:\+?233[\s-]?|\b0)[235]\d(?:[\s-]?\d){7}\b/g,
-    message: 'Phone numbers must not appear in a care study. Remove it.',
+    message: 'Phone numbers must not appear in your study. Remove it.',
   },
   {
     kind: 'email',
     re: /\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g,
-    message: 'Email addresses must not appear in a care study. Remove it.',
+    message: 'Email addresses must not appear in your study. Remove it.',
   },
   {
     kind: 'id_number',
     // Ghana Card (GHA-123456789-0).
     re: /\bGHA-?\d{9}-?\d\b/gi,
-    message: 'ID numbers must not appear in a care study. Remove it.',
+    message: 'ID numbers must not appear in your study. Remove it.',
   },
   {
     kind: 'id_number',
     // NHIS, folder, hospital or registration numbers given with their label.
     re: /\b(?:NHIS|NHIA|folder|hospital|OPD|IPD|patient|reg(?:istration)?)\s*(?:no\.?|number|#|ID)\s*[:.]?\s*[A-Z0-9/-]*\d[A-Z0-9/-]{3,}/gi,
-    message: 'Folder, NHIS and registration numbers must not appear in a care study. Remove it.',
+    message: 'Folder, NHIS and registration numbers must not appear in your study. Remove it.',
   },
   {
     kind: 'address',
     // GhanaPost GPS digital address, e.g. AK-039-5028.
     re: /\b[A-Z]{2}-\d{3,4}-\d{4}\b/g,
-    message: 'Digital addresses must not appear in a care study. Give only the town or community.',
+    message: 'Digital addresses must not appear in your study. Give only the town or community.',
   },
 ];
 

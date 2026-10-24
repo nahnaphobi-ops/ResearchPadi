@@ -1,0 +1,233 @@
+{
+  "id": "nmtc-research-project",
+  "kind": "research_project",
+  "name": "Research Project (Nursing and Midwifery Training Colleges)",
+  "description": "A small study you carried out yourself, written up chapter by chapter: introduction, literature review, methodology, results and discussion, conclusion and recommendations.",
+  "notice": "Starter template based on the common five-chapter structure of student research projects. It is not an official format. Check every heading against your own college's research guide and your supervisor.",
+  "focus_label": "Research topic",
+  "focus_hint": "Your topic as a short title or question, e.g. \"Knowledge of exclusive breastfeeding among mothers attending postnatal clinic\". Used to search for sources.",
+  "search_terms": "nursing midwifery Ghana",
+  "review_specialty": "research_methods",
+  "coverage_checks": [
+    { "from": "objectives", "to": "findings", "message": "You listed {from} specific objectives but entered {to} findings. Each objective needs a finding in Chapter 4. Check that none is missing." }
+  ],
+  "stages": [
+    { "key": "front", "label": "Front pages", "nursing_process": false },
+    { "key": "intro", "label": "Chapter 1: Introduction" },
+    { "key": "literature", "label": "Chapter 2: Literature review" },
+    { "key": "methods", "label": "Chapter 3: Methodology" },
+    { "key": "results", "label": "Chapter 4: Results and discussion" },
+    { "key": "conclusion", "label": "Chapter 5: Conclusion and recommendations" },
+    { "key": "back", "label": "Appendices", "nursing_process": false }
+  ],
+  "sections": [
+    {
+      "key": "acknowledgement",
+      "title": "Acknowledgement",
+      "part": "ACKNOWLEDGEMENT",
+      "stage": "front",
+      "why": "This is where you thank the people who helped you. It is written by you, in the first person, so every name must come from you.",
+      "guidance": "About half a page, no sub-headings. Written in the first person as the student (\"I would like to thank ...\"); this is the one section where the first person is correct. Thank only the people the student lists, in the order: supervisor, then the institution or facility that allowed the study, then the respondents (only if the student says so), then anyone else the student names. Never add a name, role or title.",
+      "word_target": 250,
+      "fields": [
+        { "key": "supervisor", "label": "Your supervisor", "hint": "Their name and title as you want it written, e.g. Mr. K. Mensah, tutor.", "type": "text", "required": true },
+        { "key": "institutions", "label": "The facility or institution that allowed your study", "hint": "Its name and the person who gave permission, as you want it written.", "type": "textarea", "required": true },
+        { "key": "respondents", "label": "Thank your respondents? (write yes or no)", "hint": "If yes, they are thanked as a group, never by name.", "type": "text", "blank_ok": true },
+        { "key": "others", "label": "Anyone else you want to thank", "hint": "For example your tutors, your family or friends, in your own words.", "type": "textarea", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "background_problem",
+      "title": "Background and problem statement",
+      "part": "CHAPTER ONE: INTRODUCTION",
+      "stage": "intro",
+      "why": "The background shows why your topic matters, and the problem statement shows what gap or trouble your study looks at. Your supervisor reads these first to see whether the study is worth doing.",
+      "guidance": "Sub-headings 1.1 BACKGROUND TO THE STUDY and 1.2 PROBLEM STATEMENT. Start from the general picture, narrow to the setting, and end with the specific problem. Use only the context and problem the student entered, in connected paragraphs. Statistics and findings from other studies appear only if a listed source supports them, with its citation; otherwise write [Student to supply: a source for this statement]. Do not state any figure the student did not enter.",
+      "fields": [
+        { "key": "context", "label": "What is happening, in your own words", "hint": "What you have seen or read that made you choose this topic, e.g. many mothers at the clinic stop exclusive breastfeeding before six months.", "type": "textarea", "required": true },
+        { "key": "problem", "label": "The problem your study looks at", "hint": "What is not known, or not going well, that you want to find out about.", "type": "textarea", "required": true },
+        { "key": "setting", "label": "Where the study was done", "hint": "The facility, community or school and its district and region, e.g. Holy Family Hospital postnatal clinic, Berekum, Bono Region.", "type": "text", "required": true }
+      ]
+    },
+    {
+      "key": "objectives",
+      "title": "Objectives and research questions",
+      "part": "CHAPTER ONE: INTRODUCTION",
+      "stage": "intro",
+      "why": "Everything else in the study answers these. Each objective needs a finding in Chapter 4, so write them clearly and keep them few.",
+      "guidance": "Sub-headings 1.3 GENERAL OBJECTIVE, 1.4 SPECIFIC OBJECTIVES and 1.5 RESEARCH QUESTIONS. Number the specific objectives and questions in the order the student entered them, and keep each question tied to its objective. Do not add, merge or reword the meaning of any objective. If the student gave no general objective, write [Student to supply: general objective].",
+      "repeat": {
+        "label": "Objective",
+        "min": 1,
+        "fields": [
+          { "key": "objective", "label": "Specific objective", "hint": "Starts with a verb, e.g. To assess the knowledge of mothers on exclusive breastfeeding.", "type": "text", "required": true },
+          { "key": "question", "label": "Matching research question", "hint": "The question this objective answers, e.g. What do mothers know about exclusive breastfeeding?", "type": "text", "required": true }
+        ]
+      }
+    },
+    {
+      "key": "significance_scope",
+      "title": "Significance, scope and definitions",
+      "part": "CHAPTER ONE: INTRODUCTION",
+      "stage": "intro",
+      "why": "This tells the reader who benefits from the study and where its limits are. Being clear about scope protects you from questions about what you did not study.",
+      "guidance": "Sub-headings 1.6 SIGNIFICANCE OF THE STUDY, 1.7 SCOPE (DELIMITATION) and, only if the student entered definitions, 1.8 DEFINITION OF TERMS. Use only what the student entered. Do not claim benefits or reach beyond what she wrote.",
+      "fields": [
+        { "key": "significance", "label": "Who will benefit and how", "hint": "For example the clinic, mothers, the college or the health service, in your own words.", "type": "textarea", "required": true },
+        { "key": "scope", "label": "What the study covers and does not cover", "hint": "The group of people, the place and the period, e.g. mothers aged 18 to 40 attending the clinic in March 2022.", "type": "textarea", "required": true },
+        { "key": "definitions", "label": "Terms you define", "hint": "Each term and its meaning as you use it. Leave blank if none.", "type": "textarea", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "literature_review",
+      "title": "Literature review",
+      "part": "CHAPTER TWO: LITERATURE REVIEW",
+      "stage": "literature",
+      "why": "The literature review shows what is already known about your topic and where your study fits. It is the only chapter based on books and articles instead of your own data.",
+      "guidance": "Sub-headings for the themes the student lists, in her order; if she lists none, one sub-heading for each specific objective, taken from her objectives. If she names a framework or theory, add a CONCEPTUAL FRAMEWORK sub-heading explaining it in simple, correct language. Close with a short SUMMARY AND GAP paragraph. Cite only the retrieved sources, in connected paragraphs rather than lists. Every substantive statement must carry a citation from the list; where the sources do not cover a point, write [Student to supply: a source for this statement] instead of writing it uncited. Do not mention the student's own study results here.",
+      "requires_sources": true,
+      "word_target": 3000,
+      "fields": [
+        { "key": "themes", "label": "Themes you want covered", "hint": "The topics your supervisor wants reviewed, one per line. Leave blank to follow your objectives.", "type": "textarea", "blank_ok": true },
+        { "key": "framework", "label": "Framework or theory", "hint": "The model your supervisor asked you to use, e.g. Health Belief Model. Leave blank if none.", "type": "text", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "design_setting",
+      "title": "Design, setting and population",
+      "part": "CHAPTER THREE: METHODOLOGY",
+      "stage": "methods",
+      "why": "The methodology tells the reader exactly how you did the study, so someone else could repeat it. It must describe what you really did, not what a textbook says.",
+      "guidance": "Sub-headings 3.1 INTRODUCTION (two sentences on what the chapter covers), 3.2 RESEARCH DESIGN, 3.3 STUDY SETTING and 3.4 STUDY POPULATION. Past tense, third person (\"The researcher used ...\"). Describe only the design, setting and population the student entered. A sentence explaining why a design suits the objectives may use a listed source, with its citation, or be left out.",
+      "fields": [
+        { "key": "design", "label": "Research design", "hint": "For example descriptive cross-sectional, quantitative or qualitative, as your supervisor agreed.", "type": "text", "required": true },
+        { "key": "setting_detail", "label": "Description of the study setting", "hint": "The facility or community: what it is, its size or services, and how people use it.", "type": "textarea", "required": true },
+        { "key": "population", "label": "Population", "hint": "Everyone the study is about, and the group you could actually reach, e.g. all mothers attending postnatal clinic during the study period.", "type": "textarea", "required": true }
+      ]
+    },
+    {
+      "key": "sampling",
+      "title": "Sample and sampling",
+      "part": "CHAPTER THREE: METHODOLOGY",
+      "stage": "methods",
+      "why": "Readers decide how far to trust your findings from the size of your sample and how you chose it. Give the real numbers and the real method.",
+      "guidance": "Sub-headings 3.5 SAMPLE SIZE, 3.6 SAMPLING TECHNIQUE and 3.7 INCLUSION AND EXCLUSION CRITERIA. State the sample size exactly as entered. Describe how the sample size was decided only if the student entered it; otherwise write [Student to supply: how the sample size was decided]. Do not calculate or suggest a sample size.",
+      "fields": [
+        { "key": "sample_size", "label": "Sample size", "hint": "The number of people in your study.", "type": "number", "required": true, "min": 1, "max": 100000 },
+        { "key": "technique", "label": "Sampling technique", "hint": "How you chose people, e.g. simple random sampling, convenience sampling, purposive sampling.", "type": "text", "required": true },
+        { "key": "size_basis", "label": "How you decided the sample size", "hint": "A formula and its inputs, or the number of people who were eligible. Leave blank if you did not work it out.", "type": "textarea", "blank_ok": true },
+        { "key": "inclusion", "label": "Who was included", "hint": "The conditions a person had to meet to take part.", "type": "textarea", "required": true },
+        { "key": "exclusion", "label": "Who was left out", "hint": "People who did not qualify or were not included, and why. Leave blank if none.", "type": "textarea", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "instrument_collection",
+      "title": "Instrument and data collection",
+      "part": "CHAPTER THREE: METHODOLOGY",
+      "stage": "methods",
+      "why": "This shows how your numbers or answers were collected and whether the tool was sound. Supervisors look closely at the instrument and the response rate.",
+      "guidance": "Sub-headings 3.8 DATA COLLECTION INSTRUMENT, 3.9 PRE-TESTING, VALIDITY AND RELIABILITY, 3.10 DATA COLLECTION PROCEDURE and 3.11 RESPONSE RATE. State the questionnaire or guide as the student describes it. Describe pre-testing, validity or reliability only if the student entered them; otherwise write [Student to supply: pre-testing and validity]. Give the response rate only as the numbers entered; never calculate a percentage the student did not enter.",
+      "fields": [
+        { "key": "instrument", "label": "Your instrument", "hint": "What you used and how it is arranged, e.g. a structured questionnaire with four sections and 28 questions.", "type": "textarea", "required": true },
+        { "key": "pretest", "label": "Pre-testing, validity and reliability", "hint": "Whether you tried the tool out first, who checked it, and any reliability result you calculated. Leave blank if none.", "type": "textarea", "blank_ok": true },
+        { "key": "procedure", "label": "How and when data were collected", "hint": "Who collected it, where, when, how long it took, and how people were approached.", "type": "textarea", "required": true },
+        { "key": "distributed", "label": "Questionnaires given out", "hint": "How many you gave out or interviews you arranged.", "type": "number", "required": true, "min": 1, "max": 100000 },
+        { "key": "returned", "label": "Questionnaires returned and usable", "hint": "How many came back and were used in the analysis.", "type": "number", "required": true, "min": 0, "max": 100000, "not_more_than": "distributed" },
+        { "key": "response_rate", "label": "Response rate you calculated", "hint": "Only if you worked it out, e.g. 96%. Leave blank otherwise.", "type": "text", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "analysis_ethics",
+      "title": "Data analysis and ethical considerations",
+      "part": "CHAPTER THREE: METHODOLOGY",
+      "stage": "methods",
+      "why": "Your ethics section proves that people took part freely and safely. It must say only what you really did, because an invented ethical clearance is serious misconduct.",
+      "guidance": "Sub-headings 3.12 DATA ANALYSIS and 3.13 ETHICAL CONSIDERATIONS. Describe the analysis and the ethical steps exactly as the student entered them. Never state that ethical clearance, permission or consent was obtained unless the student entered it; where she did not, write [Student to supply: ethical clearance or permission]. Do not add ethical steps she did not take.",
+      "fields": [
+        { "key": "analysis", "label": "How you analysed the data", "hint": "The software or method and what you calculated, e.g. entered in Excel and analysed with frequencies and percentages.", "type": "textarea", "required": true },
+        { "key": "permission", "label": "Permission or ethical clearance", "hint": "Who gave permission or clearance, and when. Write none if you did not get any.", "type": "textarea", "required": true },
+        { "key": "consent", "label": "How consent was obtained", "hint": "How you explained the study and how people agreed to take part, e.g. verbal consent after reading the information sheet.", "type": "textarea", "required": true },
+        { "key": "confidentiality", "label": "How privacy and confidentiality were protected", "hint": "For example no names on the forms and forms kept locked.", "type": "textarea", "required": true }
+      ]
+    },
+    {
+      "key": "participants",
+      "title": "Characteristics of respondents",
+      "part": "CHAPTER FOUR: RESULTS AND DISCUSSION",
+      "stage": "results",
+      "why": "The first results table describes who took part. Readers use it to judge whether your respondents fit the population you wanted.",
+      "guidance": "Sub-heading 4.1 SOCIO-DEMOGRAPHIC CHARACTERISTICS OF RESPONDENTS. One pipe table with the caption \"TABLE 4.1: SOCIO-DEMOGRAPHIC CHARACTERISTICS OF RESPONDENTS\" and columns Characteristic | Frequency | Percentage, using only the counts the student entered. Write a percentage only where the student entered it; otherwise show [Student to supply: percentage]. Add two or three sentences describing the table, using only its figures. Do not total, round or calculate anything.",
+      "repeat": {
+        "label": "Characteristic",
+        "min": 1,
+        "fields": [
+          { "key": "characteristic", "label": "Characteristic and group", "hint": "For example Age 20 to 29 years, or Female.", "type": "text", "required": true },
+          { "key": "count", "label": "Number of respondents", "hint": "How many fell in this group, from your analysis.", "type": "number", "required": true, "min": 0, "max": 100000 },
+          { "key": "percent", "label": "Percentage", "hint": "From your analysis, e.g. 35.2. Leave blank if you did not calculate it.", "type": "text", "blank_ok": true }
+        ]
+      }
+    },
+    {
+      "key": "findings",
+      "title": "Findings by objective",
+      "part": "CHAPTER FOUR: RESULTS AND DISCUSSION",
+      "stage": "results",
+      "why": "This is the heart of the study: what you found for each objective. Every number must come from your own analysis, and each objective needs at least one finding.",
+      "guidance": "One sub-heading per specific objective, numbered 4.2, 4.3 and so on, in the order the student entered the findings. For each finding, write the numbers or themes exactly as entered and refer to the table the student named; if she gave no table, show [Student to supply: table]. Describe what the figures show in plain sentences. Use the student's interpretation only if she entered one; never add your own explanation of why. Do not calculate, round or add any figure, and invent no quotations or themes.",
+      "repeat": {
+        "label": "Finding",
+        "min": 1,
+        "fields": [
+          { "key": "objective", "label": "Which objective", "hint": "The objective this finding answers, e.g. Objective 1.", "type": "text", "required": true },
+          { "key": "result", "label": "The result", "hint": "Your numbers, or your themes with quotations, exactly as in your analysis.", "type": "textarea", "required": true },
+          { "key": "table_ref", "label": "Table or figure", "hint": "Where it is shown, e.g. Table 4.2.", "type": "text", "blank_ok": true },
+          { "key": "interpretation", "label": "What you think it means", "hint": "Your own interpretation. Leave blank to let the discussion section carry it.", "type": "textarea", "blank_ok": true }
+        ]
+      }
+    },
+    {
+      "key": "discussion",
+      "title": "Discussion",
+      "part": "CHAPTER FOUR: RESULTS AND DISCUSSION",
+      "stage": "results",
+      "why": "The discussion explains what your findings mean and compares them with what other researchers found. This is where you show that you understand your results.",
+      "guidance": "Sub-heading DISCUSSION OF FINDINGS. Take the points the student lists, in her order, and for each state her finding exactly as entered, then compare it with the retrieved sources, citing only those listed. Say whether the sources agree or differ only where a listed excerpt supports it. Where the sources do not cover a point, write [Student to supply: a source for this comparison]. Do not introduce any new result or figure.",
+      "requires_sources": true,
+      "word_target": 1500,
+      "fields": [
+        { "key": "points", "label": "The main points to discuss", "hint": "Three to five points, one per line, e.g. most mothers knew the recommended duration but fewer knew the benefits.", "type": "textarea", "required": true },
+        { "key": "explanations", "label": "Your explanations", "hint": "Why you think the results came out this way, in your own words. Leave blank if you have none.", "type": "textarea", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "conclusion_recommendations",
+      "title": "Summary, conclusion and recommendations",
+      "part": "CHAPTER FIVE: SUMMARY, CONCLUSION AND RECOMMENDATIONS",
+      "stage": "conclusion",
+      "why": "The last chapter pulls the study together and says what should happen next. Recommendations must follow from your own findings.",
+      "guidance": "Sub-headings 5.1 SUMMARY OF FINDINGS, 5.2 CONCLUSION, 5.3 RECOMMENDATIONS, 5.4 LIMITATIONS OF THE STUDY and, only if entered, 5.5 SUGGESTIONS FOR FURTHER RESEARCH. Build the summary from the findings the student entered and the conclusions and recommendations she wrote, one conclusion per objective. Do not add a finding, conclusion or recommendation she did not give.",
+      "fields": [
+        { "key": "conclusions", "label": "Your conclusions", "hint": "One conclusion for each objective, in your own words.", "type": "textarea", "required": true },
+        { "key": "recommendations", "label": "Your recommendations", "hint": "What you recommend and to whom, e.g. the facility, the health service or the college.", "type": "textarea", "required": true },
+        { "key": "limitations", "label": "Limitations", "hint": "Problems that may have affected the study, e.g. a small sample, one facility only or a low response rate.", "type": "textarea", "required": true },
+        { "key": "further_research", "label": "Suggestions for further research", "hint": "Leave blank if none.", "type": "textarea", "blank_ok": true }
+      ]
+    },
+    {
+      "key": "appendices",
+      "title": "Appendices",
+      "part": "APPENDICES",
+      "stage": "back",
+      "why": "The appendices hold what supports the study but does not belong in the chapters: your questionnaire, consent form and permission letters.",
+      "guidance": "A list of appendices, lettered A, B, C in the order the student entered them, each with its title and her note. Do not write the content of any appendix, and do not add one she did not list.",
+      "repeat": {
+        "label": "Appendix",
+        "min": 0,
+        "fields": [
+          { "key": "title", "label": "Title", "hint": "For example Questionnaire, Consent form, Introductory letter.", "type": "text", "required": true },
+          { "key": "note", "label": "Note", "hint": "Anything the reader should know about it. Leave blank if none.", "type": "text", "blank_ok": true }
+        ]
+      }
+    }
+  ]
+}

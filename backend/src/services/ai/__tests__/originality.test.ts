@@ -10,7 +10,7 @@ import { INLINE_SYSTEM_PROMPT } from '../inline-ai.service.js';
 import { buildSupervisionSystemPrompt } from '../prompts.js';
 import { COACH_SYSTEM_PROMPT } from '../../workspace/study-draft.service.js';
 import { NOTEBOOK_SYSTEM_PROMPT } from '../../notebook/notebook-ai.js';
-import { CARE_STUDY_RULES, CARE_STUDY_SYSTEM_PROMPT as GUIDED_CARE_STUDY_PROMPT } from '../../care-study/prompts.js';
+import { CARE_STUDY_RULES, CARE_STUDY_SYSTEM_PROMPT as GUIDED_CARE_STUDY_PROMPT, RESEARCH_PROJECT_RULES, RESEARCH_PROJECT_SYSTEM_PROMPT } from '../../care-study/prompts.js';
 import { CARE_STUDY_SYSTEM_PROMPT as MODEL_CARE_STUDY_PROMPT } from '../../pipeline/care-study.service.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -40,6 +40,8 @@ test('the rule is added after a system prompt, once, leaving the prompt intact',
 const FEATURES: [feature: string, systemPrompt: string | undefined, ownRule: RegExp | null][] = [
   ['guided care study draft', GUIDED_CARE_STUDY_PROMPT, /Never invent patient data, dates, measurements, treatments or outcomes/],
   ['guided care study help and review', CARE_STUDY_RULES, /Never fill a gap with a typical, normal or likely value/],
+  ['guided research project draft', RESEARCH_PROJECT_SYSTEM_PROMPT, /Never invent study details or results/],
+  ['guided research project help and review', RESEARCH_PROJECT_RULES, /Never calculate, round, total or compare figures she did not give/],
   ['model care study chapters, review and fixes', MODEL_CARE_STUDY_PROMPT, /Use only the facts in the CASE RECORD/],
   ['writing assist', WORKSPACE_SYSTEM_PROMPT, /Maintain the researcher's voice/],
   ['editor AI', INLINE_SYSTEM_PROMPT, /Never\s+invent new citations or references/],

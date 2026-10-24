@@ -1,6 +1,6 @@
 import type { CareStudyTemplate, SectionEntries, TemplateField, TemplateSection } from './template.service.js';
 import { collectText } from './privacy.js';
-import { missingRequired } from './template.service.js';
+import { isResearchProject, missingRequired } from './template.service.js';
 
 /**
  * Rule-based part of "Check my work". It points at gaps and values that look
@@ -55,17 +55,22 @@ const isoDate = (v: string | undefined) => (v && /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}
 /** Numbers outside the range the template calls plausible, as questions for the student. */
 function rangeIssues(section: TemplateSection, entries: SectionEntries | undefined): string[] {
   const out: string[] = [];
-  const test = (field: TemplateField, value: string | undefined, where: string) => {
+  const test = (field: TemplateField, value: string | undefined, where: string, group: TemplateField[], valueOf: (key: string) => string | undefined) => {
     if (field.type !== 'number' || value === undefined || value.trim() === '') return;
     const n = Number(value);
     if (!Number.isFinite(n)) { out.push(`${where}${field.label}: "${value}" is not a number.`); return; }
     if ((field.min !== undefined && n < field.min) || (field.max !== undefined && n > field.max)) {
       out.push(`${where}${field.label}: ${n} looks unusual (expected about ${field.min ?? '…'} to ${field.max ?? '…'}).`);
     }
+    // A part cannot be bigger than its whole (questionnaires returned of those given out).
+    const other = field.not_more_than ? valueOf(field.not_more_than) : undefined;
+    if (field.not_more_than && other !== undefined && other.trim() !== '' && Number.isFinite(Number(other)) && n > Number(other)) {
+      out.push(`${where}${field.label}: ${n} is more than ${group.find((g) => g.key === field.not_more_than)?.label ?? field.not_more_than} (${Number(other)}).`);
+    }
   };
-  for (const f of section.fields ?? []) test(f, entries?.fields?.[f.key], '');
+  for (const f of section.fields ?? []) test(f, entries?.fields?.[f.key], '', section.fields ?? [], (k) => entries?.fields?.[k]);
   (entries?.items ?? []).forEach((item, i) => {
-    for (const f of section.repeat?.fields ?? []) test(f, item[f.key], `${section.repeat!.label} ${i + 1}, `);
+    for (const f of section.repeat?.fields ?? []) test(f, item[f.key], `${section.repeat!.label} ${i + 1}, `, section.repeat!.fields, (k) => item[k]);
   });
   return out;
 }
@@ -84,7 +89,8 @@ export function ruleChecks(
       issues.push({ section: s.key, kind: 'gap', message: `${s.title}: still needs ${missing.join('; ')}.` });
     }
 
-    for (const v of valueIssues(collectText(row?.entries))) {
+    // The clinical reading checks (blood pressure, pulse…) only make sense in a care study.
+    for (const v of isResearchProject(template) ? [] : valueIssues(collectText(row?.entries))) {
       issues.push({ section: s.key, kind: 'value', message: `${s.title}: ${v} ${CONFIRM}` });
     }
 
@@ -110,7 +116,23 @@ export function ruleChecks(
     if (stage.nursing_process === false) continue;
     const inStage = template.sections.filter((s) => s.stage === stage.key);
     if (inStage.length && inStage.every((s) => !collectText(sections[s.key]?.entries).trim())) {
-      issues.push({ section: null, kind: 'nursing_process', message: `Nothing entered yet for ${stage.label}. The nursing process needs every step.` });
+      issues.push({
+        section: null,
+        kind: 'nursing_process',
+        message: isResearchProject(template)
+          ? `Nothing entered yet for ${stage.label}. A research project needs every chapter.`
+          : `Nothing entered yet for ${stage.label}. The nursing process needs every step.`,
+      });
+    }
+  }
+
+  // Each objective needs a finding, and similar pairings the template names.
+  for (const c of template.coverage_checks ?? []) {
+    const count = (key: string) => (sections[key]?.entries?.items ?? []).length;
+    const from = count(c.from);
+    const to = count(c.to);
+    if (from > 0 && to > 0 && from > to) {
+      issues.push({ section: c.to, kind: 'gap', message: c.message.replace('{from}', String(from)).replace('{to}', String(to)) });
     }
   }
 

@@ -1,7 +1,7 @@
 import { GRID, inline, pdfTable, renderPdf, type InlineStyle, type PdfContent, type PdfRun } from '../documents/pdf.service.js';
 import {
-  bibliographyEntries, chartFigures, chartHeight, CLEAN_COPY_DESCRIPTION, declarationLine, documentTitle, isPlaceholder, LANDSCAPE_COLUMNS,
-  NO_SOURCES_CITED, PLACEHOLDER, sectionLayout, SUPERVISOR_COPY_ABOUT, SUPERVISOR_COPY_DESCRIPTION, SUPERVISOR_COPY_TITLE, widestTable,
+  bibliographyEntries, chartFigures, chartHeight, cleanDescription, declarationLine, documentTitle, isPlaceholder, LANDSCAPE_COLUMNS,
+  NO_SOURCES_CITED, PLACEHOLDER, sectionLayout, subjectLine, SUPERVISOR_COPY_ABOUT, SUPERVISOR_COPY_TITLE, supervisorDescription, widestTable,
   type ExportStudy, type SectionRows,
 } from './export.service.js';
 import { entriesText, type CareStudyTemplate, type SectionEntries, type TemplateSection } from './template.service.js';
@@ -140,16 +140,16 @@ export async function buildCareStudyPdf(
     pageOrientation: 'landscape',
     pageMargins: [54, 54, 54, 54],
     footer,
-    info: info(study, template, SUPERVISOR_COPY_DESCRIPTION),
+    info: info(study, template, supervisorDescription(template)),
     content: [
       { text: inline(template.name.toUpperCase(), { bold: true }), fontSize: 15, alignment: 'center', margin: [0, 0, 0, 10] },
-      cover(`Client: ${study.pseudonym}`),
+      ...(subjectLine(study, template) ? [cover(subjectLine(study, template)!)] : []),
       ...(study.focus ? [cover(`${template.focus_label}: ${study.focus}`)] : []),
       ...(study.institution_name ? [cover(study.institution_name)] : []),
       ...(study.supervisor_name ? [cover(`Supervisor: ${study.supervisor_name}`)] : []),
       { text: inline(SUPERVISOR_COPY_TITLE, { bold: true }), fontSize: 10, margin: [0, 15, 0, 2] },
       { text: inline(SUPERVISOR_COPY_ABOUT), fontSize: 10 },
-      { text: inline(declarationLine(study, generatedAt), { italics: true }), fontSize: 10, color: GREY, margin: [0, 6, 0, 0] },
+      { text: inline(declarationLine(study, generatedAt, template), { italics: true }), fontSize: 10, color: GREY, margin: [0, 6, 0, 0] },
       { text: inline(template.notice, { italics: true }), fontSize: 10, color: GREY },
       ...body,
       ...bibliography(sections, template, study, {}),
@@ -172,7 +172,7 @@ export async function buildCleanCareStudyPdf(
 ): Promise<Buffer> {
   const title: PdfContent[] = [
     { text: inline(template.name.toUpperCase(), { bold: true }), fontSize: 16, alignment: 'center', margin: [0, 120, 0, 20] },
-    { text: inline(`Client: ${study.pseudonym}`), fontSize: 13, alignment: 'center', margin: [0, 0, 0, 10] },
+    ...(subjectLine(study, template) ? [{ text: inline(subjectLine(study, template)!), fontSize: 13, alignment: 'center', margin: [0, 0, 0, 10] }] : []),
     ...(study.focus ? [{ text: inline(`${template.focus_label}: ${study.focus}`), fontSize: 13, alignment: 'center', margin: [0, 0, 0, 10] }] : []),
     ...(study.institution_name ? [{ text: inline(study.institution_name, { bold: true }), fontSize: 13, alignment: 'center', margin: [0, 30, 0, 10] }] : []),
     ...(study.supervisor_name ? [{ text: inline(`Supervisor: ${study.supervisor_name}`), fontSize: 12, alignment: 'center' }] : []),
@@ -222,7 +222,7 @@ export async function buildCleanCareStudyPdf(
   return renderPdf({
     pageMargins: [108, 72, 72, 72],
     footer,
-    info: info(study, template, CLEAN_COPY_DESCRIPTION),
+    info: info(study, template, cleanDescription(template)),
     content: [
       ...title,
       contents,

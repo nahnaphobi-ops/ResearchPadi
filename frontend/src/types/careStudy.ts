@@ -7,6 +7,8 @@ export interface TemplateField {
   required?: boolean;
   min?: number;
   max?: number;
+  /** Number fields: must not be more than this other number field of the same entry. */
+  not_more_than?: string;
 }
 
 /** A chart plotted from the student's own numbers in a section's repeating entries. */
@@ -33,6 +35,8 @@ export interface TemplateSection {
 
 export interface CareStudyTemplate {
   id: string;
+  /** A care study is about a real client; a research project is about a study the student carried out. Default care_study. */
+  kind?: 'care_study' | 'research_project';
   name: string;
   description: string;
   notice: string;

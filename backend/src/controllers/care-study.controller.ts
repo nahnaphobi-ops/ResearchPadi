@@ -4,7 +4,7 @@ import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
 import { debitWallet } from '../lib/wallet.js';
 import { checkPseudonym, collectText, scanPrivacy } from '../services/care-study/privacy.js';
-import { cleanEntries, getTemplate, listTemplates, missingRequired, type CareStudyTemplate } from '../services/care-study/template.service.js';
+import { cleanEntries, getTemplate, isResearchProject, listTemplates, missingRequired, type CareStudyTemplate } from '../services/care-study/template.service.js';
 import {
   checkWork, defaultGenerate, draftSection, help, retrieveSources, type StudyContext, type StudySection,
 } from '../services/care-study/care-study.service.js';
@@ -121,13 +121,30 @@ export const create = async (req: Request, res: Response) => {
   const template = typeof template_id === 'string' ? getTemplate(template_id) : null;
   if (!template) return res.status(400).json({ error: 'Choose a care study template' });
 
-  const nameError = checkPseudonym(String(pseudonym ?? ''));
-  if (nameError) return res.status(400).json({ error: nameError, field: 'pseudonym' });
+  // A research project has no client: the topic is its focus, and the declarations are about its ethics and its data.
+  const research = isResearchProject(template);
+  if (!research) {
+    const nameError = checkPseudonym(String(pseudonym ?? ''));
+    if (nameError) return res.status(400).json({ error: nameError, field: 'pseudonym' });
+  }
 
-  if (consent !== true) return res.status(400).json({ error: 'Confirm that your client gave consent for this care study', field: 'consent' });
-  if (declaration !== true) return res.status(400).json({ error: 'Confirm that you personally cared for this client', field: 'declaration' });
+  if (consent !== true) {
+    return res.status(400).json({
+      error: research
+        ? 'Confirm that your participants gave informed consent and that you followed your college\'s ethics process'
+        : 'Confirm that your client gave consent for this care study',
+      field: 'consent',
+    });
+  }
+  if (declaration !== true) {
+    return res.status(400).json({
+      error: research ? 'Confirm that you carried out this study yourself and that the data and results are your own' : 'Confirm that you personally cared for this client',
+      field: 'declaration',
+    });
+  }
 
   const focusText = String(focus ?? '').trim().slice(0, 200);
+  if (research && !focusText) return res.status(400).json({ error: 'Enter your research topic', field: 'focus' });
   const blocked = scanPrivacy(`${focusText}\n${institution_name ?? ''}\n${supervisor_name ?? ''}`).filter((i) => i.severity === 'block');
   if (blocked.length) return res.status(422).json({ error: blocked[0].message, issues: blocked });
 
@@ -137,7 +154,7 @@ export const create = async (req: Request, res: Response) => {
     .insert({
       user_id: userId,
       template_id: template.id,
-      pseudonym: String(pseudonym).trim(),
+      pseudonym: research ? 'Research project' : String(pseudonym).trim(),
       focus: focusText,
       institution_name: institution_name ? String(institution_name).slice(0, 200) : null,
       supervisor_name: supervisor_name ? String(supervisor_name).slice(0, 120) : null,
@@ -146,14 +163,14 @@ export const create = async (req: Request, res: Response) => {
     })
     .select()
     .single();
-  if (error) return res.status(500).json({ error: 'Could not start the care study' });
+  if (error) return res.status(500).json({ error: research ? 'Could not start the research project' : 'Could not start the care study' });
 
   const fee = CONFIG.PRICING.CARE_STUDY_GHS;
   const charge = await debitWallet(userId, fee, 'care_study', careStudyChargeReference(study.id));
   if (!charge.ok) {
     await supabase.from('care_studies').delete().eq('id', study.id);
     if (charge.reason === 'insufficient_funds') {
-      return res.status(402).json({ error: `Insufficient balance. A care study costs GHS ${fee}. Please top up your wallet.` });
+      return res.status(402).json({ error: `Insufficient balance. ${research ? 'A research project' : 'A care study'} costs GHS ${fee}. Please top up your wallet.` });
     }
     return res.status(500).json({ error: 'Could not process payment. You have not been charged.' });
   }
@@ -236,7 +253,7 @@ export const draft = async (req: Request, res: Response) => {
 
   await ensureSources(study, template);
   try {
-    const result = await draftSection(context(study, template, sections), section, defaultGenerate());
+    const result = await draftSection(context(study, template, sections), section, defaultGenerate(undefined, template));
     if (result.status === 'locked') {
       return res.status(422).json({ error: 'Fill in the required details for this section first.', missing: result.missing });
     }
@@ -304,10 +321,12 @@ export const check = async (req: Request, res: Response) => {
   const loaded = await loadStudy(req, res);
   if (!loaded) return;
   const { study, template, sections } = loaded;
-  const issues = await checkWork(context(study, template, sections), defaultGenerate(userIdOf(req)));
+  const issues = await checkWork(context(study, template, sections), defaultGenerate(userIdOf(req), template));
   res.json({
     issues,
-    note: 'These are questions to check, not corrections. Confirm anything clinical with your supervisor.',
+    note: isResearchProject(template)
+      ? 'These are questions to check, not corrections. Confirm your method and results with your supervisor.'
+      : 'These are questions to check, not corrections. Confirm anything clinical with your supervisor.',
   });
 };
 
@@ -320,7 +339,7 @@ export const askHelp = async (req: Request, res: Response) => {
   if (blocked.length) return res.status(422).json({ error: blocked[0].message, issues: blocked });
   const { study, template, sections } = loaded;
   try {
-    res.json(await help(context(study, template, sections), message, defaultGenerate(userIdOf(req))));
+    res.json(await help(context(study, template, sections), message, defaultGenerate(userIdOf(req), template)));
   } catch (err: any) {
     // The daily AI allowance message is useful to the student; anything else is not.
     res.status(err.status || 500).json({ error: err.status === 429 ? err.message : 'Could not answer right now. Please try again.' });
@@ -339,9 +358,10 @@ export const exportDocx = async (req: Request, res: Response) => {
     ? (clean ? buildCleanCareStudyPdf : buildCareStudyPdf)
     : (clean ? buildCleanCareStudyDocx : buildCareStudyDocx);
   const buffer = await build(study, template, sections);
-  const safe = String(study.pseudonym).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'client';
+  const research = isResearchProject(template);
+  const safe = String(research ? study.focus : study.pseudonym).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 60) || (research ? 'study' : 'client');
   res.setHeader('Content-Type', pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-  res.setHeader('Content-Disposition', `attachment; filename="Care_study_${safe}${clean ? '' : '_supervisor_copy'}.${pdf ? 'pdf' : 'docx'}"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${research ? 'Research_project' : 'Care_study'}_${safe}${clean ? '' : '_supervisor_copy'}.${pdf ? 'pdf' : 'docx'}"`);
   res.setHeader('X-AI-Generated', 'true');
   res.send(buffer);
 };

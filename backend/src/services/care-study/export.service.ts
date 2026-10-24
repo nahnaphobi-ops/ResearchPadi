@@ -6,7 +6,7 @@ import { formatCitation } from '../citations/formatter.service.js';
 import { draftBlocks, isTableLine, splitRow } from '../documents/draft-text.js';
 import { chartData, chartImages, CHART_HEIGHT, CHART_WIDTH } from './chart.service.js';
 import { citedSources, type CareSource } from './guards.js';
-import { entriesText, type CareStudyTemplate, type SectionEntries, type TemplateSection } from './template.service.js';
+import { entriesText, isResearchProject, type CareStudyTemplate, type SectionEntries, type TemplateSection } from './template.service.js';
 
 /**
  * Two Word exports of a care study:
@@ -52,10 +52,22 @@ export const SUPERVISOR_COPY_DESCRIPTION = "Care study export: the student's own
 export const CLEAN_COPY_DESCRIPTION = 'Care study prepared with ResearchPadi from the student\'s own entries. Not approved by any college or council.';
 
 /** The supervisor copy's record of the student's declarations and of this export. */
-export const declarationLine = (study: ExportStudy, generatedAt: string) =>
-  `Student declared they personally cared for this client on ${study.declaration_confirmed_at.slice(0, 10)} and confirmed the client's consent on ${study.consent_confirmed_at.slice(0, 10)}. Exported ${generatedAt.slice(0, 16).replace('T', ' ')} UTC. Study ID ${study.id}.`;
+export const declarationLine = (study: ExportStudy, generatedAt: string, template?: CareStudyTemplate) => {
+  const exported = `Exported ${generatedAt.slice(0, 16).replace('T', ' ')} UTC. Study ID ${study.id}.`;
+  return template && isResearchProject(template)
+    ? `Student declared the study was carried out by them and the data and results are their own on ${study.declaration_confirmed_at.slice(0, 10)}, and confirmed that participants gave informed consent and that their college's ethics process was followed on ${study.consent_confirmed_at.slice(0, 10)}. ${exported}`
+    : `Student declared they personally cared for this client on ${study.declaration_confirmed_at.slice(0, 10)} and confirmed the client's consent on ${study.consent_confirmed_at.slice(0, 10)}. ${exported}`;
+};
 
-export const documentTitle = (study: ExportStudy, template: CareStudyTemplate) => `${template.name} — ${study.pseudonym}`;
+/** The line under the title on a cover page: the client for a care study; a research project has no client. */
+export const subjectLine = (study: ExportStudy, template: CareStudyTemplate) => (isResearchProject(template) ? null : `Client: ${study.pseudonym}`);
+
+const kindWord = (template: CareStudyTemplate) => (isResearchProject(template) ? 'Research project' : 'Care study');
+export const supervisorDescription = (template: CareStudyTemplate) => SUPERVISOR_COPY_DESCRIPTION.replace('Care study', kindWord(template));
+export const cleanDescription = (template: CareStudyTemplate) => CLEAN_COPY_DESCRIPTION.replace('Care study', kindWord(template));
+
+export const documentTitle = (study: ExportStudy, template: CareStudyTemplate) =>
+  `${template.name} — ${isResearchProject(template) ? study.focus || study.pseudonym : study.pseudonym}`;
 
 /** A section whose draft has a table this wide is laid out on landscape pages. */
 export const LANDSCAPE_COLUMNS = 6;
@@ -262,19 +274,19 @@ export async function buildCareStudyDocx(
   const doc = new Document({
     creator: 'ResearchPadi',
     title: documentTitle(study, template),
-    description: SUPERVISOR_COPY_DESCRIPTION,
+    description: supervisorDescription(template),
     sections: [{
       properties: { page: { size: { orientation: PageOrientation.LANDSCAPE }, margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
       footers: { default: footer() },
       children: [
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [run(template.name.toUpperCase(), { bold: true, size: 30 })] }),
-        new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`Client: ${study.pseudonym}`, { size: 24 })] }),
+        ...(subjectLine(study, template) ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(subjectLine(study, template)!, { size: 24 })] })] : []),
         ...(study.focus ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`${template.focus_label}: ${study.focus}`, { size: 24 })] })] : []),
         ...(study.institution_name ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(study.institution_name, { size: 24 })] })] : []),
         ...(study.supervisor_name ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`Supervisor: ${study.supervisor_name}`, { size: 24 })] })] : []),
         new Paragraph({ spacing: { before: 300 }, children: [run(SUPERVISOR_COPY_TITLE, { bold: true })] }),
         new Paragraph({ children: [run(SUPERVISOR_COPY_ABOUT)] }),
-        new Paragraph({ spacing: { before: 120 }, children: [run(declarationLine(study, generatedAt), { italics: true, color: GREY })] }),
+        new Paragraph({ spacing: { before: 120 }, children: [run(declarationLine(study, generatedAt, template), { italics: true, color: GREY })] }),
         new Paragraph({ children: [run(template.notice, { italics: true, color: GREY })] }),
         ...body,
         ...bibliographyBlocks(sections, template, study.sources),
@@ -302,7 +314,7 @@ export async function buildCleanCareStudyDocx(
 ): Promise<Buffer> {
   const title = [
     new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 2400, after: 400 }, children: [run(template.name.toUpperCase(), { bold: true, size: 32 })] }),
-    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [run(`Client: ${study.pseudonym}`, { size: 26 })] }),
+    ...(subjectLine(study, template) ? [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [run(subjectLine(study, template)!, { size: 26 })] })] : []),
     ...(study.focus ? [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [run(`${template.focus_label}: ${study.focus}`, { size: 26 })] })] : []),
     ...(study.institution_name ? [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 600, after: 200 }, children: [run(study.institution_name, { bold: true, size: 26 })] })] : []),
     ...(study.supervisor_name ? [new Paragraph({ alignment: AlignmentType.CENTER, children: [run(`Supervisor: ${study.supervisor_name}`, { size: 24 })] })] : []),
@@ -369,7 +381,7 @@ export async function buildCleanCareStudyDocx(
   const doc = new Document({
     creator: 'ResearchPadi',
     title: documentTitle(study, template),
-    description: CLEAN_COPY_DESCRIPTION,
+    description: cleanDescription(template),
     // Word asks to update fields on opening, which fills in the contents page.
     features: { updateFields: true },
     sections: docSections,
