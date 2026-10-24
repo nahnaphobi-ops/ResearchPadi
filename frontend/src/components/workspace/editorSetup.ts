@@ -22,6 +22,7 @@ import { SearchHighlight } from './search';
 import { Bibliography, Citation, CitationManager } from './citations/CitationExtension';
 import { AITargetHighlight } from './inlineAI/aiTarget';
 import { ReviewMarks } from './review/reviewMarks';
+import { CommentMarks } from './comments/commentMarks';
 
 /**
  * The document schema shared by the editor and the reviewer's read-only view.
@@ -47,6 +48,7 @@ export function workspaceExtensions(opts: { placeholder?: string } = {}): Extens
     SearchHighlight,
     AITargetHighlight,
     ReviewMarks,
+    CommentMarks,
     Citation,
     Bibliography,
     CitationManager,

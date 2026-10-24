@@ -18,6 +18,8 @@ import RequestReviewModal from '../components/workspace/review/RequestReviewModa
 import type { WorkspacePanel } from '../components/workspace/panels';
 import { Autocomplete, dismissSuggestion } from '../components/workspace/autocomplete/Autocomplete';
 import { useWorkspacePlan } from '../hooks/useWorkspacePlan';
+import ShareDialog from '../components/workspace/comments/ShareDialog';
+import VersionHistory from '../components/workspace/comments/VersionHistory';
 import { apiErrorCode } from '../utils/apiError';
 
 const countWords = (text: string) => text.split(/\s+/).filter(Boolean).length;
@@ -34,9 +36,11 @@ export default function WorkspaceEditor() {
   // ?panel=feedback (from the Reviews page or the review-ready SMS) opens that panel.
   const [sidePanel, setSidePanel] = useState<WorkspacePanel | null>(() => {
     const p = searchParams.get('panel');
-    return p === 'feedback' || p === 'sources' || p === 'data' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
+    return p === 'feedback' || p === 'sources' || p === 'data' || p === 'comments' || p === 'citations' || p === 'ai' || p === 'draft' ? p : null;
   });
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const [aiSelectedText, setAiSelectedText] = useState('');
   const [fullDocText, setFullDocText] = useState('');
@@ -282,6 +286,7 @@ export default function WorkspaceEditor() {
         sidePanel={sidePanel}
         onTogglePanel={togglePanel}
         hasStudyDraft={hasStudyDraft}
+        onShare={() => setShareOpen(true)}
       />
 
       {editor && (
@@ -297,6 +302,8 @@ export default function WorkspaceEditor() {
           onOpenFind={setFind}
           onOpenPanel={(panel) => setSidePanel(panel)}
           onRequestReview={() => setReviewOpen(true)}
+          onShare={() => setShareOpen(true)}
+          onVersionHistory={() => setHistoryOpen(true)}
           onTogglePanel={() => setSidePanel((cur) => (cur ? null : 'ai'))}
           onFitWidth={handleFitWidth}
           onBack={() => navigate('/workspace')}
@@ -351,7 +358,22 @@ export default function WorkspaceEditor() {
           onRequestReview={() => setReviewOpen(true)}
           reviewRefreshKey={reviewRefreshKey}
           hasStudyDraft={hasStudyDraft}
+          onShare={() => setShareOpen(true)}
         />
+        {shareOpen && id && <ShareDialog sessionId={id} onClose={() => setShareOpen(false)} />}
+        {historyOpen && id && (
+          <VersionHistory
+            sessionId={id}
+            onBeforeChange={() => save(true)}
+            onRestored={(content) => {
+              editor?.commands.setContent(content);
+              savedHtmlRef.current = content;
+              updateSessionContent(content);
+              notify('Version restored. Your previous text was kept in the version history.');
+            }}
+            onClose={() => setHistoryOpen(false)}
+          />
+        )}
         {reviewOpen && editor && (
           <RequestReviewModal
             editor={editor}

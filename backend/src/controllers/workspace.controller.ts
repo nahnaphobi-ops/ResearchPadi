@@ -17,6 +17,7 @@ import { countToday, usedToday } from '../lib/daily-count.js';
 import { ownSession, searchSources, type SourceExcerpt } from '../services/notebook/notebook.service.js';
 import { autocompletesUsed, countAutocomplete, suggestContinuation } from '../services/workspace/autocomplete.service.js';
 import { checkClaims, cleanClaims } from '../services/workspace/claim-check.service.js';
+import { autoVersion } from '../services/workspace/sharing.service.js';
 import { documentLimitError, paidPlanRequired, planOf } from '../middleware/subscription.middleware.js';
 import { formatPlan } from '../services/pipeline/plan.service.js';
 import {
@@ -106,6 +107,8 @@ export const updateSession = async (req: Request, res: Response) => {
   if (error) return res.status(500).json({ error: 'Failed to save session' });
   if (!data) return res.status(404).json({ error: 'Session not found' });
   res.json(data);
+  // Version history: an automatic snapshot every so often while writing (never delays the save).
+  if (typeof safeUpdates.content === 'string') void autoVersion(id as string, userId, safeUpdates.content);
 };
 
 // CRUD: Delete session

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, BookOpen, FileText, Library, Redo2, Save, Sparkles, Undo2 } from 'lucide-react';
+import { ArrowLeft, BarChart3, BookOpen, FileText, Library, MessageSquare, Redo2, Save, Share2, Sparkles, Undo2 } from 'lucide-react';
 import type { WorkspacePanel } from './panels';
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useWorkspaceStore } from '../../store/useWorkspaceStore';
@@ -13,10 +13,11 @@ interface Props {
   sidePanel: WorkspacePanel | null;
   onTogglePanel: (panel: WorkspacePanel) => void;
   hasStudyDraft?: boolean;
+  onShare: () => void;
 }
 
 /** Word-style title bar: quick access toolbar, document name and save state. */
-export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft }) => {
+export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, onSave, sidePanel, onTogglePanel, hasStudyDraft, onShare }) => {
   const navigate = useNavigate();
   const { activeSession } = useWorkspaceStore();
   const history = useEditorState({
@@ -115,6 +116,23 @@ export const WorkspaceHeader: React.FC<Props> = ({ editor, lastSaved, saving, on
           className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'data' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
         >
           <BarChart3 size={15} /> <span className="hidden lg:inline">Data</span>
+        </button>
+        <button
+          onClick={() => onTogglePanel('comments')}
+          aria-label="Comments"
+          title="Comments"
+          aria-pressed={sidePanel === 'comments'}
+          className={`h-8 px-2.5 rounded text-[12.5px] inline-flex items-center gap-1.5 ${sidePanel === 'comments' ? 'bg-white text-[#2b579a]' : 'text-white hover:bg-white/15'}`}
+        >
+          <MessageSquare size={15} />
+        </button>
+        <button
+          onClick={onShare}
+          aria-label="Share"
+          title="Share with your supervisor or classmates"
+          className="h-8 px-3 ml-1 rounded bg-white text-[#2b579a] text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-[#eff6fc]"
+        >
+          <Share2 size={14} /> <span className="hidden sm:inline">Share</span>
         </button>
       </div>
     </div>

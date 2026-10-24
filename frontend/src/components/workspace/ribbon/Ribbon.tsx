@@ -8,7 +8,7 @@ import {
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
-  WandSparkles, BarChart3,
+  WandSparkles, BarChart3, Share2, History, MessageSquare,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -85,8 +85,10 @@ export interface RibbonProps {
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
-  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'data' | 'feedback') => void;
+  onOpenPanel: (panel: 'ai' | 'citations' | 'sources' | 'data' | 'comments' | 'feedback') => void;
   onRequestReview: () => void;
+  onShare: () => void;
+  onVersionHistory: () => void;
   onTogglePanel: () => void;
   onFitWidth: () => void;
   onBack: () => void;
@@ -210,6 +212,8 @@ export default function Ribbon(props: RibbonProps) {
           <LargeButton icon={<Save />} label="Save" shortcut="Ctrl+S" onClick={props.onSave} />
           <LargeButton icon={<FileDown />} label="Download .docx" onClick={props.onExportDocx} />
           <LargeButton icon={<Printer />} label="Print" shortcut="Ctrl+P" onClick={props.onPrint} />
+          <LargeButton icon={<Share2 />} label="Share" onClick={props.onShare} />
+          <LargeButton icon={<History />} label="Version History" onClick={props.onVersionHistory} />
         </RibbonGroup>
         <RibbonGroup label="Info">
           <div className="px-2 pt-1 text-[12px] text-[#323130] leading-5 min-w-[170px]">
@@ -596,6 +600,7 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Expert Review">
           <LargeButton icon={<GraduationCap />} label="Request Review" onClick={props.onRequestReview} />
           <LargeButton icon={<MessageSquareText />} label="Feedback" onClick={() => props.onOpenPanel('feedback')} />
+          <LargeButton icon={<MessageSquare />} label="Comments" onClick={() => props.onOpenPanel('comments')} />
         </RibbonGroup>
       </>
     ),

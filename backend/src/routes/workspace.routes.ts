@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as workspaceController from '../controllers/workspace.controller.js';
 import * as notebook from '../controllers/notebook.controller.js';
 import * as data from '../controllers/data.controller.js';
+import * as sharing from '../controllers/sharing.controller.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { attachPlan, enforceSessionLimit, requirePaidPlan, requirePremium } from '../middleware/subscription.middleware.js';
 
@@ -20,6 +21,19 @@ router.get('/sessions/:id', workspaceController.getSession);
 router.put('/sessions/:id', workspaceController.updateSession);
 router.delete('/sessions/:id', workspaceController.deleteSession);
 router.get('/sessions/:id/study-draft', workspaceController.getStudyDraft);
+
+// Version history, share links and comments: every plan.
+router.get('/sessions/:id/versions', sharing.versions);
+router.post('/sessions/:id/versions', sharing.saveNamedVersion);
+router.get('/sessions/:id/versions/:versionId', sharing.version);
+router.post('/sessions/:id/versions/:versionId/restore', sharing.restore);
+router.get('/sessions/:id/shares', sharing.shares);
+router.post('/sessions/:id/shares', sharing.share);
+router.delete('/sessions/:id/shares/:shareId', sharing.unshare);
+router.get('/sessions/:id/comments', sharing.comments);
+router.post('/sessions/:id/comments', sharing.comment);
+router.patch('/sessions/:id/comments/:commentId', sharing.updateComment);
+router.delete('/sessions/:id/comments/:commentId', sharing.removeComment);
 // Every plan: the coach only works on a study draft the student bought (prepaid).
 router.post('/sessions/:id/coach', workspaceController.coach);
 

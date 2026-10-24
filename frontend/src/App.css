@@ -255,6 +255,13 @@ input:focus, select:focus, textarea:focus {
 }
 .cite-chip:hover { background: #ddd6fe; }
 
+/* Passages that reviewer feedback and comments refer to */
+.review-anchor { background: #ede9fe; border-bottom: 2px solid #a78bfa; }
+.review-anchor-active { background: #ddd6fe; }
+.comment-anchor { background: #fef3c7; border-bottom: 2px solid #f59e0b; }
+.comment-anchor-active { background: #fde68a; }
+@media print { .review-anchor, .comment-anchor { background: none; border: 0; } }
+
 /* Autocomplete: the suggested next sentence, in grey after the cursor */
 .rp-ghost { color: #8a8886; cursor: pointer; }
 .rp-ghost kbd {
