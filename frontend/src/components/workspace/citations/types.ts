@@ -6,7 +6,7 @@ export interface PersonName {
 }
 
 export type SourceType = 'article' | 'thesis' | 'book' | 'chapter' | 'report' | 'conference' | 'webpage' | 'other';
-export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar' | 'notebook' | 'imported';
+export type SourceOrigin = 'ghana-repository' | 'openalex' | 'semantic-scholar' | 'europe-pmc' | 'notebook' | 'imported';
 
 export interface Source {
   id: string;

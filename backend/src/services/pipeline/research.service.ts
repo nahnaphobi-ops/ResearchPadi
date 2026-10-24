@@ -1,5 +1,6 @@
 import { searchOpenAlex } from '../citations/openalex.service.js';
 import { searchSemanticScholar } from '../citations/semantic.service.js';
+import { searchEuropePmc } from '../citations/europepmc.service.js';
 import { searchPerplexity } from '../ai/perplexity.service.js';
 import { searchKnowledge, type KnowledgeHit } from '../rag/retriever.service.js';
 import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
@@ -22,13 +23,15 @@ function hitToExcerpt(hit: KnowledgeHit): GhanaExcerpt {
 
 export const performResearch = async (topic: string) => {
   return cacheGet(
-    `research3:${topic.toLowerCase().trim().substring(0, 100)}`,
+    `research4:${topic.toLowerCase().trim().substring(0, 100)}`,
     CACHE_TTL.CITATIONS_EXTERNAL,
     async () => {
-      const [ghanaWorks, globalWorks, semanticResults, perplexityData, ragHits, repositoryItems] = await Promise.all([
+      const [ghanaWorks, globalWorks, semanticResults, pubmedGhana, pubmedResults, perplexityData, ragHits, repositoryItems] = await Promise.all([
         searchOpenAlex(topic, { ghanaOnly: true, perPage: 10 }),
         searchOpenAlex(topic, { perPage: 10 }),
         searchSemanticScholar(topic),
+        searchEuropePmc(topic, { ghanaOnly: true, limit: 6 }),
+        searchEuropePmc(topic, { limit: 10 }),
         searchPerplexity(topic),
         searchKnowledge(topic, { limit: 8 }),
         searchGhanaRepositories(topic, { perRepo: 3 }),
@@ -45,7 +48,7 @@ export const performResearch = async (topic: string) => {
 
       // Ghana-affiliated research first, then global; drop duplicates across APIs.
       const seen = new Set<string>();
-      const citations = [...ghanaWorks, ...globalWorks, ...semanticResults]
+      const citations = [...ghanaWorks, ...pubmedGhana, ...globalWorks, ...pubmedResults, ...semanticResults]
         .filter((s) => {
           const key = sourceKey(s);
           if (seen.has(key)) return false;

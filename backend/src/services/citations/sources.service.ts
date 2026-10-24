@@ -8,6 +8,7 @@ import { chunkText } from '../rag/chunker.service.js';
 import { CONFIG } from '../../config/index.js';
 import { searchOpenAlex } from './openalex.service.js';
 import { searchSemanticScholar } from './semantic.service.js';
+import { searchEuropePmc } from './europepmc.service.js';
 import { normaliseDoi, sourceKey, type Source, type SourceOrigin, type SourceType } from './source.types.js';
 import { isOfflineMode, offlineSources } from '../ai/offline.service.js';
 
@@ -72,6 +73,12 @@ export interface FindSourcesOptions {
   yearFrom?: number;
   limit?: number;
   origins?: SourceOrigin[];
+  /**
+   * Keep at least this many sources from an origin in the results when the search
+   * found them, even where other sources rank higher. A care study's literature
+   * review needs clinical studies, which Ghanaian repositories would otherwise crowd out.
+   */
+  reserve?: Partial<Record<SourceOrigin, number>>;
 }
 
 /** Merge two records of the same work, keeping whichever fields are filled in. */
@@ -96,8 +103,38 @@ function merge(a: Source, b: Source): Source {
 }
 
 /**
+ * The top `limit` of a ranked list, with at least `reserve[origin]` sources from each
+ * origin where the list has them. Ghanaian sources come first among those added and
+ * are never dropped to make room: only the lowest-ranked non-Ghanaian sources of other
+ * origins are. The result keeps the original ranking order.
+ */
+export function withReserved(ranked: Source[], limit: number, reserve: FindSourcesOptions['reserve'] = {}): Source[] {
+  const rank = new Map(ranked.map((s, i) => [s, i]));
+  const top = ranked.slice(0, limit);
+  const kept = (origin: SourceOrigin) => top.filter((s) => s.origin === origin).length;
+  for (const [origin, min] of Object.entries(reserve) as [SourceOrigin, number][]) {
+    const extra = ranked
+      .slice(limit)
+      .filter((s) => s.origin === origin)
+      .sort((a, b) => Number(b.ghanaian) - Number(a.ghanaian))
+      .slice(0, Math.max(0, min - kept(origin)));
+    for (const source of extra) {
+      let drop = -1;
+      for (let i = top.length - 1; i >= 0; i--) {
+        const other = top[i];
+        if (other.origin !== origin && !other.ghanaian && kept(other.origin) > (reserve[other.origin] ?? 0)) { drop = i; break; }
+      }
+      if (drop < 0) break;
+      top.splice(drop, 1);
+      top.push(source);
+    }
+  }
+  return top.sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+}
+
+/**
  * One search across the Ghanaian knowledge base, Ghana-affiliated OpenAlex works,
- * global OpenAlex and Semantic Scholar — de-duplicated and ranked.
+ * global OpenAlex, Semantic Scholar and Europe PMC (PubMed) — de-duplicated and ranked.
  */
 export async function findSources(query: string, opts: FindSourcesOptions = {}): Promise<Source[]> {
   const q = query.replace(/\s+/g, ' ').trim();
@@ -107,16 +144,18 @@ export async function findSources(query: string, opts: FindSourcesOptions = {}):
   if (isOfflineMode()) return offlineSources(limit);
   const ghanaFirst = opts.ghanaFirst ?? true;
 
-  const [kb, live, oaGhana, oaGlobal, s2] = await Promise.all([
+  const [kb, live, oaGhana, oaGlobal, s2, pubmedGhana, pubmed] = await Promise.all([
     want('ghana-repository') ? searchKnowledge(q, { limit: 10, yearFrom: opts.yearFrom }).then((h) => h.map(knowledgeHitToSource)) : [],
     want('ghana-repository') ? searchGhanaRepositories(q, { perRepo: 4, yearFrom: opts.yearFrom }).then((items) => items.map(dspaceItemToSource)) : [],
     want('openalex') ? searchOpenAlex(q, { ghanaOnly: true, yearFrom: opts.yearFrom, perPage: 10 }) : [],
     want('openalex') ? searchOpenAlex(q, { yearFrom: opts.yearFrom, perPage: 10 }) : [],
     want('semantic-scholar') ? searchSemanticScholar(q, { yearFrom: opts.yearFrom, limit: 8 }) : [],
+    want('europe-pmc') ? searchEuropePmc(q, { ghanaOnly: true, yearFrom: opts.yearFrom, limit: 6 }) : [],
+    want('europe-pmc') ? searchEuropePmc(q, { yearFrom: opts.yearFrom, limit: 10 }) : [],
   ]);
 
   // Reciprocal-rank scoring per list, weighted by how relevant that list is for Ghanaian students.
-  const lists: [Source[], number][] = [[live, 1.0], [kb, 0.95], [oaGhana, 0.95], [oaGlobal, 0.75], [s2, 0.7]];
+  const lists: [Source[], number][] = [[live, 1.0], [kb, 0.95], [oaGhana, 0.95], [pubmedGhana, 0.95], [pubmed, 0.8], [oaGlobal, 0.75], [s2, 0.7]];
   const byKey = new Map<string, { source: Source; score: number }>();
   for (const [list, weight] of lists) {
     list.forEach((s, rank) => {
@@ -131,14 +170,14 @@ export async function findSources(query: string, opts: FindSourcesOptions = {}):
   const ranked = [...byKey.values()]
     .map((e) => ({ ...e, score: e.score + (ghanaFirst && e.source.ghanaian ? 0.08 : 0) }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
     .map((e) => e.source);
+  const results = withReserved(ranked, limit, opts.reserve);
 
   // Grow the knowledge base with the Ghanaian works students are finding, so paper
   // generation and claim checks can draw on them too.
   void ingestIntoKnowledgeBase([...live, ...oaGhana]).catch((err) => log.warn({ err: (err as Error).message }, 'Background ingest failed'));
 
-  return ranked;
+  return results;
 }
 
 const REPO_BY_LABEL = new Map(DSPACE_REPOSITORIES.map((r) => [r.label, r]));

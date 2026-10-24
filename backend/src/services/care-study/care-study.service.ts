@@ -61,7 +61,7 @@ export function toCareSources(found: Source[]): CareSource[] {
 
 export async function retrieveSources(template: CareStudyTemplate, focus: string): Promise<CareSource[]> {
   // Wide enough to back a full literature review.
-  const found = await findSources(`${focus} ${template.search_terms}`.trim(), { limit: 30 });
+  const found = await findSources(`${focus} ${template.search_terms}`.trim(), { limit: 30, reserve: { 'europe-pmc': 10 } });
   return toCareSources(found);
 }
 
