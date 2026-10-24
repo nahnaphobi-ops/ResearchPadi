@@ -19,9 +19,15 @@ export default function CheckedSources({ sources, sentences }: { sources?: Check
           <li key={s.name} title={s.note} className={`px-1.5 py-0.5 rounded border text-[10px] ${STYLES[s.status].className}`}>
             {STYLES[s.status].mark} {s.name}
             {s.status !== 'checked' && s.note ? ` (${s.note})` : ''}
+            {s.status === 'checked' && s.scope === 'abstracts' ? ' · abstracts only' : ''}
           </li>
         ))}
       </ul>
+      {sources.some((s) => s.status === 'checked' && s.scope === 'abstracts') && (
+        <p className="text-[10px] text-gray-500">
+          Journals and repositories are compared by abstract only, so copying from the body of a paper may not be flagged.
+        </p>
+      )}
     </div>
   );
 }
