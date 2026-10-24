@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
+import { idleLimitMs } from '../utils/sessionLength';
 
-const IDLE_LIMIT_MS = 30 * 60 * 1000;
 const CHECK_EVERY_MS = 30 * 1000;
 const KEY = 'lastActivity';
 const EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'] as const;
@@ -14,7 +14,7 @@ function lastActivity(): number {
   }
 }
 
-/** Sign the user out after 30 minutes without activity (shared across tabs, survives closed tabs). */
+/** Sign the user out after a period without activity: 30 minutes, or 7 days if they chose to stay signed in (shared across tabs, survives closed tabs). */
 export function useIdleLogout() {
   const signedIn = useAuthStore((state) => !!state.token);
   const logout = useAuthStore((state) => state.logout);
@@ -22,7 +22,7 @@ export function useIdleLogout() {
   useEffect(() => {
     if (!signedIn) return;
 
-    const expired = () => Date.now() - lastActivity() > IDLE_LIMIT_MS;
+    const expired = () => Date.now() - lastActivity() > idleLimitMs();
     const signOut = () => {
       logout();
       window.location.assign('/login');

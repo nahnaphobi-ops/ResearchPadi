@@ -94,6 +94,29 @@ function toSource(w: OpenAlexWork, ghanaOnly: boolean): Source | null {
   };
 }
 
+/**
+ * Title, link and full abstract of works matching a query, for comparing
+ * wording in the plagiarism check. Throws when OpenAlex cannot be reached, so
+ * the check can say which sources it could not search.
+ */
+export async function searchOpenAlexAbstracts(query: string, perPage = 8): Promise<{ title: string; url: string; abstract: string }[]> {
+  const q = query.replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (!q) return [];
+  return cacheGet(`plagiarism:openalex:${perPage}:${q.toLowerCase()}`, CACHE_TTL.OPENALEX, async () => {
+    const { data } = await axios.get(OPENALEX_URL, {
+      params: { search: q, filter: 'has_abstract:true', 'per-page': perPage, select: 'id,doi,display_name,primary_location,abstract_inverted_index', mailto: CONTACT },
+      timeout: 12_000,
+    });
+    return ((data?.results ?? []) as OpenAlexWork[]).flatMap((w) => {
+      const title = w.display_name?.trim();
+      const abstract = rebuildAbstract(w.abstract_inverted_index);
+      if (!title || !abstract) return [];
+      const doi = normaliseDoi(w.doi);
+      return [{ title, url: doi ? `https://doi.org/${doi}` : w.primary_location?.landing_page_url || w.id, abstract }];
+    });
+  });
+}
+
 /** Search OpenAlex; with ghanaOnly, restrict to works with a Ghana-based author institution. */
 export async function searchOpenAlex(query: string, opts: OpenAlexOptions = {}): Promise<Source[]> {
   const q = query.replace(/\s+/g, ' ').trim().slice(0, 300);

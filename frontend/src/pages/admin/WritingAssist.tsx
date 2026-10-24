@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiErrorMessage } from '../../utils/apiError';
 import AdminLayout from '../../components/admin/AdminLayout';
+import CheckedSources from '../../components/common/CheckedSources';
 import adminApi from '../../services/adminApi';
 import type { AIDetectionResult, ClaimAnalysis, GrammarIssue, GrammarSummary, PlagiarismReport } from '../../types/writingAssist';
 
@@ -349,6 +350,9 @@ export default function WritingAssist() {
                   <div className="text-xs text-gray-500">Similarity</div>
                 </div>
               </div>
+              <div className="mb-4">
+                <CheckedSources sources={plagiarismReport.checkedSources} sentences={plagiarismReport.sentencesChecked} />
+              </div>
               {plagiarismReport.sources?.length > 0 && (
                 <div>
                   <h4 className="font-medium text-sm mb-2">Sources Matched</h4>
@@ -387,7 +391,7 @@ export default function WritingAssist() {
                       ind.severity === 'medium' ? 'border-yellow-500 bg-yellow-50' :
                       'border-gray-500 bg-gray-50'
                     }`}>
-                      {ind.description}
+                      {ind.type}: {ind.description}
                     </div>
                   ))}
                 </div>

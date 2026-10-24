@@ -1,6 +1,6 @@
 // Longest the splash may stay up once the app is ready, counted from page start, so a
 // stalled video download never keeps someone out of the app.
-const MAX_SPLASH_MS = 5_000;
+const MAX_SPLASH_MS = 8_000;
 
 let dismissing = false;
 

@@ -78,7 +78,12 @@ function sourceFiles(dir = SRC): string[] {
 
 test('every model call goes through the gateway, which adds the rule', () => {
   // The gateway owns the model clients; perplexity-agent.ts is the client it uses for research.
-  const owners = [join('services', 'ai', 'gateway.service.ts'), join('services', 'ai', 'perplexity-agent.ts')];
+  // perplexity-search.ts is Perplexity's web search, which returns published pages, not model text.
+  const owners = [
+    join('services', 'ai', 'gateway.service.ts'),
+    join('services', 'ai', 'perplexity-agent.ts'),
+    join('services', 'ai', 'perplexity-search.ts'),
+  ];
   const MODEL_CLIENT = /from ['"](@anthropic-ai\/sdk|openai|[^'"]*\/perplexity-agent(\.js)?)['"]/;
   const MODEL_ENDPOINT = /api\.anthropic\.com|\/v1\/messages|chat\/completions|api\.perplexity\.ai/;
   const offenders = sourceFiles()
