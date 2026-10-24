@@ -29,6 +29,8 @@ export interface SourceResult {
 
 export interface PlagiarismSource {
   name: string;
+  /** What of each work is compared: its abstract, or the whole text. Unset when mixed or unknown. */
+  scope?: 'abstracts' | 'full text';
   search: (sentences: string[]) => Promise<SourceResult>;
 }
 
@@ -73,6 +75,7 @@ export const librarySource: PlagiarismSource = {
 /** Live search of the Ghanaian university repositories (UGSpace, KNUSTSpace and others). */
 export const ghanaRepositoriesSource: PlagiarismSource = {
   name: 'Ghana university repositories',
+  scope: 'abstracts',
   search: async (sentences) => {
     if (isOfflineMode()) return OFFLINE;
     return searchEach(pickQueries(sentences, 3).map((s) => keywordQuery(s)), async (q) =>
@@ -85,6 +88,7 @@ export const ghanaRepositoriesSource: PlagiarismSource = {
 /** OpenAlex: over 250 million scholarly works worldwide (abstracts). */
 export const openAlexSource: PlagiarismSource = {
   name: 'OpenAlex',
+  scope: 'abstracts',
   search: async (sentences) => {
     if (isOfflineMode()) return OFFLINE;
     return searchEach(pickQueries(sentences, 4).map((s) => keywordQuery(s)), async (q) =>
@@ -95,6 +99,7 @@ export const openAlexSource: PlagiarismSource = {
 /** Semantic Scholar: over 200 million papers (abstracts). */
 export const semanticScholarSource: PlagiarismSource = {
   name: 'Semantic Scholar',
+  scope: 'abstracts',
   search: async (sentences) => {
     if (isOfflineMode()) return OFFLINE;
     return searchEach(pickQueries(sentences, 2).map((s) => keywordQuery(s)), async (q) =>
@@ -132,6 +137,7 @@ async function wikipediaArticle(title: string): Promise<Passage | null> {
 /** English Wikipedia: full article text, a common thing to copy from. */
 export const wikipediaSource: PlagiarismSource = {
   name: 'Wikipedia',
+  scope: 'full text',
   search: async (sentences) => {
     if (isOfflineMode()) return OFFLINE;
     const seen = new Set<string>();

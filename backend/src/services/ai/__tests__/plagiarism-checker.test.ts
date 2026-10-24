@@ -101,10 +101,17 @@ test('a source that cannot be searched is reported and does not stop the check',
   const report = await checkPlagiarism(COPIED, [fakeSource('Library', passage('1', THESIS)), broken, busy]);
   assert.equal(report.matchCount, 1);
   assert.deepEqual(report.checkedSources, [
-    { name: 'Library', status: 'checked', passages: 1, note: undefined },
-    { name: 'Semantic Scholar', status: 'failed', passages: 0, note: 'could not be reached' },
-    { name: 'OpenAlex', status: 'failed', passages: 0, note: 'busy, try again later' },
+    { name: 'Library', status: 'checked', passages: 1, note: undefined, scope: undefined },
+    { name: 'Semantic Scholar', status: 'failed', passages: 0, note: 'could not be reached', scope: undefined },
+    { name: 'OpenAlex', status: 'failed', passages: 0, note: 'busy, try again later', scope: undefined },
   ]);
+});
+
+test('abstract-only sources are labelled, so the limit is visible in the report', async () => {
+  const openAlex: PlagiarismSource = { name: 'OpenAlex', scope: 'abstracts', search: async () => ({ passages: [passage('1', THESIS)], status: 'checked' }) };
+  const report = await checkPlagiarism(COPIED, [openAlex]);
+  assert.equal(report.checkedSources[0].scope, 'abstracts');
+  assert.equal(report.matchCount, 1);
 });
 
 test('light rewording of a copied sentence is still caught', () => {

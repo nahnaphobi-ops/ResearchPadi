@@ -50,6 +50,8 @@ export interface CheckedSource {
   status: 'checked' | 'skipped' | 'failed';
   passages: number;
   note?: string;
+  /** 'abstracts' means the body of each work was not compared. */
+  scope?: 'abstracts' | 'full text';
 }
 
 export interface PlagiarismReport {

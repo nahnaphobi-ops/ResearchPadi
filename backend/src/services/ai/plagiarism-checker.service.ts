@@ -16,6 +16,8 @@ export interface CheckedSource {
   status: 'checked' | 'skipped' | 'failed';
   passages: number;
   note?: string;
+  /** 'abstracts' means the body of each work was not compared. */
+  scope?: 'abstracts' | 'full text';
 }
 
 export interface PlagiarismReport {
@@ -206,6 +208,7 @@ export async function checkPlagiarism(text: string, sources: PlagiarismSource[] 
     sources: Array.from(sourceMap.values()).sort((a, b) => b.matchCount - a.matchCount),
     checkedSources: searched.map(({ source, result }) => ({
       name: source.name,
+      scope: source.scope,
       status: result.status,
       passages: result.passages.length,
       note: result.note,
