@@ -26,10 +26,11 @@ export const performResearch = async (topic: string) => {
     `research4:${topic.toLowerCase().trim().substring(0, 100)}`,
     CACHE_TTL.CITATIONS_EXTERNAL,
     async () => {
-      const [ghanaWorks, globalWorks, semanticResults, pubmedResults, perplexityData, ragHits, repositoryItems] = await Promise.all([
+      const [ghanaWorks, globalWorks, semanticResults, pubmedGhana, pubmedResults, perplexityData, ragHits, repositoryItems] = await Promise.all([
         searchOpenAlex(topic, { ghanaOnly: true, perPage: 10 }),
         searchOpenAlex(topic, { perPage: 10 }),
         searchSemanticScholar(topic),
+        searchEuropePmc(topic, { ghanaOnly: true, limit: 6 }),
         searchEuropePmc(topic, { limit: 10 }),
         searchPerplexity(topic),
         searchKnowledge(topic, { limit: 8 }),
@@ -47,7 +48,7 @@ export const performResearch = async (topic: string) => {
 
       // Ghana-affiliated research first, then global; drop duplicates across APIs.
       const seen = new Set<string>();
-      const citations = [...ghanaWorks, ...globalWorks, ...pubmedResults, ...semanticResults]
+      const citations = [...ghanaWorks, ...pubmedGhana, ...globalWorks, ...pubmedResults, ...semanticResults]
         .filter((s) => {
           const key = sourceKey(s);
           if (seen.has(key)) return false;

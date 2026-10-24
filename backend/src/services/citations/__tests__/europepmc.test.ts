@@ -57,8 +57,8 @@ test('authors fall back to the author string, and page ranges use an en dash', (
   assert.equal(s.pages, '101–109');
 });
 
-const src = (origin: SourceOrigin, n: number): Source => ({
-  id: `${origin}:${n}`, title: `${origin} ${n}`, authors: [], year: 2020, type: 'article', origin, ghanaian: false,
+const src = (origin: SourceOrigin, n: number, ghanaian = false): Source => ({
+  id: `${origin}:${n}${ghanaian ? ':gh' : ''}`, title: `${origin} ${n}`, authors: [], year: 2020, type: 'article', origin, ghanaian,
 });
 const names = (list: Source[]) => list.map((s) => s.id);
 
@@ -74,4 +74,17 @@ test('a reserve already met, or larger than what was found, changes nothing it c
   assert.deepEqual(names(withReserved(ranked, 3, { 'europe-pmc': 1 })), names(ranked.slice(0, 3)));
   assert.equal(withReserved(ranked, 3, { 'europe-pmc': 10 }).filter((s) => s.origin === 'europe-pmc').length, 2);
   assert.equal(withReserved(ranked, 3, { 'europe-pmc': 10 }).length, 3);
+});
+
+test('Ghanaian sources are never dropped to make room for a reserve, and Ghanaian ones are added first', () => {
+  const ranked = [
+    src('ghana-repository', 1, true), src('openalex', 1, true), src('openalex', 2), src('ghana-repository', 2, true),
+    src('europe-pmc', 1), src('europe-pmc', 2, true), src('europe-pmc', 3, true),
+  ];
+  // Two places are needed: the non-Ghanaian OpenAlex work is dropped, the Ghanaian ones stay.
+  const result = withReserved(ranked, 4, { 'europe-pmc': 2 });
+  assert.deepEqual(names(result), ['ghana-repository:1:gh', 'openalex:1:gh', 'ghana-repository:2:gh', 'europe-pmc:2:gh']);
+  // When only Ghanaian sources are left to drop, the reserve gives way instead.
+  const allGhana = [src('ghana-repository', 1, true), src('ghana-repository', 2, true), src('europe-pmc', 1)];
+  assert.deepEqual(names(withReserved(allGhana, 2, { 'europe-pmc': 1 })), ['ghana-repository:1:gh', 'ghana-repository:2:gh']);
 });

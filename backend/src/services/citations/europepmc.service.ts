@@ -32,6 +32,8 @@ interface EuropePmcRecord {
 export interface EuropePmcOptions {
   yearFrom?: number;
   limit?: number;
+  /** Only records with a Ghana affiliation, like OpenAlex's Ghana-only search. */
+  ghanaOnly?: boolean;
 }
 
 /** Europe PMC wraps emphasis in tags and entities; the text itself is what we want. */
@@ -74,12 +76,16 @@ export async function searchEuropePmc(query: string, opts: EuropePmcOptions = {}
   const q = searchable(query);
   if (!q) return [];
   const limit = Math.min(Math.max(opts.limit ?? 10, 1), 25);
-  const filters = ['SRC:MED', ...(opts.yearFrom ? [`PUB_YEAR:[${opts.yearFrom} TO 3000]`] : [])];
+  const filters = [
+    'SRC:MED',
+    ...(opts.ghanaOnly ? ['AFF:"Ghana"'] : []),
+    ...(opts.yearFrom ? [`PUB_YEAR:[${opts.yearFrom} TO 3000]`] : []),
+  ];
 
   // A failed search is not cached, so one slow moment does not hide PubMed for hours.
   try {
     return await cacheGet(
-      `citations:europepmc:${opts.yearFrom ?? ''}:${limit}:${q.toLowerCase()}`,
+      `citations:europepmc:${opts.ghanaOnly ? 'gh' : 'all'}:${opts.yearFrom ?? ''}:${limit}:${q.toLowerCase()}`,
       CACHE_TTL.OPENALEX,
       async () => {
         const { data } = await axios.get(SEARCH_URL, {
