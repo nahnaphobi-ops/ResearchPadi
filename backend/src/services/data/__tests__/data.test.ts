@@ -95,7 +95,7 @@ test('columns are described as numeric or not', () => {
 });
 
 test('CSV: quotes, embedded commas and semicolon files', () => {
-  const data = toDataset(readCsv('﻿Name,"Comment, if any",Age\r\nAma,"Good, very ""good""",21\r\n\r\nKofi,,30\n'));
+  const data = toDataset(readCsv(String.fromCharCode(0xfeff) + 'Name,"Comment, if any",Age\r\nAma,"Good, very ""good""",21\r\n\r\nKofi,,30\n'));
   assert.deepEqual(data.columns, ['Name', 'Comment, if any', 'Age']);
   assert.deepEqual(data.rows, [['Ama', 'Good, very "good"', '21'], ['Kofi', null, '30']]);
   assert.deepEqual(toDataset(readCsv('A;B\n1;2\n')).columns, ['A', 'B']);

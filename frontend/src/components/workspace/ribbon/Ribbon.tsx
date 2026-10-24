@@ -8,7 +8,7 @@ import {
   RectangleHorizontal, RectangleVertical, RemoveFormatting, Replace, Ruler, Save, Scissors, Search, SeparatorHorizontal,
   Sparkles, SpellCheck, SquareCode, Strikethrough, Subscript, Superscript, Table, TextAlignCenter, TextAlignEnd,
   TextAlignJustify, TextAlignStart, TextCursorInput, Underline, Bold, Italic, Columns2, ZoomIn, Maximize2, GraduationCap, MessageSquareText,
-  WandSparkles, BarChart3, Share2, History, MessageSquare,
+  WandSparkles, BarChart3, Share2, History, MessageSquare, FileCode2, ClipboardCheck,
 } from 'lucide-react';
 import {
   ColorSplitButton, LargeButton, Popover, RibbonGroup, RibbonRow, RibbonRows, ScrollRow, SelectMenu, SmallButton,
@@ -82,6 +82,8 @@ export interface RibbonProps {
   pageCount: number;
   onSave: () => void;
   onExportDocx: () => void;
+  onExportLatex: () => void;
+  onFormatCheck: () => void;
   onPrint: () => void;
   onInsertToc: () => void;
   onOpenFind: (mode: 'find' | 'replace') => void;
@@ -211,6 +213,7 @@ export default function Ribbon(props: RibbonProps) {
         <RibbonGroup label="Document">
           <LargeButton icon={<Save />} label="Save" shortcut="Ctrl+S" onClick={props.onSave} />
           <LargeButton icon={<FileDown />} label="Download .docx" onClick={props.onExportDocx} />
+          <LargeButton icon={<FileCode2 />} label="Download LaTeX" onClick={props.onExportLatex} />
           <LargeButton icon={<Printer />} label="Print" shortcut="Ctrl+P" onClick={props.onPrint} />
           <LargeButton icon={<Share2 />} label="Share" onClick={props.onShare} />
           <LargeButton icon={<History />} label="Version History" onClick={props.onVersionHistory} />
@@ -592,6 +595,7 @@ export default function Ribbon(props: RibbonProps) {
             onClick={() => onSettingsChange({ autocomplete: !settings.autocomplete })}
           />
           <WordCountButton editor={editor} pageCount={props.pageCount} />
+          <LargeButton icon={<ClipboardCheck />} label="Check Format" onClick={props.onFormatCheck} />
         </RibbonGroup>
         <RibbonGroup label="AI Review">
           <LargeButton icon={<Sparkles />} label="Check Document" onClick={() => props.onOpenPanel('ai')} />

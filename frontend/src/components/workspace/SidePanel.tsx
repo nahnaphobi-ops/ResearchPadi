@@ -111,7 +111,7 @@ export const SidePanel: React.FC<Props> = ({
             onCite={(source) => editor?.chain().focus().insertCitation([source]).run()}
           />
         )}
-        {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} />}
+        {sidePanel === 'citations' && <CitationPanel editor={editor} selectedText={aiSelectedText} sessionId={sessionId} />}
         {sidePanel === 'sources' && <NotebookPanel editor={editor} sessionId={sessionId} plan={plan} maxSources={maxSources} />}
         {sidePanel === 'data' && <DataPanel editor={editor} sessionId={sessionId} />}
         {sidePanel === 'comments' && <CommentsPanel editor={editor} sessionId={sessionId} onShare={onShare} />}

@@ -73,7 +73,7 @@ export async function readXlsx(buffer: Buffer): Promise<Cell[][]> {
 
 /** CSV with quoted fields; the separator (comma, semicolon or tab) is taken from the header row. */
 export function readCsv(text: string): Cell[][] {
-  const clean = text.replace(/^﻿/, '');
+  const clean = (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text);
   const header = clean.split(/\r?\n/, 1)[0] ?? '';
   const sep = [',', ';', '\t'].sort((a, b) => header.split(b).length - header.split(a).length)[0];
   const rows: Cell[][] = [];

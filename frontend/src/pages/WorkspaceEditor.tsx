@@ -5,6 +5,9 @@ import { useEditor, type JSONContent } from '@tiptap/react';
 import { workspaceService } from '../services/workspaceService';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { exportToDocx } from '../utils/exportDocx';
+import { exportToLatex } from '../utils/exportLatex';
+import FormatCheckDialog from '../components/workspace/format/FormatCheckDialog';
+import { useAuthStore } from '../store/useAuthStore';
 import { WorkspaceHeader } from '../components/workspace/WorkspaceHeader';
 import { EditorArea } from '../components/workspace/EditorArea';
 import { SidePanel } from '../components/workspace/SidePanel';
@@ -41,6 +44,8 @@ export default function WorkspaceEditor() {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [formatOpen, setFormatOpen] = useState(false);
+  const profileInstitution = useAuthStore((state) => state.user?.institution_type);
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const [aiSelectedText, setAiSelectedText] = useState('');
   const [fullDocText, setFullDocText] = useState('');
@@ -208,6 +213,11 @@ export default function WorkspaceEditor() {
     exportToDocx(editor.getHTML(), activeSession.title || 'Untitled');
   }, [editor, activeSession]);
 
+  const handleExportLatex = useCallback(() => {
+    if (!editor || !activeSession) return;
+    void exportToLatex(editor.getHTML(), activeSession.title || 'Untitled');
+  }, [editor, activeSession]);
+
   const handleInsertToc = useCallback(() => {
     if (!editor) return;
     const headings: { level: number; text: string }[] = [];
@@ -297,6 +307,8 @@ export default function WorkspaceEditor() {
           pageCount={pageMetrics.pageCount}
           onSave={handleSave}
           onExportDocx={handleExportDocx}
+          onExportLatex={handleExportLatex}
+          onFormatCheck={() => setFormatOpen(true)}
           onPrint={handlePrint}
           onInsertToc={handleInsertToc}
           onOpenFind={setFind}
@@ -361,6 +373,9 @@ export default function WorkspaceEditor() {
           onShare={() => setShareOpen(true)}
         />
         {shareOpen && id && <ShareDialog sessionId={id} onClose={() => setShareOpen(false)} />}
+        {formatOpen && editor && (
+          <FormatCheckDialog editor={editor} institutionType={activeSession?.institution_type || profileInstitution} onClose={() => setFormatOpen(false)} />
+        )}
         {historyOpen && id && (
           <VersionHistory
             sessionId={id}
