@@ -3,6 +3,7 @@ import { cacheGet, CACHE_TTL } from '../../lib/cache.js';
 import { parseAuthors } from '../../lib/authors.js';
 import { childLogger } from '../../lib/logger.js';
 import { normaliseDoi, type Source, type SourceType } from '../citations/source.types.js';
+import { harvestGet } from './harvest-http.js';
 
 const log = childLogger('dspace');
 
@@ -166,10 +167,12 @@ export async function searchGhanaRepositories(query: string, opts: { perRepo?: n
 
 /** Newest items first, for harvesting DSpace 7 sites whose OAI index is empty. */
 export async function listRecentItems(repo: DSpaceRepo, page: number, size = 100): Promise<{ items: DSpaceItem[]; totalPages: number }> {
-  const { data } = await axios.get(`${repo.baseUrl}/server/api/discover/search/objects`, {
+  // A page is ~800 KB and takes up to ~10 s from Ghana, longer from Render (Oregon); dropped
+  // connections ("socket hang up") are retried by harvestGet.
+  const { data } = await harvestGet<any>(`${repo.baseUrl}/server/api/discover/search/objects`, {
     params: { dsoType: 'ITEM', size, page, sort: 'dc.date.accessioned,DESC' },
-    headers: { Accept: 'application/json', 'User-Agent': UA },
-    timeout: 30_000,
+    headers: { Accept: 'application/json' },
+    timeout: 90_000,
   });
   const sr = data?._embedded?.searchResult;
   const items = ((sr?._embedded?.objects ?? []) as Parameters<typeof toItem>[1][]).map((o) => toItem(repo, o)).filter((i): i is DSpaceItem => !!i);
