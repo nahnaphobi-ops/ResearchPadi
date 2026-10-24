@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '../types';
+import { clearKeepSignedIn } from '../utils/sessionLength';
 
 interface AuthState {
   token: string | null;
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('lastActivity');
+    clearKeepSignedIn();
     localStorage.removeItem('user');
     set({ token: null, user: null });
   },

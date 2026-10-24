@@ -7,6 +7,7 @@ import HeroStudent from '../components/brand/HeroStudent';
 import { parsePlan, planDestination, withPlan } from '../utils/planIntent';
 import { apiErrorMessage } from '../utils/apiError';
 import { takeAfterLogin } from '../utils/afterLogin';
+import { defaultKeepSignedIn, setKeepSignedIn } from '../utils/sessionLength';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -16,6 +17,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [notice, setNotice] = useState('');
+  const [keepSignedIn, setKeep] = useState(defaultKeepSignedIn);
   // Only offer "Try demo" when the server has the demo account switched on.
   const [demoAvailable, setDemoAvailable] = useState(false);
 
@@ -77,6 +79,7 @@ export default function Login() {
       await authService.requestOtp('+233200000000');
       const response = await authService.verifyOtp('+233200000000', '123456');
       const { token, user, isNewUser } = response.data;
+      setKeepSignedIn(keepSignedIn);
       setAuth(token, user);
 
       if (isNewUser) {
@@ -104,6 +107,7 @@ export default function Login() {
     try {
       const response = await authService.verifyOtp(phone, otp);
       const { token, user, isNewUser } = response.data;
+      setKeepSignedIn(keepSignedIn);
       setAuth(token, user);
       // New users finish registering first; Register sends them on.
       const after = isNewUser ? null : takeAfterLogin();
@@ -191,6 +195,13 @@ export default function Login() {
                   required
                 />
               </div>
+              <label className="flex items-start gap-2.5 text-sm text-ink cursor-pointer">
+                <input type="checkbox" checked={keepSignedIn} onChange={(e) => setKeep(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
+                <span>
+                  Keep me signed in
+                  <span className="block text-xs text-muted">Stays signed in for up to 7 days. Untick on a shared computer: you'll be signed out after 30 minutes idle.</span>
+                </span>
+              </label>
               <button disabled={loading} className="btn-primary w-full p-3.5 text-sm disabled:opacity-50">
                 {loading ? 'Sending...' : 'Send OTP'}
               </button>
