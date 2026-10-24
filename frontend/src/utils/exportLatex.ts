@@ -13,10 +13,21 @@ const SPECIAL: Record<string, string> = {
 };
 export const escapeLatex = (text: string) => text.replace(/[\\{}$&#^_%~]/g, (ch) => SPECIAL[ch]);
 
+/**
+ * Letters of Akan, Ewe, Ga, Dagbani and other Ghanaian languages (with any
+ * accents on them) that Times-style fonts lack. They go in \gh{\u2026}, set in a
+ * font that has them under XeLaTeX.
+ */
+const GHANAIAN = /(?:[\u025b\u0190\u0254\u0186\u014b\u014a\u0192\u0191\u028b\u01b2\u0256\u0189\u0263\u0194\u0292\u01b7][\u0300-\u036f]*)+/g;
+export const hasGhanaianLetters = (text: string) => new RegExp(GHANAIAN.source).test(text);
+
+/** Escaped text, with Ghanaian letters marked for their font. */
+const texText = (text: string) => escapeLatex(text).replace(GHANAIAN, (run) => `\\gh{${run}}`);
+
 interface Context { figures: { name: string; data: string }[] }
 
 function inline(node: ChildNode, ctx: Context): string {
-  if (node.nodeType === Node.TEXT_NODE) return escapeLatex((node.textContent ?? '').replace(/\u00a0/g, ' '));
+  if (node.nodeType === Node.TEXT_NODE) return texText((node.textContent ?? '').replace(/\u00a0/g, ' '));
   if (node.nodeType !== Node.ELEMENT_NODE) return '';
   const el = node as Element;
   const tag = el.tagName.toLowerCase();
@@ -88,7 +99,7 @@ function block(node: ChildNode, ctx: Context): string {
     const entries = Array.from(el.children).filter((c) => c.tagName.toLowerCase() !== 'h1' && !c.classList.contains('bib-empty'));
     const title = el.querySelector('h1')?.textContent?.trim() || 'References';
     // Hanging indent, as reference lists are set.
-    return `\\section*{${escapeLatex(title)}}\n\\addcontentsline{toc}{chapter}{${escapeLatex(title)}}\n\\begin{list}{}{\\leftmargin=0.5in \\itemindent=-0.5in}\n${entries.map((e) => `  \\item ${Array.from(e.childNodes).map((c) => inline(c, ctx)).join('').trim()}`).join('\n')}\n\\end{list}\n\n`;
+    return `\\section*{${texText(title)}}\n\\addcontentsline{toc}{chapter}{${texText(title)}}\n\\begin{list}{}{\\leftmargin=0.5in \\itemindent=-0.5in}\n${entries.map((e) => `  \\item ${Array.from(e.childNodes).map((c) => inline(c, ctx)).join('').trim()}`).join('\n')}\n\\end{list}\n\n`;
   }
   return Array.from(el.childNodes).map((c) => block(c, ctx)).join('');
 }
@@ -98,11 +109,26 @@ export function htmlToLatex(html: string, title: string): { tex: string; figures
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const ctx: Context = { figures: [] };
   const body = Array.from(doc.body.childNodes).map((n) => block(n, ctx)).join('').replace(/\n{3,}/g, '\n\n');
-  const tex = `% Exported from ResearchPadi. Compile with pdfLaTeX (e.g. on Overleaf).
+  const ghanaian = hasGhanaianLetters(html) || hasGhanaianLetters(title);
+  // pdfLaTeX has no font with ɛ, ɔ and the rest, so those documents need XeLaTeX; say so plainly.
+  const pdfTexStop = ghanaian
+    ? '\n  \\errmessage{This document uses Ghanaian letters (e.g. open e, open o). Compile it with XeLaTeX: in Overleaf, Menu > Compiler > XeLaTeX}'
+    : '';
+  const tex = `% Exported from ResearchPadi. Compile with ${ghanaian ? 'XeLaTeX (Overleaf: Menu > Compiler > XeLaTeX), because it uses Ghanaian letters' : 'pdfLaTeX or XeLaTeX (e.g. on Overleaf)'}.
 \\documentclass[12pt,a4paper]{report}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-\\usepackage{mathptmx}
+\\usepackage{iftex}
+\\ifPDFTeX${pdfTexStop}
+  \\usepackage[utf8]{inputenc}
+  \\usepackage[T1]{fontenc}
+  \\usepackage{mathptmx}
+  \\DeclareRobustCommand{\\gh}[1]{#1}
+\\else
+  % Times-style text; Ghanaian letters in Noto Serif, which has them all. Both come with TeX Live.
+  \\usepackage{fontspec}
+  \\setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+  \\newfontfamily\\ghfont{NotoSerif}[Extension=.ttf, UprightFont=*-Regular, BoldFont=*-Bold, ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]
+  \\DeclareRobustCommand{\\gh}[1]{{\\ghfont #1}}
+\\fi
 \\usepackage[left=1.5in,right=1in,top=1in,bottom=1in]{geometry}
 \\usepackage{setspace}
 \\usepackage{graphicx}
@@ -110,7 +136,7 @@ export function htmlToLatex(html: string, title: string): { tex: string; figures
 \\usepackage[normalem]{ulem}
 \\onehalfspacing
 
-\\title{${escapeLatex(title)}}
+\\title{${texText(title)}}
 \\date{}
 
 \\begin{document}
