@@ -1,7 +1,7 @@
-import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { FirewallChallengeError, describeError, harvestGet, type HarvestGetOptions } from './harvest-http.js';
 
 export interface OaiRecord {
   identifier: string;
@@ -34,6 +34,8 @@ export interface RepositoryConfig {
   dspaceVersion: 6 | 7;
   /** OJS journals (e.g. on AJOL) use their /oai URL as given. Default 'dspace'. */
   platform?: 'dspace' | 'ojs';
+  /** Minimum gap between requests to this host (default 1 s); AJOL's firewall challenges faster clients. */
+  requestIntervalMs?: number;
 }
 
 interface HarvestState {
@@ -45,8 +47,6 @@ interface HarvestState {
 }
 
 const RATE_LIMIT_MS = 1000;
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY_MS = 2000;
 const SAFETY_MAX_PAGES = 200;
 const STATE_DIR = join(process.env.TEMP || '/tmp', 'researchpadi-harvest');
 
@@ -79,8 +79,86 @@ export function getOaiBaseUrl(repo: RepositoryConfig): string {
   return base.endsWith('/oai/request') ? base : `${base}/oai/request`;
 }
 
+function requestOptions(repo: RepositoryConfig): HarvestGetOptions {
+  return { minIntervalMs: repo.requestIntervalMs ?? RATE_LIMIT_MS };
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/** The endpoint answered, but not with usable OAI-PMH (empty body, HTML page, OAI error). */
+export class OaiResponseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OaiResponseError';
+  }
+}
+
+/** Parse an OAI-PMH response to its root element. "No records" is a normal, empty answer. */
+export async function parseOai(xml: unknown): Promise<any> {
+  const text = typeof xml === 'string' ? xml : '';
+  if (!text.trim()) throw new OaiResponseError('Empty response instead of OAI-PMH XML');
+  let parsed: any;
+  try {
+    parsed = await parseStringPromise(text);
+  } catch (err) {
+    throw new OaiResponseError(`Response is not XML: ${(err as Error).message.split('\n')[0]}`);
+  }
+  // DSpace 7+ uses default namespace (no prefix), so keys are 'OAI-PMH', 'ListRecords', etc.
+  // DSpace 6 may use 'oai:' prefix, so we check both.
+  const pmh = parsed?.['oai:OAI-PMH'] ?? parsed?.['OAI-PMH'];
+  if (!pmh || typeof pmh !== 'object') throw new OaiResponseError('Response is not OAI-PMH (an error or login page?)');
+  const error = (pmh['oai:error'] ?? pmh['error'])?.[0];
+  if (error) {
+    const code = error?.$?.code ?? 'unknown';
+    if (code !== 'noRecordsMatch' && code !== 'noSetHierarchy') {
+      const detail = (typeof error === 'string' ? error : error?._ ?? '').trim();
+      throw new OaiResponseError(`OAI-PMH error ${code}${detail ? `: ${detail}` : ''}`);
+    }
+  }
+  return pmh;
+}
+
+/** xml2js gives a bare string for <resumptionToken>abc</resumptionToken> and an object when it has attributes. */
+function tokenText(el: unknown): string | undefined {
+  const text = typeof el === 'string' ? el : (el as { _?: unknown } | undefined)?._;
+  return typeof text === 'string' && text.trim() ? text.trim() : undefined;
+}
+
+/** Records and the resumption token from a parsed ListRecords response. */
+export function readListRecords(pmh: any): OaiHarvestResult {
+  const listRecords = pmh?.['oai:ListRecords']?.[0] ?? pmh?.['ListRecords']?.[0];
+  if (!listRecords || typeof listRecords !== 'object') {
+    return { records: [], totalRetrieved: 0, hasMore: false };
+  }
+
+  const rawRecords = listRecords['oai:record'] || listRecords['record'] || [];
+  const records: OaiRecord[] = rawRecords.map((rec: any) => {
+    const recMeta = rec['oai:metadata']?.[0] || rec['metadata']?.[0] || {};
+    // Dublin Core metadata may be under oai_dc:dc, dc:dc, or just dc
+    const dcMeta = recMeta['oai_dc:dc']?.[0] || recMeta['dc:dc']?.[0] || recMeta['dc']?.[0] || {};
+    const header = rec['oai:header']?.[0] || rec['header']?.[0] || rec['header'] || {};
+    // With explicitArray:false, identifier may be at header.identifier or header.$.identifier
+    const identifier = extractText(header?.$?.identifier) || extractText(header?.identifier) || '';
+    return {
+      identifier,
+      title: extractText(dcMeta['dc:title']),
+      creators: extractArray(dcMeta['dc:creator']),
+      date: extractText(dcMeta['dc:date']),
+      description: extractText(dcMeta['dc:description']),
+      subject: extractArray(dcMeta['dc:subject']),
+      type: extractText(dcMeta['dc:type']),
+      language: extractText(dcMeta['dc:language']),
+      rights: extractText(dcMeta['dc:rights']),
+      source: extractText(dcMeta['dc:source']),
+      links: extractArray(dcMeta['dc:identifier']),
+    };
+  });
+
+  // The last page carries an empty token (often with attributes), so only real text means "more".
+  const cursor = tokenText(listRecords['oai:resumptionToken']?.[0] ?? listRecords['resumptionToken']?.[0]);
+  return { records, totalRetrieved: records.length, hasMore: !!cursor, cursor };
 }
 
 export async function harvestMetadata(
@@ -91,7 +169,6 @@ export async function harvestMetadata(
   limit: number = 100,
   set?: string
 ): Promise<OaiHarvestResult> {
-  const oaiBaseUrl = getOaiBaseUrl(repo);
   const params: Record<string, string> = {
     verb: 'ListRecords',
     metadataPrefix: 'oai_dc',
@@ -101,74 +178,13 @@ export async function harvestMetadata(
   if (set) params.set = set;
   if (from) params.from = from;
   if (until) params.until = until;
-  if (cursor) params.resumptionToken = cursor;
 
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const { data } = await axios.get(oaiBaseUrl, {
-        params: cursor ? { verb: 'ListRecords', resumptionToken: cursor } : params,
-        timeout: 30000,
-        headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
-      });
-
-      const parsed = await parseStringPromise(data);
-      
-      // DSpace 7+ uses default namespace (no prefix), so keys are 'OAI-PMH', 'ListRecords', etc.
-      // DSpace 6 may use 'oai:' prefix, so we check both.
-      const pmh = parsed['oai:OAI-PMH'] || parsed['OAI-PMH'];
-      const listRecords = pmh?.['oai:ListRecords']?.[0] || pmh?.['ListRecords']?.[0];
-
-      if (!listRecords) {
-        return { records: [], totalRetrieved: 0, hasMore: false };
-      }
-
-      const rawRecords = listRecords['oai:record'] || listRecords['record'] || [];
-      const records: OaiRecord[] = rawRecords.map((rec: any) => {
-        const recMeta = rec['oai:metadata']?.[0] || rec['metadata']?.[0] || {};
-        // Dublin Core metadata may be under oai_dc:dc, dc:dc, or just dc
-        const dcMeta = recMeta['oai_dc:dc']?.[0] || recMeta['dc:dc']?.[0] || recMeta['dc']?.[0] || {};
-        const header = rec['oai:header']?.[0] || rec['header']?.[0] || rec['header'] || {};
-        // With explicitArray:false, identifier may be at header.identifier or header.$.identifier
-        const identifier = extractText(header?.$?.identifier) || extractText(header?.identifier) || '';
-        return {
-          identifier,
-          title: extractText(dcMeta['dc:title']),
-          creators: extractArray(dcMeta['dc:creator']),
-          date: extractText(dcMeta['dc:date']),
-          description: extractText(dcMeta['dc:description']),
-          subject: extractArray(dcMeta['dc:subject']),
-          type: extractText(dcMeta['dc:type']),
-          language: extractText(dcMeta['dc:language']),
-          rights: extractText(dcMeta['dc:rights']),
-          source: extractText(dcMeta['dc:source']),
-          links: extractArray(dcMeta['dc:identifier']),
-        };
-      });
-
-      const tokenEl = listRecords['oai:resumptionToken']?.[0] || listRecords['resumptionToken']?.[0];
-      const hasMore = tokenEl?.$.completeListSize
-        ? parseInt(tokenEl.$.completeListSize) > records.length
-        : !!tokenEl?._;
-
-      return {
-        records,
-        totalRetrieved: records.length,
-        hasMore,
-        cursor: tokenEl?._,
-      };
-    } catch (err: any) {
-      lastError = err;
-      if (attempt < MAX_RETRIES) {
-        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-        console.warn(`  Retry ${attempt}/${MAX_RETRIES} for ${repo.name} in ${delay}ms: ${err.message}`);
-        await sleep(delay);
-      }
-    }
-  }
-
-  throw new Error(`Failed after ${MAX_RETRIES} retries: ${lastError?.message}`);
+  // Retries, pacing and firewall back-off happen in harvestGet.
+  const { data } = await harvestGet<string>(getOaiBaseUrl(repo), {
+    params: cursor ? { verb: 'ListRecords', resumptionToken: cursor } : params,
+    responseType: 'text',
+  }, requestOptions(repo));
+  return readListRecords(await parseOai(data));
 }
 
 export async function harvestAll(
@@ -269,44 +285,45 @@ export function isIdentifyResponse(xml: string): boolean {
   return /<(?:oai:)?Identify\b/.test(xml) && /<(?:oai:)?repositoryName\b/.test(xml);
 }
 
+export type RepositoryCheck = { ok: true } | { ok: false; reason: string; blocked: boolean };
+
+/** Check a repository answers Identify; says why when it doesn't (blocked = its firewall challenged us). */
+export async function checkRepository(repo: RepositoryConfig): Promise<RepositoryCheck> {
+  try {
+    const { data } = await harvestGet<string>(getOaiBaseUrl(repo), {
+      params: { verb: 'Identify' },
+      timeout: 30_000,
+      responseType: 'text',
+    }, { ...requestOptions(repo), retries: 1 });
+    return isIdentifyResponse(String(data)) ? { ok: true } : { ok: false, reason: 'the Identify response was not OAI-PMH', blocked: false };
+  } catch (err) {
+    return { ok: false, reason: describeError(err), blocked: err instanceof FirewallChallengeError };
+  }
+}
+
 /** Check a repository is up before harvesting it; unreachable ones are skipped and logged. */
 export async function identifyRepository(repo: RepositoryConfig): Promise<boolean> {
-  try {
-    const { data } = await axios.get(getOaiBaseUrl(repo), {
-      params: { verb: 'Identify' },
-      timeout: 20_000,
-      headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
-      responseType: 'text',
-    });
-    return isIdentifyResponse(String(data));
-  } catch {
-    return false;
-  }
+  return (await checkRepository(repo)).ok;
 }
 
 /** All setSpecs a repository exposes (following resumption tokens). */
 export async function listSets(repo: RepositoryConfig): Promise<string[]> {
-  const url = getOaiBaseUrl(repo);
   const specs: string[] = [];
   let token: string | undefined;
   for (let page = 0; page < 20; page++) {
-    const { data } = await axios.get(url, {
+    const { data } = await harvestGet<string>(getOaiBaseUrl(repo), {
       params: token ? { verb: 'ListSets', resumptionToken: token } : { verb: 'ListSets' },
-      timeout: 30000,
-      headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
-    });
-    const parsed = await parseStringPromise(data);
-    const pmh = parsed['oai:OAI-PMH'] || parsed['OAI-PMH'];
-    const list = pmh?.['oai:ListSets']?.[0] || pmh?.['ListSets']?.[0];
-    if (!list) break;
+      responseType: 'text',
+    }, requestOptions(repo));
+    const pmh = await parseOai(data);
+    const list = pmh['oai:ListSets']?.[0] ?? pmh['ListSets']?.[0];
+    if (!list || typeof list !== 'object') break;
     for (const set of list['oai:set'] || list['set'] || []) {
       const spec = extractText(set['oai:setSpec'] || set['setSpec']);
       if (spec) specs.push(spec);
     }
-    const tokenEl = list['oai:resumptionToken']?.[0] || list['resumptionToken']?.[0];
-    token = typeof tokenEl === 'string' ? tokenEl : tokenEl?._;
+    token = tokenText(list['oai:resumptionToken']?.[0] ?? list['resumptionToken']?.[0]);
     if (!token) break;
-    await sleep(RATE_LIMIT_MS);
   }
   return specs;
 }

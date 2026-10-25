@@ -1,10 +1,10 @@
-import axios from 'axios';
 import { CONFIG } from '../../config/index.js';
 import { parseAuthors, serializeAuthors } from '../../lib/authors.js';
 import { childLogger } from '../../lib/logger.js';
 import { chunkText } from './chunker.service.js';
-import { rebuildAbstract } from '../citations/openalex.service.js';
+import { openAlexAuthParams, rebuildAbstract } from '../citations/openalex.service.js';
 import { normaliseDoi } from '../citations/source.types.js';
+import { harvestGet } from './harvest-http.js';
 
 const log = childLogger('openalex-harvester');
 
@@ -12,7 +12,10 @@ const log = childLogger('openalex-harvester');
 export const OPENALEX_GHANA = 'OpenAlex (Ghana)';
 
 const URL = 'https://api.openalex.org/works';
-const CONTACT = process.env.OPENALEX_EMAIL || 'hello@researchpadi.com';
+const PER_PAGE = 200;
+/** Without an API key OpenAlex only pages by number, and only through the first 10,000 results. */
+const KEYLESS_LAST_PAGE = 10_000 / PER_PAGE;
+const PAGE_RESUME = 'page:';
 const SELECT = [
   'id', 'doi', 'display_name', 'publication_year', 'type', 'language', 'authorships', 'primary_location',
   'abstract_inverted_index', 'primary_topic',
@@ -88,32 +91,55 @@ export function openAlexGhanaFilter(fromDate: string, toDate?: string): string {
 }
 
 /**
+ * Where to start paging. With an API key: cursor paging (no result limit), resuming a saved
+ * cursor. Without one OpenAlex refuses cursors past page 1 (HTTP 401), so page by number,
+ * resuming a saved "page:N". A saved position from the other mode starts the range again.
+ */
+export function openAlexStart(resume: string | undefined, hasKey: boolean): { cursor: string } | { page: number } {
+  const savedPage = resume?.startsWith(PAGE_RESUME) ? Number(resume.slice(PAGE_RESUME.length)) : NaN;
+  if (hasKey) return { cursor: resume && !resume.startsWith(PAGE_RESUME) ? resume : '*' };
+  return { page: Number.isInteger(savedPage) && savedPage > 0 ? savedPage : 1 };
+}
+
+/**
  * Page through works with a Ghana-based author published between the dates
- * (cursor paging, 200 per page), handing each page's rows to `onPage`.
+ * (200 per page), handing each page's rows and its work count to `onPage`.
+ * `nextCursor` is where a partial run stopped: a cursor, or "page:N" without a key.
  */
 export async function harvestOpenAlexGhana(
   range: { from: string; to?: string },
   maxPages: number,
-  onPage: (rows: KnowledgeRow[]) => Promise<number>,
-  startCursor = '*',
-): Promise<{ fetched: number; added: number; complete: boolean; nextCursor?: string }> {
-  let cursor = startCursor;
+  onPage: (rows: KnowledgeRow[], works: number) => Promise<number>,
+  resume?: string,
+): Promise<{ fetched: number; added: number; complete: boolean; nextCursor?: string; note?: string }> {
+  const auth = openAlexAuthParams();
+  let position = openAlexStart(resume, 'api_key' in auth);
   let fetched = 0;
   let added = 0;
-  for (let page = 0; page < maxPages; page++) {
-    const { data } = await axios.get(URL, {
-      params: { filter: openAlexGhanaFilter(range.from, range.to), 'per-page': 200, cursor, select: SELECT, mailto: CONTACT },
-      timeout: 30_000,
-      headers: { 'User-Agent': 'ResearchPadi-Harvester/2.0' },
-    });
+  for (let i = 0; i < maxPages; i++) {
+    if ('page' in position && position.page > KEYLESS_LAST_PAGE) {
+      // Keyless paging can't go further; count the range as done rather than retrying it forever.
+      const note = `Stopped at OpenAlex's 10,000-result limit for requests without an API key; set OPENALEX_API_KEY to get the rest`;
+      log.warn({ ...range, fetched, added }, note);
+      return { fetched, added, complete: true, note };
+    }
+    const { data } = await harvestGet<any>(URL, {
+      params: { filter: openAlexGhanaFilter(range.from, range.to), 'per-page': PER_PAGE, select: SELECT, ...auth, ...position },
+      timeout: 60_000,
+    }, { minIntervalMs: 200 }); // stay well inside OpenAlex's rate limit
     const works = (data?.results ?? []) as OpenAlexHarvestWork[];
     fetched += works.length;
-    added += await onPage(works.flatMap(openAlexWorkToRows));
-    const next = data?.meta?.next_cursor as string | null | undefined;
-    if (!next || !works.length) return { fetched, added, complete: true };
-    cursor = next;
-    await new Promise((r) => setTimeout(r, 200)); // stay well inside OpenAlex's rate limit
+    added += await onPage(works.flatMap(openAlexWorkToRows), works.length);
+    if ('cursor' in position) {
+      const next = data?.meta?.next_cursor as string | null | undefined;
+      if (!next || !works.length) return { fetched, added, complete: true };
+      position = { cursor: next };
+    } else {
+      const total = Number(data?.meta?.count ?? 0);
+      if (works.length < PER_PAGE || position.page * PER_PAGE >= total) return { fetched, added, complete: true };
+      position = { page: position.page + 1 };
+    }
   }
   log.info({ ...range, fetched, added, maxPages }, 'OpenAlex harvest stopped at the page limit');
-  return { fetched, added, complete: false, nextCursor: cursor };
+  return { fetched, added, complete: false, nextCursor: 'cursor' in position ? position.cursor : `${PAGE_RESUME}${position.page}` };
 }

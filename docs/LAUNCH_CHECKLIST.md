@@ -22,9 +22,13 @@ Work through these in order. Each item says who does it and how to check it work
 
 6. **Check every library source answers** (developer, from `backend/`): `npm run rag:verify`.
    Any line marked UNREACHABLE is skipped automatically; fix or remove it in `src/services/rag/repositories.ts`.
-7. **Run a first harvest** (developer): `npm run rag:harvest`. It harvests every repository and journal, then
-   recent OpenAlex works by Ghana-based authors plus one past year. The weekly job (Sundays 02:00 GMT) carries on
-   a year at a time back to 2010. Needs `OPENAI_API_KEY` (embeddings) and, optionally, `OPENALEX_EMAIL`.
+   The last two lines check the OpenAlex key and the embedding key; both must say OK.
+7. **Set the harvest keys on Render** (owner): `OPENAI_API_KEY` must be a working key (the embeddings line in
+   `rag:verify` says why it fails), `OPENALEX_API_KEY` a free key from openalex.org/settings/api, and
+   `HARVEST_DB_LIMIT_MB` stays 400 until Supabase is on Pro (then ~7000). The weekly job (Sundays 02:00 GMT)
+   then fills the library by itself: every repository and journal, then OpenAlex a year at a time back to 2010.
+   Check `harvest_logs` on Monday; each row says what was saved and why anything stopped. Once the embedding
+   key works, run `npx tsx src/scripts/embed-knowledge.ts` once to add vectors to chunks saved without them.
 
 ## Week 2 — test like a student
 

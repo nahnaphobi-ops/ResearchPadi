@@ -41,6 +41,12 @@
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      # Library harvest: free key from https://openalex.org/settings/api (needed for paging).
+      - key: OPENALEX_API_KEY
+        sync: false
+      # Harvest stops at this database size (MB); raise to ~7000 after moving Supabase to Pro.
+      - key: HARVEST_DB_LIMIT_MB
+        value: "400"
       - key: PERPLEXITY_API_KEY
         sync: false
       - key: PAYSTACK_SECRET_KEY
