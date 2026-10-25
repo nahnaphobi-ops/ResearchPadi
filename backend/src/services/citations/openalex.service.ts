@@ -114,7 +114,7 @@ export async function searchOpenAlexAbstracts(query: string, perPage = 8): Promi
   if (!q) return [];
   return cacheGet(`plagiarism:openalex:${perPage}:${q.toLowerCase()}`, CACHE_TTL.OPENALEX, async () => {
     const { data } = await axios.get(OPENALEX_URL, {
-      params: { search: q, filter: 'has_abstract:true', 'per-page': perPage, select: 'id,doi,display_name,primary_location,abstract_inverted_index', mailto: CONTACT },
+      params: { search: q, filter: 'has_abstract:true', 'per-page': perPage, select: 'id,doi,display_name,primary_location,abstract_inverted_index', ...openAlexAuthParams() },
       timeout: 12_000,
     });
     return ((data?.results ?? []) as OpenAlexWork[]).flatMap((w) => {
