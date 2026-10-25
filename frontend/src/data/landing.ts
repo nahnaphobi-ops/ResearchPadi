@@ -1,6 +1,6 @@
 import { BookOpen, FileText, GraduationCap, Quote, type LucideIcon } from 'lucide-react';
 import type { PlanKey } from '../utils/planIntent';
-import { FULL_PAPER, WORKSPACE_PLANS } from './plans';
+import { FREE_PLAN, FULL_PAPER, WORKSPACE_PLANS } from './plans';
 
 /**
  * Landing page copy. Keep every claim here verifiable — no invented user
@@ -84,6 +84,16 @@ export const pricingPlans: {
   cta: string;
   highlighted: boolean;
 }[] = [
+  {
+    key: 'free',
+    name: FREE_PLAN.name,
+    price: 'GHS 0',
+    period: 'no payment',
+    desc: FREE_PLAN.desc,
+    features: FREE_PLAN.features,
+    cta: 'Start free',
+    highlighted: false,
+  },
   {
     key: 'paper',
     name: 'Study Draft',
