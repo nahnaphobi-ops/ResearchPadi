@@ -5,7 +5,6 @@ import HeroStudent from '../components/brand/HeroStudent';
 import { testimonials } from '../data/testimonials';
 import { navItems, useCases, pricingPlans, faqs } from '../data/landing';
 import { withPlan } from '../utils/planIntent';
-import { FREE_PLAN } from '../data/plans';
 import {
   ChevronDown, CheckCircle, Shield, ArrowRight, MapPin, Mail,
   Star, GraduationCap, MessageCircle, Quote, Wallet,
@@ -312,7 +311,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-navy">Student-friendly plans. No surprises.</h2>
             <p className="text-sm text-muted mt-3 max-w-lg mx-auto">All prices in GHS. 30-day plans never auto-renew. No hidden fees.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
             {pricingPlans.map((plan, i) => (
               <div
                 key={plan.name}
@@ -349,17 +348,6 @@ export default function Landing() {
                 </button>
               </div>
             ))}
-          </div>
-          <div className="max-w-5xl mx-auto mt-5 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-rule bg-white px-6 py-5 reveal">
-            <div className="flex-1">
-              <h3 className="text-base font-extrabold text-navy">{FREE_PLAN.name}: try the Workspace first</h3>
-              <p className="text-sm text-muted mt-1">
-                Up to 2 documents, quick AI edits, grammar checks, citation search and 10 autocompletes a day. No payment needed.
-              </p>
-            </div>
-            <button onClick={() => navigate(withPlan('/login', 'free'))} className="btn-ghost px-6 py-3 text-sm font-bold whitespace-nowrap">
-              Start free
-            </button>
           </div>
         </div>
       </section>
