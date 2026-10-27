@@ -28,6 +28,8 @@ const PRODUCTION_REQUIRED_VARS = [
   'FRONTEND_URL',
 ];
 
+const KNOWN_NODE_ENVS = new Set(['production', 'development', 'test']);
+
 const WEAK_JWT_SECRETS = new Set([
   'fallback-secret-for-dev-only',
   'researchpadi-demo-secret-114107571161025654111112521061131195311899',
@@ -43,6 +45,13 @@ export function validateEnv(): EnvValidation {
   const missing: string[] = [];
   const warnings: string[] = [];
   const isProduction = process.env.NODE_ENV === 'production';
+
+  // Anything other than "production" turns on local-only shortcuts (any phone signs
+  // in with the demo code, stack traces in errors), so a missing or mistyped
+  // NODE_ENV must stop the server rather than quietly run as development.
+  if (!KNOWN_NODE_ENVS.has(process.env.NODE_ENV ?? '')) {
+    missing.push(`NODE_ENV (set to production, or development for local work; got "${process.env.NODE_ENV ?? ''}")`);
+  }
 
   for (const v of REQUIRED_VARS) {
     if (!process.env[v]) missing.push(v);

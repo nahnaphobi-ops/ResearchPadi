@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiErrorMessage } from '../utils/apiError';
+import { skipSplashOnReturn } from '../utils/splash';
 import { paymentService } from '../services/paymentService';
 import AppShell from '../components/layout/AppShell';
 import type { Transaction } from '../types';
@@ -81,6 +82,7 @@ export default function Wallet() {
     try {
       const response = await paymentService.initiate(Number(amount), email);
       if (response.data.authorizationUrl) {
+        skipSplashOnReturn();
         window.location.href = response.data.authorizationUrl;
       } else {
         setMessage({ text: 'Payment initiated. Follow the instructions on the payment page.', ok: true });
