@@ -7,11 +7,12 @@ import { FREE_PLAN, FULL_PAPER, WORKSPACE_PLANS } from './plans';
  * counts, ratings, or testimonials (see data/testimonials.ts for real quotes).
  */
 
+// The logo already scrolls to the top, so there is no "Home" item.
 export const navItems = [
-  { label: 'Home', id: 'top' },
-  { label: 'Features', id: 'about' },
+  { label: 'Why ResearchPadi', id: 'about' },
   { label: 'What you get', id: 'offer' },
   { label: 'Pricing', id: 'pricing' },
+  { label: 'FAQ', id: 'faqs' },
   { label: 'Contact', id: 'contact' },
 ];
 

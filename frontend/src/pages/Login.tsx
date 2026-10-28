@@ -8,6 +8,7 @@ import { parsePlan, planDestination, withPlan } from '../utils/planIntent';
 import { apiErrorMessage } from '../utils/apiError';
 import { takeAfterLogin } from '../utils/afterLogin';
 import { defaultKeepSignedIn, setKeepSignedIn } from '../utils/sessionLength';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -130,24 +131,22 @@ export default function Login() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-navy-mist">
-      <div className="hidden lg:flex relative flex-col justify-between p-12 bg-navy text-white overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full border border-white/5" />
-        <div className="absolute -left-8 bottom-32 w-40 h-40 rounded-full bg-brand/10" />
-        <div className="relative z-10">
+      <div className="hidden lg:flex flex-col justify-between gap-10 p-12 bg-navy text-white">
+        <div>
           <BrandLogo onDark markClassName="h-11 w-11" onClick={() => navigate('/')} />
         </div>
-        <div className="relative z-10 flex flex-col items-start gap-8">
-          <HeroStudent className="w-full max-w-sm" />
+        <div className="flex flex-col items-start gap-8">
+          <HeroStudent className="w-full max-w-[300px]" />
           <div className="max-w-md">
-            <p className="display text-4xl leading-tight mb-4">
+            <p className="display text-4xl leading-[1.1] mb-4">
               Research and write with <span className="text-gold">AI beside you</span>.
             </p>
-            <p className="text-white/70 text-sm leading-relaxed mb-6">
+            <p className="text-white/75 text-base leading-relaxed mb-6">
               The AI writing platform built for students at KNUST, UG, UCC, UPSA and every Ghanaian university.
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5">
               {['Tailored to your institution and programme', 'AI writing workspace with live suggestions', 'Plagiarism check before you submit'].map(item => (
-                <div key={item} className="flex items-center gap-2 text-sm text-white/80">
+                <div key={item} className="flex items-center gap-2.5 text-sm text-white/85">
                   <div className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
                   {item}
                 </div>
@@ -155,16 +154,16 @@ export default function Login() {
             </div>
           </div>
         </div>
-        <p className="relative z-10 text-xs text-white/40">ResearchPadi · AbusuaITLabs · Kumasi, Ghana</p>
+        <p className="text-xs text-white/50">ResearchPadi · AbusuaITLabs · Kumasi, Ghana</p>
       </div>
 
       <div className="flex flex-col items-center justify-center px-5 py-12 relative">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="absolute top-5 left-5 lg:hidden inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition"
+          className="absolute top-5 left-5 lg:hidden inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors"
         >
-          ← Back
+          <ArrowLeft size={16} /> Back
         </button>
 
         <div className="w-full max-w-md bg-white rounded-[14px] border border-rule p-8 shadow-soft">
@@ -265,7 +264,7 @@ export default function Login() {
               type="button"
               onClick={handleTryDemo}
               disabled={loading}
-              className="w-full p-3.5 bg-brand-soft text-brand rounded-[10px] font-bold text-sm hover:bg-[#dbe5ff] disabled:opacity-50 transition inline-flex items-center justify-center gap-2"
+              className="w-full p-3.5 bg-brand-soft text-brand rounded-[10px] font-semibold text-sm hover:bg-[#dbe5ff] active:scale-[0.97] disabled:opacity-50 transition inline-flex items-center justify-center gap-2"
             >
               {loading ? 'Loading demo...' : '✦ Try demo — no phone needed'}
             </button>
