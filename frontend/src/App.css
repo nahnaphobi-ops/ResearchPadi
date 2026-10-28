@@ -1,10 +1,16 @@
 body { background: var(--paper); }
 
-h1, h2, h3, h4, .font-black, .font-bold, .display {
-  letter-spacing: -0.02em;
+h1, h2, h3, h4, .display {
   font-family: 'Poppins', 'Segoe UI', sans-serif;
   font-weight: 700;
 }
+
+/* Tracking follows size: tight on display type, neutral on body, a touch
+   open on small text. :where() keeps it at zero specificity, so any
+   tracking-* utility on the element still wins. */
+:where(h1, h2, .display, .text-3xl, .text-4xl, .text-5xl, .text-6xl) { letter-spacing: -0.025em; }
+:where(h3, h4, .text-xl, .text-2xl) { letter-spacing: -0.015em; }
+:where(.text-xs) { letter-spacing: 0.01em; }
 
 .bg-gray-50 { background-color: var(--paper) !important; }
 .bg-white { background-color: var(--surface) !important; }
@@ -79,18 +85,17 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 4px rgba(47, 158, 106, .14);
 }
 
+/* Buttons answer on press, not on hover: colour shifts on hover,
+   a quick scale-down while held. */
 .btn-primary {
   background: var(--primary);
   color: #fff;
   border-radius: 10px;
-  font-weight: 700;
-  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+  font-weight: 600;
+  transition: background-color .15s ease, transform .1s ease-out;
 }
-.btn-primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(59, 110, 255, .28);
-}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-primary:active:not(:disabled) { transform: scale(.97); }
 
 .btn-ghost {
   background: transparent;
@@ -98,23 +103,23 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid var(--rule);
   border-radius: 10px;
   font-weight: 600;
-  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background-color .15s ease, border-color .15s ease, transform .1s ease-out;
 }
 .btn-ghost:hover {
   background: var(--accent-soft);
   border-color: var(--highlight);
-  transform: translateY(-1px);
 }
+.btn-ghost:active:not(:disabled) { transform: scale(.97); }
 
 .fade-up {
-  animation: fadeUp .75s cubic-bezier(.22, 1, .36, 1) both;
+  animation: fadeUp .5s cubic-bezier(.22, 1, .36, 1) both;
 }
-.fade-up-delay { animation-delay: .12s; }
-.fade-up-delay-2 { animation-delay: .24s; }
-.fade-up-delay-3 { animation-delay: .36s; }
+.fade-up-delay { animation-delay: .06s; }
+.fade-up-delay-2 { animation-delay: .12s; }
+.fade-up-delay-3 { animation-delay: .18s; }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(22px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -128,17 +133,17 @@ input:focus, select:focus, textarea:focus {
 
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity .7s cubic-bezier(.22, 1, .36, 1), transform .7s cubic-bezier(.22, 1, .36, 1);
+  transform: translateY(12px);
+  transition: opacity .5s cubic-bezier(.22, 1, .36, 1), transform .5s cubic-bezier(.22, 1, .36, 1);
 }
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
-.reveal-delay-1 { transition-delay: .08s; }
-.reveal-delay-2 { transition-delay: .16s; }
-.reveal-delay-3 { transition-delay: .24s; }
-.reveal-delay-4 { transition-delay: .32s; }
+.reveal-delay-1 { transition-delay: .04s; }
+.reveal-delay-2 { transition-delay: .08s; }
+.reveal-delay-3 { transition-delay: .12s; }
+.reveal-delay-4 { transition-delay: .16s; }
 
 /* Processing pulse — used on paper status badges */
 @keyframes statusPulse {
@@ -156,6 +161,33 @@ input:focus, select:focus, textarea:focus {
   -webkit-backdrop-filter: blur(16px);
 }
 
+/* Landing nav: a translucent layer the page scrolls under. The edge only
+   shows once content is actually beneath it. */
+.nav-material {
+  background: rgba(255, 255, 255, .72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  transition: box-shadow .2s ease;
+}
+.nav-material.is-scrolled {
+  box-shadow: 0 1px 0 rgba(14, 27, 77, .06), 0 8px 24px -12px rgba(14, 27, 77, .14);
+}
+
+/* Height-animated disclosure (mobile menu, FAQ answers): animates from
+   wherever it is, so a quick second tap reverses it mid-way. */
+.disclosure {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows .3s cubic-bezier(.32, .72, 0, 1), opacity .2s ease;
+}
+.disclosure.is-open { grid-template-rows: 1fr; opacity: 1; }
+.disclosure > * { overflow: hidden; min-height: 0; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .nav-material, .glass { background: #fff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-up, .fade-up-delay, .fade-up-delay-2, .fade-up-delay-3,
   .hero-float, .pulse-badge { animation: none !important; }
@@ -164,7 +196,7 @@ input:focus, select:focus, textarea:focus {
     transform: none !important;
     transition: none !important;
   }
-  .btn-primary:hover, .btn-ghost:hover { transform: none; }
+  .btn-primary:active, .btn-ghost:active { transform: none; }
 }
 
 /* ── Word-style document editor ───────────────────────────────────────── */

@@ -2,14 +2,9 @@ export default function HeroStudent({ className = '' }: { className?: string }) 
   return (
     <div className={`relative ${className}`}>
       <div className="absolute -left-6 top-8 h-40 w-40 rounded-full bg-brand/10" />
-      <div className="absolute right-4 top-4 grid grid-cols-5 gap-2 opacity-60">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <span key={i} className="h-1.5 w-1.5 rounded-full bg-brand/50" />
-        ))}
-      </div>
       <div className="absolute bottom-8 right-0 h-24 w-24 rounded-full border-[6px] border-gold/80" />
 
-      <div className="relative z-10 hero-float">
+      <div className="relative z-10">
         <img
           src="/hero-student.webp?v=9"
           alt="Student with a laptop giving a thumbs up"
@@ -23,12 +18,12 @@ export default function HeroStudent({ className = '' }: { className?: string }) 
       </div>
 
       <div className="absolute left-0 top-[30%] z-20 flex items-center gap-3 rounded-full bg-white px-4 py-2.5 shadow-card">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-brand text-white text-xs font-bold">4</span>
-        <p className="text-xs font-bold text-navy leading-tight">Citation<br />styles</p>
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-brand text-white text-xs font-semibold">4</span>
+        <p className="text-xs font-semibold text-navy leading-tight">Citation<br />styles</p>
       </div>
       <div className="absolute right-0 bottom-[18%] z-20 flex items-center gap-3 rounded-full bg-white px-4 py-2.5 shadow-card">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-alert text-white text-xs font-bold">GH</span>
-        <p className="text-xs font-bold text-navy leading-tight">Ghanaian<br />sources</p>
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-alert text-white text-xs font-semibold">GH</span>
+        <p className="text-xs font-semibold text-navy leading-tight">Ghanaian<br />sources</p>
       </div>
     </div>
   );
