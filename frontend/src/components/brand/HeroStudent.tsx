@@ -6,14 +6,14 @@ export default function HeroStudent({ className = '' }: { className?: string }) 
 
       <div className="relative z-10">
         <img
-          src="/hero-student.webp?v=9"
-          alt="Student with a laptop giving a thumbs up"
-          width={673}
-          height={859}
+          src="/hero-student.webp?v=10"
+          alt="Smiling student carrying books and a backpack"
+          width={840}
+          height={1329}
           fetchPriority="high"
           decoding="async"
           draggable={false}
-          className="relative z-10 mx-auto w-full max-w-[420px] object-contain select-none drop-shadow-[0_18px_24px_rgba(14,27,77,0.16)]"
+          className="relative z-10 mx-auto w-full max-w-[420px] object-contain select-none [-webkit-mask-image:linear-gradient(to_bottom,#000_82%,transparent)] [mask-image:linear-gradient(to_bottom,#000_82%,transparent)]"
         />
       </div>
 
