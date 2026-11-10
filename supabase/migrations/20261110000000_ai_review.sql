@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS review_runs (
   usd_to_ghs NUMERIC(10, 4) NOT NULL,
 
   suggestions_count INT NOT NULL DEFAULT 0,
-  -- Suggestions whose "original" was not found verbatim in the paper.
+  -- Suggestions whose "original" was not in the paper verbatim exactly once
+  -- (not found, or found more than once so accepting it could hit the wrong place).
   dropped_suggestions_count INT NOT NULL DEFAULT 0,
   -- Every reason a suggestion was left out: not_found, ambiguous, duplicate, invalid, over_cap.
   drop_details JSONB NOT NULL DEFAULT '{}',
