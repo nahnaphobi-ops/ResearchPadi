@@ -20,7 +20,7 @@ export interface StructuredCall {
   schema: Record<string, unknown>;
   maxTokens: number;
   effort?: Effort;
-  /** Logged and counted against the shared per-user AI rate limit. */
+  /** The paper's owner: counted against the shared per-user AI rate limit, and named in the usage log's metadata. */
   userId?: string;
   stage: 'reader' | 'supervisor';
   usdToGhs: number;
@@ -89,7 +89,10 @@ export async function callStructured(call: StructuredCall): Promise<StructuredRe
 
   if (call.logUsage !== false) {
     logUsage({
-      userId: call.userId,
+      // Logged like paper generation, with no user: a review is part of the paid
+      // paper, so it must never count toward the student's daily AI allowance
+      // (lib/ai-budget seeds that from this table). The owner is in the metadata.
+      userId: undefined,
       provider: 'anthropic',
       model: servedBy,
       tier: tierFor(call.stage),
@@ -100,6 +103,7 @@ export async function callStructured(call: StructuredCall): Promise<StructuredRe
       cached: usage.cacheReadTokens > 0,
       meta: {
         action: 'ai-review',
+        paperUserId: call.userId ?? null,
         stage: call.stage,
         cacheReadTokens: usage.cacheReadTokens,
         cacheWriteTokens: usage.cacheWriteTokens,

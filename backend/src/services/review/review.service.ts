@@ -43,6 +43,15 @@ async function markFailed(runIds: string[], error: string) {
   if (dbError) log.error({ runIds, err: dbError.message }, 'Could not mark review runs failed');
 }
 
+/** Save a run's result. If that fails the run is marked failed, so it never stays "running". */
+async function saveRun(runId: string, patch: Record<string, unknown>): Promise<boolean> {
+  const { error } = await supabase.from('review_runs').update(patch).eq('id', runId);
+  if (!error) return true;
+  log.error({ runId, err: error.message }, 'Could not save the review run');
+  await markFailed([runId], `Could not save the result: ${error.message}`);
+  return false;
+}
+
 /** Insert a queued run. Returns null when the same review is already queued or running. */
 async function insertRun(row: {
   paper_id: string;
@@ -184,7 +193,8 @@ export async function processReviewJob(job: ReviewJobData, cfg: ReviewConfig = r
       await markFailed(ids, 'The paper has no finished text');
       return;
     }
-    await supabase.from('review_runs').update({ status: 'running', started_at: new Date().toISOString() }).in('id', ids);
+    const { error: startError } = await supabase.from('review_runs').update({ status: 'running', started_at: new Date().toISOString() }).in('id', ids);
+    if (startError) log.warn({ ...meta, err: startError.message }, 'Could not mark the review runs as running');
 
     const outcome = await runReviewPipeline({
       paper: paper.final_content,
@@ -214,7 +224,7 @@ export async function processReviewJob(job: ReviewJobData, cfg: ReviewConfig = r
       };
 
       if (!sup.result) {
-        await supabase.from('review_runs').update({ ...base, status: 'failed', error: `Supervisor failed: ${sup.error}` }).eq('id', runId);
+        await saveRun(runId, { ...base, status: 'failed', error: `Supervisor failed: ${sup.error}` });
         continue;
       }
 
@@ -236,13 +246,13 @@ export async function processReviewJob(job: ReviewJobData, cfg: ReviewConfig = r
           .from('review_suggestions')
           .upsert(rows, { onConflict: 'run_id,suggestion_key', ignoreDuplicates: true });
         if (insertError) {
-          await supabase.from('review_runs').update({ ...base, status: 'failed', error: `Could not save suggestions: ${insertError.message}` }).eq('id', runId);
+          await saveRun(runId, { ...base, status: 'failed', error: `Could not save suggestions: ${insertError.message}` });
           continue;
         }
       }
 
       const status = outcome.readerError ? 'degraded' : 'completed';
-      await supabase.from('review_runs').update({
+      const saved = await saveRun(runId, {
         ...base,
         status,
         error: outcome.readerError ? `Reader failed, so the supervisor read the paper alone: ${outcome.readerError}` : null,
@@ -250,7 +260,8 @@ export async function processReviewJob(job: ReviewJobData, cfg: ReviewConfig = r
         // Suggestions whose original was not in the paper exactly once (spans.ts).
         dropped_suggestions_count: drops.not_found + drops.ambiguous,
         drop_details: { ...drops, returned: sup.result.items.length, truncated: sup.result.truncated, salvaged: sup.result.salvaged },
-      }).eq('id', runId);
+      });
+      if (!saved) continue;
 
       log.info(
         { ...meta, runId, status, supervisor: sup.model, kept: rows.length, drops, readerUsd: outcome.readerSpend.cost.usd, supervisorUsd: sup.spend.cost.usd },

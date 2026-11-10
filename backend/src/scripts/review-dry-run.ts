@@ -22,6 +22,10 @@ import { noteCount } from '../services/review/schema.js';
 import { guardSuggestions } from '../services/review/spans.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// Exit after a short pause, not at once: on Windows, process.exit while the
+// logger's worker thread is still starting aborts Node with a libuv assertion.
+const finish = (code: number) => new Promise<never>(() => setTimeout(() => process.exit(code), 300));
 const args = process.argv.slice(2);
 const option = (name: string) => {
   const i = args.indexOf(name);
@@ -35,7 +39,7 @@ const compare = args.includes('--compare');
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error('ANTHROPIC_API_KEY is not set (backend/.env). The dry run calls the real API.');
-  process.exit(1);
+  await finish(1);
 }
 
 const cfg = reviewConfig();
@@ -45,7 +49,7 @@ const supervisors = compare ? [cfg.supervisorModel, cfg.compareModel] : [cfg.sup
 for (const model of [cfg.readerModel, ...supervisors]) {
   if (!hasPricing(model)) {
     console.error(`No price for ${model} in services/review/pricing.json`);
-    process.exit(1);
+    await finish(1);
   }
 }
 
@@ -94,4 +98,4 @@ line(`reader ${cfg.readerModel}`, outcome.readerSpend);
 for (const sup of outcome.supervisors) line(`supervisor ${sup.model}`, sup.spend);
 line('total', total);
 console.log(`\nTook ${Math.round((Date.now() - started) / 1000)}s`);
-process.exit(0);
+await finish(0);
