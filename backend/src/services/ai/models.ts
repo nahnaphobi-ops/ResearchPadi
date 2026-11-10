@@ -106,6 +106,19 @@ export const FAILOVER_CHAINS: Record<ModelTier, string[]> = {
   research: ['fast'],
 };
 
+/**
+ * AI review stage (services/review): the reader takes notes, the supervisor
+ * turns them into suggestions, and compare mode runs a second supervisor on the
+ * same notes. Each is overridable by env (REVIEW_READER_MODEL,
+ * REVIEW_SUPERVISOR_MODEL, REVIEW_COMPARE_MODEL). Their prices live in
+ * services/review/pricing.json, which also prices Haiku's long-prompt tier.
+ */
+export const REVIEW_MODEL_DEFAULTS = {
+  reader: 'claude-haiku-5-5',
+  supervisor: 'claude-opus-5-5',
+  compare: 'claude-fable-5-2',
+} as const;
+
 /** The model a tier uses when its primary provider is up (for callers outside the gateway). */
 export function primaryModel(tier: ModelTier): ModelConfig {
   return MODELS[FAILOVER_CHAINS[tier][0]];

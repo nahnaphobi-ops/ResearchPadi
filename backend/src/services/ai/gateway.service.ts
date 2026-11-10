@@ -60,7 +60,7 @@ const RATE_LIMITS: Record<Provider, { max: number; windowMs: number }> = {
 // Per-user fairness cap so one heavy user can't consume the whole bucket.
 const PER_USER_AI_MAX = parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10);
 
-async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
+export async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
   const limit = RATE_LIMITS[provider];
   const window = Math.floor(Date.now() / limit.windowMs);
   const redis = getReadyRedis();
@@ -509,7 +509,7 @@ ${prompt}` : prompt;
 
 // --- Usage logging ---
 
-interface UsageLogEntry {
+export interface UsageLogEntry {
   userId?: string;
   provider: Provider;
   model: string;
@@ -522,7 +522,7 @@ interface UsageLogEntry {
   meta?: Record<string, any>;
 }
 
-async function logUsage(entry: UsageLogEntry) {
+export async function logUsage(entry: UsageLogEntry) {
   await supabase.from('ai_usage_logs').insert({
     user_id: entry.userId || null,
     provider: entry.provider,

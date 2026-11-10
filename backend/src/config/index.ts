@@ -45,6 +45,8 @@ export const CONFIG = {
   },
   QUEUE: {
     PAPER_CONCURRENCY: parseInt(process.env.PAPER_CONCURRENCY || '6', 10),
+    // AI reviews of finished papers run on their own queue (workers/review.worker).
+    REVIEW_CONCURRENCY: parseInt(process.env.REVIEW_CONCURRENCY || '2', 10),
     AI_RATE_LIMIT_MAX: parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10),
     AI_RATE_LIMIT_WINDOW: parseInt(process.env.AI_RATE_LIMIT_WINDOW || '60000', 10),
   },
