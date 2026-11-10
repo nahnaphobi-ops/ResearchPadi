@@ -1,6 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { childLogger } from '../../lib/logger.js';
-import { checkRateLimit, logUsage } from '../ai/gateway.service.js';
+import { anthropicCountTokens, anthropicStructured, checkRateLimit, logUsage } from '../ai/gateway.service.js';
 import type { ModelTier } from '../ai/models.js';
 import type { Effort } from './config.js';
 import { costOf, hasPricing, usageFromApi, type Cost, type TokenUsage } from './pricing.js';
@@ -8,15 +7,8 @@ import { withRetry } from './retry.js';
 
 const log = childLogger('review-client');
 
-// Retries are done by withRetry (429 / overloaded / connection), so the SDK's own are off.
-let client: Anthropic | null = null;
-function getClient(): Anthropic {
-  if (!client) {
-    if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured');
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, maxRetries: 0, timeout: 10 * 60 * 1000 });
-  }
-  return client;
-}
+// The calls go through the gateway (its client and system rules) with no SDK
+// retries; withRetry here retries 429, overloaded and connection errors.
 
 /** The model declined (stop_reason "refusal"). */
 export class ReviewRefusalError extends Error {}
@@ -70,20 +62,17 @@ function tierFor(stage: StructuredCall['stage']): ModelTier {
 
 /** One structured-output call with retries, rate limiting and real usage. */
 export async function callStructured(call: StructuredCall): Promise<StructuredResult> {
-  const anthropic = getClient();
   const start = Date.now();
   const response = await withRetry(
     async () => {
       await waitForRateLimit(call.userId, call.meta);
-      return anthropic.messages.create({
+      return anthropicStructured({
         model: call.model,
-        max_tokens: call.maxTokens,
-        system: call.system,
-        messages: [{ role: 'user', content: call.user }],
-        output_config: {
-          format: { type: 'json_schema', schema: call.schema },
-          ...(call.effort ? { effort: call.effort } : {}),
-        },
+        systemPrompt: call.system,
+        prompt: call.user,
+        schema: call.schema,
+        maxTokens: call.maxTokens,
+        effort: call.effort,
       });
     },
     {
@@ -136,15 +125,8 @@ export async function countPromptTokens(args: {
   schema: Record<string, unknown>;
   retryAttempts: number;
 }): Promise<number> {
-  const res = await withRetry(
-    () =>
-      getClient().messages.countTokens({
-        model: args.model,
-        system: args.system,
-        messages: [{ role: 'user', content: args.user }],
-        output_config: { format: { type: 'json_schema', schema: args.schema } },
-      }),
+  return withRetry(
+    () => anthropicCountTokens({ model: args.model, systemPrompt: args.system, prompt: args.user, schema: args.schema }),
     { attempts: args.retryAttempts },
   );
-  return res.input_tokens;
 }

@@ -35,6 +35,16 @@ test('retries 429 and overloaded errors, not bad requests', () => {
   assert.equal(isRetryable({ status: 401 }), false);
 });
 
+test('retries connection errors and timeouts from the SDK, found by class name', () => {
+  class APIError extends Error {}
+  class APIConnectionError extends APIError {}
+  class APIConnectionTimeoutError extends APIConnectionError {}
+  assert.equal(isRetryable(new APIConnectionError('Connection error.')), true);
+  assert.equal(isRetryable(new APIConnectionTimeoutError('Request timed out.')), true);
+  assert.equal(isRetryable(new APIError('Bad request')), false);
+  assert.equal(isRetryable(null), false);
+});
+
 test('backoff uses retry-after when the API sends it, else grows exponentially', () => {
   assert.equal(retryDelayMs({ headers: { 'retry-after': '7' } }, 1), 7000);
   assert.equal(retryDelayMs({}, 1, 1000, 60_000, () => 0.5), 1000);

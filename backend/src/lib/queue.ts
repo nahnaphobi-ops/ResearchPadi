@@ -28,12 +28,16 @@ function createQueue(name: string): Queue | null {
 export let paperQueue: Queue | null = null;
 export let researchQueue: Queue | null = null;
 export let embeddingQueue: Queue | null = null;
+// AI review of finished papers. Its own queue, so a failed review never reaches
+// the paper worker's failure handler (which refunds the fee).
+export let reviewQueue: Queue | null = null;
 
 export async function initQueues(): Promise<void> {
   if (!(await redisSupportsBullmq())) return;
   paperQueue = createQueue('papers');
   researchQueue = createQueue('research');
   embeddingQueue = createQueue('embeddings');
+  reviewQueue = createQueue('reviews');
 }
 
 export function setupQueueEvents() {

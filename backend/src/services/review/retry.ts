@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 
 export interface RetryOptions {
   /** Total attempts, including the first. */
@@ -11,9 +10,19 @@ export interface RetryOptions {
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/** The SDK's APIConnectionError, or a subclass such as APIConnectionTimeoutError, found by class name. */
+function isConnectionError(err: unknown): boolean {
+  for (let proto = err && typeof err === 'object' ? Object.getPrototypeOf(err) : null; proto; proto = Object.getPrototypeOf(proto)) {
+    if (proto.constructor?.name === 'APIConnectionError') return true;
+  }
+  return false;
+}
+
 /** 429 rate limit, 529 overloaded (or 503), or no response at all. 400s and auth errors are not retried. */
 export function isRetryable(err: unknown): boolean {
-  if (err instanceof Anthropic.APIConnectionError) return true; // includes timeouts
+  // The SDK's APIConnectionError and its timeout subclass (checked by name, so
+  // this file needs no SDK import: model clients live in the gateway).
+  if (isConnectionError(err)) return true;
   const e = err as { status?: number; error?: { error?: { type?: string } } } | null;
   if (!e) return false;
   if (e.status === 429 || e.status === 529 || e.status === 503) return true;

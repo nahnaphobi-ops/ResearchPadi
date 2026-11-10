@@ -642,3 +642,46 @@ export async function getUsageStats(userId?: string, days: number = 30) {
 export async function getRemainingBudget(userId: string) {
   return getBudget(userId);
 }
+
+// --- Structured calls for the AI review stage (services/review) ---
+
+/** A single Anthropic request whose answer must match a JSON schema. */
+export interface StructuredRequest {
+  model: string;
+  systemPrompt: string;
+  prompt: string;
+  schema: Record<string, unknown>;
+  maxTokens: number;
+  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+}
+
+const structuredParams = (req: Omit<StructuredRequest, 'maxTokens' | 'effort'>, effort?: StructuredRequest['effort']) => ({
+  model: req.model,
+  // The same originality and accuracy rules as every other call.
+  system: systemPromptFor({ systemPrompt: req.systemPrompt }),
+  messages: [{ role: 'user' as const, content: req.prompt }],
+  output_config: {
+    format: { type: 'json_schema' as const, schema: req.schema },
+    ...(effort ? { effort } : {}),
+  },
+});
+
+/**
+ * One structured-output call with no failover and no retries, for the AI
+ * review stage. The review names its models exactly (its costs and compare
+ * mode depend on that) and does its own retries, rate-limit waits and usage
+ * logging. Returns the raw message, so the caller reads the API's real token
+ * usage, cache reads and writes included, and the stop reason.
+ */
+export async function anthropicStructured(req: StructuredRequest) {
+  return getAnthropic().messages.create(
+    { ...structuredParams(req, req.effort), max_tokens: req.maxTokens },
+    { maxRetries: 0, timeout: 10 * 60 * 1000 },
+  );
+}
+
+/** Input tokens the same request would use, from the free token-count endpoint. */
+export async function anthropicCountTokens(req: Omit<StructuredRequest, 'maxTokens' | 'effort'>): Promise<number> {
+  const res = await getAnthropic().messages.countTokens(structuredParams(req), { maxRetries: 0 });
+  return res.input_tokens;
+}

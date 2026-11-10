@@ -14,6 +14,7 @@ import { CHAPTER_STRUCTURE } from '../services/ai/prompts.js';
 import { runCitationVerification } from '../services/citations/verify/citation-verify.service.js';
 import { writeCareStudy } from '../services/pipeline/care-study-writer.service.js';
 import type { CareStudyBrief } from '../services/pipeline/care-study.service.js';
+import { enqueueAutoReview } from '../services/review/review.service.js';
 
 const log = childLogger('paper-worker');
 
@@ -181,6 +182,11 @@ async function runPipeline(job: Job<PaperJobData>) {
 
     await job.updateProgress(100);
     log.info({ paperId: d.paperId }, 'Paper pipeline completed');
+
+    // AI review suggestions, in the background on their own queue. Never
+    // throws and never edits the paper. Care studies are left out: a wording
+    // suggestion there could change a clinical fact.
+    if (d.document_type !== 'care_study') void enqueueAutoReview(d.paperId);
     return { paperId: d.paperId, status: 'completed' };
 
   } catch (error: any) {
