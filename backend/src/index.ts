@@ -5,6 +5,7 @@ import { CONFIG } from './config/index.js';
 import { validateEnv } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { startPaperWorker, stopPaperWorker } from './workers/paper.worker.js';
+import { startReviewWorker, stopReviewWorker } from './workers/review.worker.js';
 import { initQueues, setupQueueEvents } from './lib/queue.js';
 import { closeRedis } from './lib/redis.js';
 import { closePools } from './db/supabase.js';
@@ -34,6 +35,7 @@ async function bootstrap() {
   if (enableWorker) {
     setupQueueEvents();
     await startPaperWorker();
+    await startReviewWorker();
   }
 
   let server: ReturnType<typeof app.listen> | null = null;
@@ -49,6 +51,7 @@ async function bootstrap() {
     await flushCollab();
     if (server) server.close();
     await stopPaperWorker();
+    await stopReviewWorker();
     await closeRedis();
     await closePools();
     process.exit(0);

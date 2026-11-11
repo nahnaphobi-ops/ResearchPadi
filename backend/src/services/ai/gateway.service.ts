@@ -60,7 +60,7 @@ const RATE_LIMITS: Record<Provider, { max: number; windowMs: number }> = {
 // Per-user fairness cap so one heavy user can't consume the whole bucket.
 const PER_USER_AI_MAX = parseInt(process.env.AI_RATE_LIMIT_MAX || '20', 10);
 
-async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
+export async function checkRateLimit(provider: Provider, userId?: string): Promise<boolean> {
   const limit = RATE_LIMITS[provider];
   const window = Math.floor(Date.now() / limit.windowMs);
   const redis = getReadyRedis();
@@ -509,7 +509,7 @@ ${prompt}` : prompt;
 
 // --- Usage logging ---
 
-interface UsageLogEntry {
+export interface UsageLogEntry {
   userId?: string;
   provider: Provider;
   model: string;
@@ -522,7 +522,7 @@ interface UsageLogEntry {
   meta?: Record<string, any>;
 }
 
-async function logUsage(entry: UsageLogEntry) {
+export async function logUsage(entry: UsageLogEntry) {
   await supabase.from('ai_usage_logs').insert({
     user_id: entry.userId || null,
     provider: entry.provider,
@@ -641,4 +641,47 @@ export async function getUsageStats(userId?: string, days: number = 30) {
  */
 export async function getRemainingBudget(userId: string) {
   return getBudget(userId);
+}
+
+// --- Structured calls for the AI review stage (services/review) ---
+
+/** A single Anthropic request whose answer must match a JSON schema. */
+export interface StructuredRequest {
+  model: string;
+  systemPrompt: string;
+  prompt: string;
+  schema: Record<string, unknown>;
+  maxTokens: number;
+  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+}
+
+const structuredParams = (req: Omit<StructuredRequest, 'maxTokens' | 'effort'>, effort?: StructuredRequest['effort']) => ({
+  model: req.model,
+  // The same originality and accuracy rules as every other call.
+  system: systemPromptFor({ systemPrompt: req.systemPrompt }),
+  messages: [{ role: 'user' as const, content: req.prompt }],
+  output_config: {
+    format: { type: 'json_schema' as const, schema: req.schema },
+    ...(effort ? { effort } : {}),
+  },
+});
+
+/**
+ * One structured-output call with no failover and no retries, for the AI
+ * review stage. The review names its models exactly (its costs and compare
+ * mode depend on that) and does its own retries, rate-limit waits and usage
+ * logging. Returns the raw message, so the caller reads the API's real token
+ * usage, cache reads and writes included, and the stop reason.
+ */
+export async function anthropicStructured(req: StructuredRequest) {
+  return getAnthropic().messages.create(
+    { ...structuredParams(req, req.effort), max_tokens: req.maxTokens },
+    { maxRetries: 0, timeout: 10 * 60 * 1000 },
+  );
+}
+
+/** Input tokens the same request would use, from the free token-count endpoint. */
+export async function anthropicCountTokens(req: Omit<StructuredRequest, 'maxTokens' | 'effort'>): Promise<number> {
+  const res = await getAnthropic().messages.countTokens(structuredParams(req), { maxRetries: 0 });
+  return res.input_tokens;
 }

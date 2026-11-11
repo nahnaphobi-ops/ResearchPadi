@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as adminController from '../controllers/admin.controller.js';
 import { requireAdmin } from '../middleware/admin.middleware.js';
 import * as reviews from '../controllers/reviews.controller.js';
+import * as aiReview from '../controllers/ai-review.controller.js';
 import * as reviewerApplications from '../controllers/reviewer-applications.controller.js';
 
 const router = Router();
@@ -23,6 +24,12 @@ router.get('/subscriptions', requireAdmin, adminController.getSubscriptions);
 // Papers
 router.get('/papers', requireAdmin, adminController.getPapers);
 router.post('/papers/:id/review', requireAdmin, adminController.approvePaper);
+
+// AI review: re-run, or compare supervisor models on one paper
+router.post('/papers/:id/ai-review', requireAdmin, aiReview.adminStart);
+router.get('/papers/:id/ai-review', requireAdmin, aiReview.adminForPaper);
+router.get('/ai-review/compare', requireAdmin, aiReview.adminCompareList);
+router.get('/ai-review/compare/:group', requireAdmin, aiReview.adminCompareGroup);
 
 // Content
 router.get('/workspaces', requireAdmin, adminController.getWorkspaces);
