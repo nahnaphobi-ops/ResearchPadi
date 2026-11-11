@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'crypto';
 import { sanitizeIlikeTerm, ilikeContains } from '../postgrest-filter.js';
-import { verifyPaystackSignature, paystackAmountToGhs } from '../paystack-signature.js';
+import { verifyPaystackSignature, paystackAmountToGhs, paystackOutcome } from '../paystack-signature.js';
 import { generateNumericOtp, normalizePhone } from '../otp-store.js';
 import { chunkText } from '../../services/rag/chunker.service.js';
 
@@ -40,6 +40,20 @@ test('verifyPaystackSignature rejects missing, wrong, or mismatched-length signa
 
 test('paystackAmountToGhs converts pesewas', () => {
   assert.equal(paystackAmountToGhs(5050), 50.5);
+});
+
+test('only success is paid, and only a definite failure is failed', () => {
+  assert.equal(paystackOutcome('success'), 'paid');
+  assert.equal(paystackOutcome('failed'), 'failed');
+  assert.equal(paystackOutcome('reversed'), 'failed');
+});
+
+test('a mobile money payment still waiting for approval is in progress, not failed', () => {
+  for (const status of ['ongoing', 'pending', 'processing', 'queued', 'abandoned']) {
+    assert.equal(paystackOutcome(status), 'in_progress', status);
+  }
+  assert.equal(paystackOutcome(undefined), 'in_progress');
+  assert.equal(paystackOutcome('something-new'), 'in_progress');
 });
 
 test('generateNumericOtp is a 6-digit code', () => {

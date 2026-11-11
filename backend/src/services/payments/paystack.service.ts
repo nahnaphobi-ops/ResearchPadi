@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { CONFIG } from '../../config/index.js';
+import { childLogger } from '../../lib/logger.js';
+
+const log = childLogger('paystack');
 
 const PAYSTACK_BASE = 'https://api.paystack.co';
+
+/** Paystack's own explanation when it gave one, else the network error. */
+const reason = (error: any): string => error.response?.data?.message || error.message;
 
 const headers = () => ({
   Authorization: `Bearer ${CONFIG.PAYSTACK_SECRET_KEY}`,
@@ -10,7 +16,7 @@ const headers = () => ({
 
 export const initializeTransaction = async (email: string, amount: number, reference: string, callbackUrl?: string) => {
   if (!CONFIG.PAYSTACK_SECRET_KEY) {
-    console.warn('Paystack secret key missing');
+    log.error('Paystack secret key missing; top-ups cannot start');
     return null;
   }
 
@@ -29,7 +35,7 @@ export const initializeTransaction = async (email: string, amount: number, refer
     );
     return response.data;
   } catch (error: any) {
-    console.error('Paystack Init Error:', error.response?.data || error.message);
+    log.error({ err: reason(error), status: error.response?.status }, 'Paystack could not start a payment');
     return null;
   }
 };
@@ -44,7 +50,13 @@ export const verifyTransaction = async (reference: string) => {
     );
     return response.data;
   } catch (error: any) {
-    console.error('Paystack Verify Error:', error.response?.data || error.message);
+    // Asking about a reference Paystack never saw is expected (a checkout that never
+    // opened), so that case is a warning; anything else means verification is broken.
+    if (error.response?.status === 400 || error.response?.status === 404) {
+      log.warn({ err: reason(error) }, 'Paystack does not know this payment reference');
+    } else {
+      log.error({ err: reason(error), status: error.response?.status }, 'Paystack could not verify a payment');
+    }
     return null;
   }
 };

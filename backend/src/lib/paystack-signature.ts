@@ -21,3 +21,16 @@ export function verifyPaystackSignature(
 export function paystackAmountToGhs(amountPesewas: number): number {
   return Math.round(amountPesewas) / 100;
 }
+
+export type PaystackOutcome = 'paid' | 'failed' | 'in_progress';
+
+/**
+ * What a Paystack transaction status means for a top-up. A mobile money payment stays
+ * "ongoing" or "pending" until the customer approves it on their phone, and an "abandoned"
+ * checkout can still be completed, so only a definite failure counts as failed.
+ */
+export function paystackOutcome(status: unknown): PaystackOutcome {
+  if (status === 'success') return 'paid';
+  if (status === 'failed' || status === 'reversed') return 'failed';
+  return 'in_progress';
+}

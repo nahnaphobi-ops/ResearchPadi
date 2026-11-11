@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiErrorMessage } from '../utils/apiError';
 import { skipSplashOnReturn } from '../utils/splash';
 import { paymentService } from '../services/paymentService';
@@ -21,6 +21,11 @@ const PRODUCT_LABELS: Record<string, string> = {
   full_paper_refund: 'Study draft refund',
 };
 
+// A mobile money payment can be approved on the phone after the student has left the
+// Paystack page. Top-ups still pending and newer than this are asked about again.
+const RECHECK_WINDOW_MS = 24 * 60 * 60 * 1000;
+const RECHECK_LIMIT = 3;
+
 export default function Wallet() {
   const [balance, setBalance] = useState(0);
   const [history, setHistory] = useState<Transaction[]>([]);
@@ -33,9 +38,11 @@ export default function Wallet() {
     try { return new URLSearchParams(window.location.search).has('reference'); }
     catch { return false; }
   });
-  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  // info: neither a success nor an error (a payment that is not confirmed yet).
+  const [message, setMessage] = useState<{ text: string; ok: boolean; info?: boolean } | null>(null);
+  const rechecked = useRef(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<Transaction[] | null> => {
     try {
       const [walletRes, historyRes] = await Promise.all([
         paymentService.getWallet(),
@@ -43,8 +50,10 @@ export default function Wallet() {
       ]);
       setBalance(walletRes.data.balance);
       setHistory(historyRes.data);
+      return historyRes.data;
     } catch {
       console.error('Failed to fetch wallet data');
+      return null;
     }
   }, []);
 
@@ -54,13 +63,19 @@ export default function Wallet() {
       if (res.data.status === 'success') {
         setMessage({ text: `Payment of GHS ${res.data.amount.toFixed(2)} confirmed! New balance: GHS ${res.data.balance.toFixed(2)}`, ok: true });
         setBalance(res.data.balance);
-        fetchData();
+      } else if (res.data.status === 'pending') {
+        setMessage({
+          text: 'Your payment is not confirmed yet. If you approved it on your phone, your balance will update here within a few minutes.',
+          ok: false,
+          info: true,
+        });
       }
     } catch (err) {
       setMessage({ text: apiErrorMessage(err, 'Payment verification failed'), ok: false });
     } finally {
       setVerifyLoading(false);
       window.history.replaceState({}, '', '/wallet');
+      fetchData();
     }
   }, [fetchData]);
 
@@ -68,8 +83,25 @@ export default function Wallet() {
     let ignore = false;
     (async () => {
       const ref = new URLSearchParams(window.location.search).get('reference');
-      await (ref ? handleVerify(ref) : fetchData());
+      if (ref) return handleVerify(ref);
+
+      const rows = await fetchData();
+      if (ignore || !rows || rechecked.current) return;
+
+      const cutoff = Date.now() - RECHECK_WINDOW_MS;
+      const waiting = rows
+        .filter((tx) => tx.status === 'pending' && tx.product === 'wallet_topup' && tx.reference && new Date(tx.created_at).getTime() > cutoff)
+        .slice(0, RECHECK_LIMIT);
+      if (!waiting.length) return;
+      rechecked.current = true;
+
+      // A check that fails here means not paid, or Paystack could not be reached; the row stays as it is.
+      const results = await Promise.allSettled(waiting.map((tx) => paymentService.verify(tx.reference as string)));
       if (ignore) return;
+      if (results.some((r) => r.status === 'fulfilled' && r.value.data.status === 'success')) {
+        setMessage({ text: 'A payment you made earlier has been confirmed and added to your balance.', ok: true });
+      }
+      fetchData();
     })();
     return () => { ignore = true; };
   }, [handleVerify, fetchData]);
@@ -105,7 +137,7 @@ export default function Wallet() {
       </div>
 
       {message && (
-        <div role="status" className={`p-4 mb-6 rounded-[10px] text-sm ${message.ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+        <div role="status" className={`p-4 mb-6 rounded-[10px] text-sm ${message.info ? 'bg-navy-soft text-navy' : message.ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
           {message.text}
         </div>
       )}

@@ -61,3 +61,10 @@
         sync: false
       - key: ALLOW_DEMO_LOGIN
         value: "false"
+      # AI review of finished papers. Off until students have a screen to read the
+      # suggestions on; while on, every finished paper spends credits on a review.
+      - key: REVIEW_ENABLED
+        value: "false"
+      # Error tracking. Paste the DSN from the Sentry project; leave unset to keep it off.
+      - key: SENTRY_DSN
+        sync: false

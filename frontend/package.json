@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hocuspocus/provider": "^4.7.1",
+    "@sentry/react": "^11.12.0",
     "@tiptap/core": "3.32.0",
     "@tiptap/extension-collaboration": "3.32.0",
     "@tiptap/extension-collaboration-caret": "3.32.0",

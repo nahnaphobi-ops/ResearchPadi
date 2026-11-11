@@ -4,7 +4,7 @@ import { supabase } from '../db/supabase.js';
 import * as paystackService from '../services/payments/paystack.service.js';
 import { CONFIG } from '../config/index.js';
 import { childLogger } from '../lib/logger.js';
-import { verifyPaystackSignature, paystackAmountToGhs } from '../lib/paystack-signature.js';
+import { verifyPaystackSignature, paystackAmountToGhs, paystackOutcome } from '../lib/paystack-signature.js';
 import { incrementWalletBalance } from '../lib/wallet.js';
 
 const log = childLogger('payments');
@@ -18,7 +18,10 @@ async function creditPendingTransaction(reference: string, paidGhs: number, pays
       amount_ghs: paidGhs,
     })
     .eq('reference', reference)
-    .eq('status', 'pending');
+    // "failed" too: Paystack has confirmed the money, so a row marked failed earlier
+    // (an early check, before a mobile money approval) must still be credited. The
+    // move to "success" happens once per reference, so the credit does too.
+    .in('status', ['pending', 'failed']);
 
   if (expectedUserId) {
     query = query.eq('user_id', expectedUserId);
@@ -97,7 +100,12 @@ export const initiatePayment = async (req: Request, res: Response) => {
   const callbackUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/wallet`;
   const result = await paystackService.initializeTransaction(email, amount, reference, callbackUrl);
 
-  if (!result) return res.status(500).json({ error: 'Failed to initiate payment' });
+  if (!result) {
+    // Paystack never opened a checkout for this reference, so nothing can be paid on it.
+    // Close the row instead of leaving it "pending" in the student's history for good.
+    await supabase.from('transactions').update({ status: 'failed' }).eq('reference', reference).eq('status', 'pending');
+    return res.status(500).json({ error: 'Failed to initiate payment' });
+  }
 
   res.json({
     authorizationUrl: result.data.authorization_url,
@@ -119,8 +127,15 @@ export const verifyPayment = async (req: Request, res: Response) => {
   }
 
   const txData = result.data;
+  const outcome = paystackOutcome(txData.status);
 
-  if (txData.status !== 'success') {
+  // Not decided yet (mobile money waiting for approval on the phone). Leave the row
+  // pending: the webhook, or the next check from the wallet page, credits it once paid.
+  if (outcome === 'in_progress') {
+    return res.json({ status: 'pending' });
+  }
+
+  if (outcome === 'failed') {
     await supabase
       .from('transactions')
       .update({ status: 'failed' })

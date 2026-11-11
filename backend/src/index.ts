@@ -4,6 +4,7 @@ import { attachCollab, flushCollab } from './lib/collab.js';
 import { CONFIG } from './config/index.js';
 import { validateEnv } from './config/env.js';
 import { logger } from './lib/logger.js';
+import { flushErrorTracking, initErrorTracking } from './lib/error-tracking.js';
 import { startPaperWorker, stopPaperWorker } from './workers/paper.worker.js';
 import { startReviewWorker, stopReviewWorker } from './workers/review.worker.js';
 import { initQueues, setupQueueEvents } from './lib/queue.js';
@@ -15,12 +16,18 @@ import './jobs/keepalive.job.js';
 const log = logger.child({ module: 'index' });
 
 async function bootstrap() {
+  // First, so a failed start is reported too.
+  const tracking = await initErrorTracking();
+
   const env = validateEnv();
 
   if (!env.valid) {
     log.fatal({ missing: env.missing }, 'Missing required environment variables');
+    await flushErrorTracking();
     process.exit(1);
   }
+
+  log.info({ tracking }, tracking ? 'Error tracking on' : 'Error tracking off (SENTRY_DSN not set)');
 
   if (env.warnings.length > 0) {
     log.warn({ missing: env.warnings }, 'Recommended environment variables not set');
@@ -54,6 +61,7 @@ async function bootstrap() {
     await stopReviewWorker();
     await closeRedis();
     await closePools();
+    await flushErrorTracking();
     process.exit(0);
   };
 
@@ -61,7 +69,8 @@ async function bootstrap() {
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-bootstrap().catch((err) => {
+bootstrap().catch(async (err) => {
   log.fatal({ err: err.message }, 'Failed to start ResearchPadi');
+  await flushErrorTracking();
   process.exit(1);
 });
