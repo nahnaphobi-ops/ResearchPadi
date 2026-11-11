@@ -1,4 +1,8 @@
-export default function HeroStudent({ className = '' }: { className?: string }) {
+// The photo is cut off at the thigh. `fade` softens that cut into the background; turn it
+// off where the photo stands on the bottom edge of its section, which hides the cut instead.
+const FADE = '[-webkit-mask-image:linear-gradient(to_bottom,#000_82%,transparent)] [mask-image:linear-gradient(to_bottom,#000_82%,transparent)]';
+
+export default function HeroStudent({ className = '', fade = true }: { className?: string; fade?: boolean }) {
   return (
     <div className={`relative ${className}`}>
       <div className="absolute -left-6 top-8 h-40 w-40 rounded-full bg-brand/10" />
@@ -13,7 +17,7 @@ export default function HeroStudent({ className = '' }: { className?: string }) 
           fetchPriority="high"
           decoding="async"
           draggable={false}
-          className="relative z-10 mx-auto w-full max-w-[420px] object-contain select-none [-webkit-mask-image:linear-gradient(to_bottom,#000_82%,transparent)] [mask-image:linear-gradient(to_bottom,#000_82%,transparent)]"
+          className={`relative z-10 mx-auto block w-full max-w-[420px] object-contain select-none ${fade ? FADE : ''}`}
         />
       </div>
 

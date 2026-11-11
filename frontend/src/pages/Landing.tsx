@@ -142,7 +142,8 @@ export default function Landing() {
               </button>
             </div>
           </div>
-          <HeroStudent className="w-full max-w-[460px] mx-auto lg:ml-auto fade-up fade-up-delay" />
+          {/* The negative margin cancels the section's bottom padding, so the photo stands on its bottom edge. */}
+          <HeroStudent fade={false} className="w-full max-w-[460px] mx-auto lg:ml-auto self-end -mb-16 sm:-mb-24 fade-up fade-up-delay" />
         </div>
       </section>
 
